@@ -570,9 +570,11 @@ export default function WorldView() {
             <span className="chip">{t("Planet {name}", { name: w.geo.name })}</span>
             <span className="chip">{followed ? t("Following Bot #{id}", { id: followed.id }) : zoomedOut ? t("Whole world") : t("Exploring")}</span>
             {night && <span className="chip">{t("Night")}</span>}
-            {player.role && player.role !== "watch" && (
+            {player.role && (
               <span className="chip gold">
-                {player.role === "god"
+                {player.role === "watch"
+                  ? t("You are the Observer")
+                  : player.role === "god"
                   ? t("You are God")
                   : player.role === "king"
                     ? player.kingdom != null

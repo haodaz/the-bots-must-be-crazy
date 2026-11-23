@@ -31,7 +31,7 @@ export function i18nKeys(): string[] {
     "small area", "wide area", "vast area", "small", "wide", "vast",
     "need switch flipped", "plenty switch flipped",
     "Richest", "Hungriest", "Born with least", "Born with most", "Latest switch",
-    "Watch", "God", "King", "Human",
+    "Observer", "God", "King", "Human",
     "Hands off. Just see.", "Weather, harvests, the sky's gold.", "One nation's laws and treasury.", "One ordinary life. One draw.",
     "Follow the live channels and the director. Nothing you do changes the world.",
     "Bring harvests and droughts, floods and seasons of plenty, or call down the sky's gold early.",

@@ -44,7 +44,8 @@ export const ZH: Record<string, string> = {
   // ---- 选身份 ----
   "How will you enter this world?": "你要以什么身份进入这个世界？",
   "Planet {name}: {n} souls, born by the real birth lottery.": "{name} 星：{n} 个生灵，按真实的出生抽签降生。",
-  Watch: "旁观",
+  Observer: "观察者",
+  "You are the Observer": "你是观察者",
   God: "神",
   King: "王",
   Human: "人",

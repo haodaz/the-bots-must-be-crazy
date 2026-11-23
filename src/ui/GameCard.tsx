@@ -294,7 +294,7 @@ export function GameCard({
 
 const ROLE_TEXT: Record<Role, { title: string; line: string; detail: string }> = {
   watch: {
-    title: "Watch",
+    title: "Observer",
     line: "Hands off. Just see.",
     detail: "Follow the live channels and the director. Nothing you do changes the world.",
   },
