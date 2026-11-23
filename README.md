@@ -45,10 +45,22 @@ Spending more than $10 of Muse Ember credit disqualifies the project, and the pl
 - Development runs on mock responses first. Real calls come only once the logic works.
 - The public demo replays a recorded run, so trying it costs $0.
 
+## Run it
+
+```bash
+npm install
+npm run dev          # the world in the browser, at http://localhost:3000
+npm test             # the laws: fixed supply, replay, halving, wake switches
+node scripts/simulate.ts 1 30   # one world, 30 days, headless
+```
+
+Nothing here calls a model yet, so running it costs $0.
+
 ## Build log
 
 All work in this repository was done during the hackathon window.
 
 | Date (ET) | What happened |
 |---|---|
-| Nov 23 | Design day; repository created. Settled the world's laws: metashi (21M, never burned), the daily sugar ration, mindless creatures, two ways to wake, three promises to minds, and the opening scene. No code and no API calls yet. |
+| Nov 23 | Design day; repository created. Settled the world's laws: metashi (21M, never burned), the daily sugar ration, mindless creatures, two ways to wake, three promises to minds, and the opening scene. |
+| Nov 23 | The mindless world, in plain code with no API calls: 100 bots on instinct, 21M metashi landing in uneven patches, halving, one dig per tile per tick, food money returning to the ground, and both wake switches (they flip, but no one wakes yet). Tests check that the supply never changes and that a seed always replays the same history. |

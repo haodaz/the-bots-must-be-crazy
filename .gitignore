@@ -17,3 +17,7 @@ data/local/
 *.log
 .vscode/
 .idea/
+
+# TypeScript build cache
+*.tsbuildinfo
+next-env.d.ts
