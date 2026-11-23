@@ -1,0 +1,655 @@
+{
+ "generated": "2026-11-23T18:57:34.155Z",
+ "seeds": 50,
+ "days": 30,
+ "population": 100,
+ "data": {
+  "source": "World Bank Open Data (https://data.worldbank.org), CC BY 4.0",
+  "fetched": "2026-11-23"
+ },
+ "lands": [
+  "North America",
+  "Latin America",
+  "Europe & Central Asia",
+  "Sub-Saharan Africa",
+  "Middle East & N. Africa",
+  "South Asia",
+  "East Asia & Pacific"
+ ],
+ "baseline": {
+  "starvingDays": 0.9799233333333334,
+  "needShare": 0.169,
+  "poorestHalfShare": 0.024321158001572737,
+  "medianWallet": 57867.12,
+  "mined": 37833869.98,
+  "welfarePaid": 428072.68,
+  "landStarvingDays": [
+   0,
+   0.20511204481792716,
+   0.011906103286384978,
+   2.425637195121951,
+   0.9567714570858282,
+   0.16098844884488447,
+   0.050898359343737494
+  ],
+  "landMedianWallet": [
+   693366,
+   137488,
+   430723,
+   699,
+   28099,
+   71656,
+   283282
+  ],
+  "landBots": [
+   2.74,
+   7.14,
+   7.1,
+   32.8,
+   13.36,
+   20.2,
+   16.66
+  ]
+ },
+ "results": [
+  {
+   "key": "school",
+   "label": "Twelve years of school for everyone",
+   "question": "What is schooling worth?",
+   "levers": {
+    "schoolYearsAtLeast": 12
+   },
+   "effects": {
+    "starvingDays": {
+     "base": 0.9799233333333334,
+     "changed": 0.8022903333333334,
+     "diff": -0.177633,
+     "low": -0.22803958730832002,
+     "high": -0.12722641269168,
+     "relative": -0.18127234443510887
+    },
+    "needShare": {
+     "base": 0.169,
+     "changed": 0.16080000000000005,
+     "diff": -0.008200000000000006,
+     "low": -0.014377538668434222,
+     "high": -0.00202246133156579,
+     "relative": -0.04852071005917163
+    },
+    "poorestHalfShare": {
+     "base": 0.024321158001572737,
+     "changed": 0.029465559182330233,
+     "diff": 0.005144401180757497,
+     "low": 0.003714662925739213,
+     "high": 0.0065741394357757815,
+     "relative": 0.211519582267622
+    },
+    "medianWallet": {
+     "base": 57867.12,
+     "changed": 61521.56,
+     "diff": 3654.44,
+     "low": 314.67085419758996,
+     "high": 6994.20914580241,
+     "relative": 0.06315227023567097
+    },
+    "mined": {
+     "base": 37833869.98,
+     "changed": 38326536.84,
+     "diff": 492666.86,
+     "low": 405027.0834550272,
+     "high": 580306.6365449728,
+     "relative": 0.013021846833549858
+    }
+   },
+   "world": {
+    "starvingDays": 0.8022903333333334,
+    "needShare": 0.16080000000000005,
+    "poorestHalfShare": 0.029465559182330233,
+    "medianWallet": 61521.56,
+    "mined": 38326536.84,
+    "welfarePaid": 367531.58,
+    "landStarvingDays": [
+     0,
+     0.20088702147525678,
+     0.0033333333333333335,
+     2.0029827235772357,
+     0.7575499001996008,
+     0.1265990099009901,
+     0.023711484593837533
+    ],
+    "landMedianWallet": [
+     740913,
+     152814,
+     449786,
+     692,
+     33988,
+     75804,
+     300308
+    ],
+    "landBots": [
+     2.74,
+     7.14,
+     7.1,
+     32.8,
+     13.36,
+     20.2,
+     16.66
+    ]
+   }
+  },
+  {
+   "key": "electricity",
+   "label": "Electricity for everyone",
+   "question": "What is a light at night worth?",
+   "levers": {
+    "electricityForAll": true
+   },
+   "effects": {
+    "starvingDays": {
+     "base": 0.9799233333333334,
+     "changed": 0.8230593333333333,
+     "diff": -0.15686399999999998,
+     "low": -0.19554508949508703,
+     "high": -0.11818291050491293,
+     "relative": -0.16007782921793198
+    },
+    "needShare": {
+     "base": 0.169,
+     "changed": 0.15960000000000002,
+     "diff": -0.009400000000000002,
+     "low": -0.013643085669651275,
+     "high": -0.005156914330348729,
+     "relative": -0.05562130177514794
+    },
+    "poorestHalfShare": {
+     "base": 0.024321158001572737,
+     "changed": 0.02480163028137465,
+     "diff": 0.00048047227980190844,
+     "low": -0.0007083703796571174,
+     "high": 0.0016693149392609343,
+     "relative": 0.019755320851533406
+    },
+    "medianWallet": {
+     "base": 57867.12,
+     "changed": 57325.48,
+     "diff": -541.64,
+     "low": -3128.0407509462566,
+     "high": 2044.7607509462568,
+     "relative": -0.009360064921150386
+    },
+    "mined": {
+     "base": 37833869.98,
+     "changed": 38304068.98,
+     "diff": 470199,
+     "low": 410772.55114197667,
+     "high": 529625.4488580234,
+     "relative": 0.012427991116123195
+    }
+   },
+   "world": {
+    "starvingDays": 0.8230593333333333,
+    "needShare": 0.15960000000000002,
+    "poorestHalfShare": 0.02480163028137465,
+    "medianWallet": 57325.48,
+    "mined": 38304068.98,
+    "welfarePaid": 434346.06,
+    "landStarvingDays": [
+     0,
+     0.1872222222222222,
+     0.01152582159624413,
+     1.9692184959349595,
+     0.9402120758483034,
+     0.1527310231023102,
+     0.03904961984793918
+    ],
+    "landMedianWallet": [
+     691671,
+     144142,
+     438771,
+     695,
+     28775,
+     72860,
+     283069
+    ],
+    "landBots": [
+     2.74,
+     7.14,
+     7.1,
+     32.8,
+     13.36,
+     20.2,
+     16.66
+    ]
+   }
+  },
+  {
+   "key": "accounts",
+   "label": "A bank account for everyone",
+   "question": "What is it worth for help to be able to reach you?",
+   "levers": {
+    "accountsForAll": true
+   },
+   "effects": {
+    "starvingDays": {
+     "base": 0.9799233333333334,
+     "changed": 0.07955200000000001,
+     "diff": -0.9003713333333334,
+     "low": -0.9958979466492475,
+     "high": -0.8048447200174194,
+     "relative": -0.9188181388339904
+    },
+    "needShare": {
+     "base": 0.169,
+     "changed": 0.0596,
+     "diff": -0.10940000000000005,
+     "low": -0.13844673090039572,
+     "high": -0.08035326909960439,
+     "relative": -0.6473372781065091
+    },
+    "poorestHalfShare": {
+     "base": 0.024321158001572737,
+     "changed": 0.02893822947985395,
+     "diff": 0.004617071478281209,
+     "low": 0.0037115285113993954,
+     "high": 0.005522614445163023,
+     "relative": 0.18983764991710692
+    },
+    "medianWallet": {
+     "base": 57867.12,
+     "changed": 64403.46,
+     "diff": 6536.34,
+     "low": 4200.258148640987,
+     "high": 8872.421851359013,
+     "relative": 0.11295429943636386
+    },
+    "mined": {
+     "base": 37833869.98,
+     "changed": 38588342.76,
+     "diff": 754472.78,
+     "low": 682374.6818973176,
+     "high": 826570.8781026824,
+     "relative": 0.01994172894284499
+    }
+   },
+   "world": {
+    "starvingDays": 0.07955200000000001,
+    "needShare": 0.0596,
+    "poorestHalfShare": 0.02893822947985395,
+    "medianWallet": 64403.46,
+    "mined": 38588342.76,
+    "welfarePaid": 778937.54,
+    "landStarvingDays": [
+     0,
+     0.005312791783380019,
+     0.0006713615023474179,
+     0.2313780487804878,
+     0.012829341317365269,
+     0.0060742574257425744,
+     0.001752701080432173
+    ],
+    "landMedianWallet": [
+     692329,
+     142661,
+     434716,
+     719,
+     33086,
+     73540,
+     287216
+    ],
+    "landBots": [
+     2.74,
+     7.14,
+     7.1,
+     32.8,
+     13.36,
+     20.2,
+     16.66
+    ]
+   }
+  },
+  {
+   "key": "tools",
+   "label": "Internet and tools for everyone",
+   "question": "What are better tools worth?",
+   "levers": {
+    "toolsForAll": true
+   },
+   "effects": {
+    "starvingDays": {
+     "base": 0.9799233333333334,
+     "changed": 0.7982103333333335,
+     "diff": -0.181713,
+     "low": -0.2415734834265233,
+     "high": -0.12185251657347673,
+     "relative": -0.18543593546433906
+    },
+    "needShare": {
+     "base": 0.169,
+     "changed": 0.15060000000000007,
+     "diff": -0.018400000000000003,
+     "low": -0.025220974710406133,
+     "high": -0.011579025289593873,
+     "relative": -0.10887573964497042
+    },
+    "poorestHalfShare": {
+     "base": 0.024321158001572737,
+     "changed": 0.03477631531836859,
+     "diff": 0.010455157316795853,
+     "low": 0.008276527235164637,
+     "high": 0.01263378739842707,
+     "relative": 0.429879091946188
+    },
+    "medianWallet": {
+     "base": 57867.12,
+     "changed": 65772.3,
+     "diff": 7905.18,
+     "low": 4085.5400017776756,
+     "high": 11724.819998222325,
+     "relative": 0.13660918324602986
+    },
+    "mined": {
+     "base": 37833869.98,
+     "changed": 38645780.06,
+     "diff": 811910.08,
+     "low": 681129.6202587724,
+     "high": 942690.5397412275,
+     "relative": 0.021459873928551258
+    }
+   },
+   "world": {
+    "starvingDays": 0.7982103333333335,
+    "needShare": 0.15060000000000007,
+    "poorestHalfShare": 0.03477631531836859,
+    "medianWallet": 65772.3,
+    "mined": 38645780.06,
+    "welfarePaid": 333078.04,
+    "landStarvingDays": [
+     0,
+     0.11440242763772175,
+     0.0009342723004694836,
+     2.0917489837398375,
+     0.6122330339321357,
+     0.09205610561056106,
+     0.020962384953981592
+    ],
+    "landMedianWallet": [
+     702894,
+     137421,
+     441855,
+     739,
+     40652,
+     80366,
+     287864
+    ],
+    "landBots": [
+     2.74,
+     7.14,
+     7.1,
+     32.8,
+     13.36,
+     20.2,
+     16.66
+    ]
+   }
+  },
+  {
+   "key": "basics",
+   "label": "All four basics together",
+   "question": "What if every bot got school, light, an account and tools?",
+   "levers": {
+    "schoolYearsAtLeast": 12,
+    "electricityForAll": true,
+    "accountsForAll": true,
+    "toolsForAll": true
+   },
+   "effects": {
+    "starvingDays": {
+     "base": 0.9799233333333334,
+     "changed": 0.008621333333333335,
+     "diff": -0.971302,
+     "low": -1.0660534805912214,
+     "high": -0.8765505194087785,
+     "relative": -0.9912020328120907
+    },
+    "needShare": {
+     "base": 0.169,
+     "changed": 0,
+     "diff": -0.169,
+     "low": -0.18061578236710726,
+     "high": -0.15738421763289276,
+     "relative": -1
+    },
+    "poorestHalfShare": {
+     "base": 0.024321158001572737,
+     "changed": 0.049243145461429876,
+     "diff": 0.024921987459857166,
+     "low": 0.022112106034193436,
+     "high": 0.027731868885520896,
+     "relative": 1.0247039823615953
+    },
+    "medianWallet": {
+     "base": 57867.12,
+     "changed": 74614.84,
+     "diff": 16747.72,
+     "low": 13563.460145548823,
+     "high": 19931.97985445118,
+     "relative": 0.2894168571029628
+    },
+    "mined": {
+     "base": 37833869.98,
+     "changed": 40154395.88,
+     "diff": 2320525.9,
+     "low": 2158880.6787257157,
+     "high": 2482171.121274284,
+     "relative": 0.06133461634315211
+    }
+   },
+   "world": {
+    "starvingDays": 0.008621333333333335,
+    "needShare": 0,
+    "poorestHalfShare": 0.049243145461429876,
+    "medianWallet": 74614.84,
+    "mined": 40154395.88,
+    "welfarePaid": 497151.74,
+    "landStarvingDays": [
+     0,
+     0.002642390289449113,
+     0.00007981220657276994,
+     0.02108739837398374,
+     0.00596057884231537,
+     0.003226072607260726,
+     0.0003741496598639456
+    ],
+    "landMedianWallet": [
+     744882,
+     144035,
+     456365,
+     862,
+     56716,
+     87599,
+     293632
+    ],
+    "landBots": [
+     2.74,
+     7.14,
+     7.1,
+     32.8,
+     13.36,
+     20.2,
+     16.66
+    ]
+   }
+  },
+  {
+   "key": "noInheritance",
+   "label": "No family money: everyone starts at zero",
+   "question": "How much does where your family stands decide?",
+   "levers": {
+    "noInheritance": true
+   },
+   "effects": {
+    "starvingDays": {
+     "base": 0.9799233333333334,
+     "changed": 1.2642396666666664,
+     "diff": 0.28431633333333334,
+     "low": 0.22290606347009523,
+     "high": 0.34572660319657145,
+     "relative": 0.29014140562016755
+    },
+    "needShare": {
+     "base": 0.169,
+     "changed": 0.20800000000000002,
+     "diff": 0.03900000000000001,
+     "low": 0.024023271385245716,
+     "high": 0.0539767286147543,
+     "relative": 0.23076923076923078
+    },
+    "poorestHalfShare": {
+     "base": 0.024321158001572737,
+     "changed": 0.010628720448228062,
+     "diff": -0.01369243755334467,
+     "low": -0.015487059312540354,
+     "high": -0.011897815794148987,
+     "relative": -0.562984605932795
+    },
+    "medianWallet": {
+     "base": 57867.12,
+     "changed": 27301.74,
+     "diff": -30565.38,
+     "low": -34195.46392324903,
+     "high": -26935.296076750976,
+     "relative": -0.5281994334606596
+    },
+    "mined": {
+     "base": 37833869.98,
+     "changed": 37918398.58,
+     "diff": 84528.6,
+     "low": -51843.76050819445,
+     "high": 220900.96050819446,
+     "relative": 0.0022342044322900116
+    }
+   },
+   "world": {
+    "starvingDays": 1.2642396666666664,
+    "needShare": 0.20800000000000002,
+    "poorestHalfShare": 0.010628720448228062,
+    "medianWallet": 27301.74,
+    "mined": 37918398.58,
+    "welfarePaid": 555393.26,
+    "landStarvingDays": [
+     0.01245742092457421,
+     0.26938842203548086,
+     0.02027230046948357,
+     3.1067987804878046,
+     1.1941092814371257,
+     0.2648135313531353,
+     0.06704281712685073
+    ],
+    "landMedianWallet": [
+     583002,
+     97367,
+     351343,
+     632,
+     3964,
+     40415,
+     242344
+    ],
+    "landBots": [
+     2.74,
+     7.14,
+     7.1,
+     32.8,
+     13.36,
+     20.2,
+     16.66
+    ]
+   }
+  },
+  {
+   "key": "resources",
+   "label": "Gold lands where the babies are",
+   "question": "What if resources were where the people are?",
+   "levers": {
+    "goldFollowsBirths": true
+   },
+   "effects": {
+    "starvingDays": {
+     "base": 0.9799233333333334,
+     "changed": 0.23423766666666665,
+     "diff": -0.7456856666666668,
+     "low": -0.8223538226201426,
+     "high": -0.669017510713191,
+     "relative": -0.7609632726369752
+    },
+    "needShare": {
+     "base": 0.169,
+     "changed": 0.085,
+     "diff": -0.084,
+     "low": -0.09283665094931333,
+     "high": -0.07516334905068668,
+     "relative": -0.4970414201183432
+    },
+    "poorestHalfShare": {
+     "base": 0.024321158001572737,
+     "changed": 0.1006657156846687,
+     "diff": 0.07634455768309599,
+     "low": 0.07135519519637341,
+     "high": 0.08133392016981857,
+     "relative": 3.1390182029227036
+    },
+    "medianWallet": {
+     "base": 57867.12,
+     "changed": 117605.38,
+     "diff": 59738.26,
+     "low": 54955.08459931604,
+     "high": 64521.435400683964,
+     "relative": 1.0323351153470226
+    },
+    "mined": {
+     "base": 37833869.98,
+     "changed": 40126335.08,
+     "diff": 2292465.1,
+     "low": 1930755.0781769266,
+     "high": 2654175.1218230734,
+     "relative": 0.060592931709387884
+    }
+   },
+   "world": {
+    "starvingDays": 0.23423766666666665,
+    "needShare": 0.085,
+    "poorestHalfShare": 0.1006657156846687,
+    "medianWallet": 117605.38,
+    "mined": 40126335.08,
+    "welfarePaid": 181336.86,
+    "landStarvingDays": [
+     0.002591240875912409,
+     0.221125116713352,
+     0.11846478873239437,
+     0.35021341463414635,
+     0.3936477045908183,
+     0.07816666666666666,
+     0.16036214485794317
+    ],
+    "landMedianWallet": [
+     267116,
+     129844,
+     158772,
+     51229,
+     117282,
+     152240,
+     155016
+    ],
+    "landBots": [
+     2.74,
+     7.14,
+     7.1,
+     32.8,
+     13.36,
+     20.2,
+     16.66
+    ]
+   }
+  }
+ ],
+ "caveat": "A toy model built to make the birth lottery felt, not a forecast. Effects are differences between paired worlds with the same seeds, inside this model only."
+}

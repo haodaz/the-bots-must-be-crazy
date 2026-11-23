@@ -2,7 +2,7 @@
 // Pure and deterministic: the same seed (and the same levers) replays the same history. Nothing here calls a model.
 
 import { EARTH, sigmaFromTop10, invNorm, type Country, type Earth } from "./earth.ts";
-import { LAWS, isNight, yieldAt } from "./laws.ts";
+import { LAWS, isNight, swingFor, yieldAt } from "./laws.ts";
 import { nextFloat, nextInt } from "./rng.ts";
 
 /** A bot's instincts. Today they come from its birth; one day a mind may rewrite its own. */
@@ -370,7 +370,7 @@ function act(w: World, b: Bot, occupied: Uint8Array, dug: Uint8Array, night: boo
   const here = idx(w, b.x, b.y);
   if (w.gold[here] > 0 && !dug[here]) {
     dug[here] = 1;
-    const got = Math.min(yieldAt(w.tick) * (b.birth.tools ? LAWS.TOOLS_MULTIPLIER : 1), w.gold[here]);
+    const got = Math.min(swingFor(w.tick, b.birth.schoolYears, b.birth.tools), w.gold[here]);
     w.gold[here] -= got;
     const tax = Math.floor(got * land.taxRate);
     land.treasury += tax;

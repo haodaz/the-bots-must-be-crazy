@@ -30,7 +30,7 @@ Where a bot is born is drawn in proportion to real births by country. Its countr
 | Births by country | Where bots are born. About one in six is born in India. |
 | GDP (PPP) by region | Where the gold lands. Seven regions become seven lands. |
 | Income share of the richest 10% | How family money is shared out inside a country. |
-| Expected years of school | How far a bot sees gold, and whether it weighs a big vein over a near one. |
+| Expected years of school | How much a swing digs (+9% per year, the global average return to schooling: Psacharopoulos & Patrinos, World Bank, 2018), how far a bot sees gold, and whether it weighs a big vein over a near one. |
 | Internet use | Whether it grew up with tools: tools dig twice as fast. |
 | Access to electricity | Without it, a bot sleeps through the night. |
 | Bank or mobile-money account | Without one, welfare can't reach it. |
@@ -76,7 +76,14 @@ npm install
 npm run dev          # the world in the browser, at http://localhost:3000
 npm test             # the laws: fixed supply, replay, halving, wake switches
 node scripts/simulate.ts 1 30   # one world, 30 days, headless
+node scripts/impact.ts 50 30    # the impact report: 50 paired worlds per lever → reports/impact.json
 ```
+
+The page has the live world at `/` and the impact report at `/report`.
+
+## The impact report
+
+For each lever, the same 50 seeds run twice: once as the world is, once with one thing changed. Each pair has the very same bots, born the same way, with the same luck, so the difference is the worth of that one thing (inside this model). Levers: twelve years of school for everyone, electricity for everyone, a bank account for everyone, internet and tools for everyone, all four together, no family money, and gold landing where the babies are. The report shows days starving, bots who ran out of food and money, and the poorer half's share of money, with 95% ranges.
 
 Nothing here calls a model yet, so running it costs $0.
 
@@ -89,3 +96,4 @@ All work in this repository was done during the hackathon window.
 | Nov 23 | Design day; repository created. Settled the world's laws: metashi (21M, never burned), the daily sugar ration, mindless creatures, two ways to wake, three promises to minds, and the opening scene. |
 | Nov 23 | The mindless world, in plain code with no API calls: 100 bots on instinct, 21M metashi landing in uneven patches, halving, one dig per tile per tick, food money returning to the ground, and both wake switches (they flip, but no one wakes yet). Tests check that the supply never changes and that a seed always replays the same history. |
 | Nov 23 | The real birth lottery: World Bank data for 217 countries; bots born by real births; seven lands with gold by real GDP; family money, schooling, tools, electricity, bank accounts, taxes, welfare and food prices from real numbers; borders; night. Each bot keeps a record of its life. Counterfactual levers (same people, one thing changed) for impact reports. Tests check that the birth draw matches real births. |
+| Nov 23 | The live screen and the impact report. A dot-matrix world (each bot is a small creature grown from its seed), an opening where $4.20 turns into 21M metashi and rains down as gold, a live camera that follows one bot, channels, an auto director and cut-ins, cards for bots (birth certificate, life so far) and lands (scene, real-world numbers, live numbers, who lives here), and a new pixel-game look. Schooling now raises what a swing digs, from the literature on returns to schooling. The first impact report: 50 paired worlds per lever, $0. |

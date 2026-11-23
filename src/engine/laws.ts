@@ -38,6 +38,14 @@ export const LAWS = {
   MIN_LAND_COLS: 4,
   /** Night starts at this point of the day. Bots without electricity sleep through it. */
   NIGHT_FROM: 0.7,
+  /**
+   * Returns to schooling: each year of school above the reference raises what a swing yields by this share.
+   * About 9% a year is the global average return to a year of schooling
+   * (Psacharopoulos & Patrinos, "Returns to Investment in Education: A Decennial Review of the Global Literature", World Bank, 2018).
+   */
+  RETURN_PER_SCHOOL_YEAR: 0.09,
+  /** Years of school at which a swing yields exactly the base amount. */
+  REFERENCE_SCHOOL_YEARS: 10,
   /** Bots with tools (they grew up online) dig this many times faster. */
   TOOLS_MULTIPLIER: 2,
   /** A land's food price follows its real cost of living, kept within this range of the world average. */
@@ -54,3 +62,9 @@ export function yieldAt(tick: number): number {
 }
 
 export const isNight = (tick: number) => tick % LAWS.DAY_TICKS >= LAWS.DAY_TICKS * LAWS.NIGHT_FROM;
+
+/** What one swing digs for a bot with this much school and these tools, at this tick. */
+export function swingFor(tick: number, schoolYears: number, tools: boolean): number {
+  const school = Math.pow(1 + LAWS.RETURN_PER_SCHOOL_YEAR, schoolYears - LAWS.REFERENCE_SCHOOL_YEARS);
+  return Math.max(1, Math.round(yieldAt(tick) * school * (tools ? LAWS.TOOLS_MULTIPLIER : 1)));
+}

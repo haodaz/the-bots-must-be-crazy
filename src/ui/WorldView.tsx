@@ -1,327 +1,416 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LAWS, isNight, yieldAt } from "@/engine/laws.ts";
-import { census, createWorld, ledger, step, type Bot, type World } from "@/engine/world.ts";
+import { census, createWorld, ledger, step, type Bot, type World, type WorldEvent } from "@/engine/world.ts";
+import { BotCard, LandCard, Portrait, fmt, stateLabel } from "./cards.tsx";
+import { COL, DotRenderer, type Camera } from "./dots.ts";
+import { DOTS, goldDots, goldOrder } from "./sprite.ts";
 
-const TILE = 16;
 const SPEEDS = [
   { label: "1×", ticks: 1 },
   { label: "10×", ticks: 10 },
   { label: "50×", ticks: 50 },
 ];
-const COLORS = {
-  ground: "#fbfaf6",
-  gold: "200, 150, 42",
-  bot: "#4a5064",
-  digging: "#1d2233",
-  faint: "#b9bdc8",
-  asleep: "#9aa3b8",
-  need: "#3b6fe0",
-  plenty: "#c8962a",
-};
 
-const fmt = (n: number) => n.toLocaleString("en-US");
+/** The opening, in seconds. */
+const INTRO = { fall: 1.8, burst: 2.6, settle: 4.4, lands: 5.6, born: 7.4, end: 8.4 };
+
+type Selection = { kind: "bot"; id: number } | { kind: "land"; index: number; tile: { x: number; y: number } | null } | null;
+type Cutin = { key: number; text: string; kind: "need" | "gold" };
+type Particle = { tx: number; ty: number; delay: number; lift: number };
+
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export default function WorldView() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const worldRef = useRef<World>(createWorld(1));
+  const rendererRef = useRef<DotRenderer | null>(null);
+  const camRef = useRef<Camera>({ cx: 24, cy: 15, zoom: 1 });
+  const particlesRef = useRef<Particle[]>([]);
+  const introStartRef = useRef<number | null>(null);
+  const lastEventRef = useRef<WorldEvent | null>(null);
+  const lastCutRef = useRef(0);
+  const rotateRef = useRef(0);
+
   const [, setFrame] = useState(0);
+  const [intro, setIntro] = useState(0); // seconds into the opening, or -1 when done
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
-  const [selected, setSelected] = useState<number | null>(null);
-  const selectedRef = useRef<number | null>(null);
-  selectedRef.current = selected;
+  const [selection, setSelection] = useState<Selection>(null);
+  const [followId, setFollowId] = useState<number | null>(null);
+  const [director, setDirector] = useState(true);
+  const [cutin, setCutin] = useState<Cutin | null>(null);
 
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const w = worldRef.current;
-    const dpr = window.devicePixelRatio || 1;
-    const cw = w.width * TILE;
-    const ch = w.height * TILE;
-    if (canvas.width !== cw * dpr) {
-      canvas.width = cw * dpr;
-      canvas.height = ch * dpr;
-    }
-    const ctx = canvas.getContext("2d")!;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = COLORS.ground;
-    ctx.fillRect(0, 0, cw, ch);
+  const followRef = useRef(followId);
+  followRef.current = followId;
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
+  const directorRef = useRef(director);
+  directorRef.current = director;
 
-    // Gold in the ground: the more metashi, the deeper the colour.
-    for (let i = 0; i < w.gold.length; i++) {
-      const g = w.gold[i];
-      if (g <= 0) continue;
-      const a = Math.min(1, Math.max(0.12, (Math.log10(g) - 2) / 4));
-      ctx.fillStyle = `rgba(${COLORS.gold}, ${a})`;
-      ctx.fillRect((i % w.width) * TILE + 1, Math.floor(i / w.width) * TILE + 1, TILE - 2, TILE - 2);
+  const follow = useCallback((id: number | null) => {
+    setFollowId(id);
+    camRef.current.zoom = id == null ? 1 : 3;
+    if (id != null) {
+      const b = worldRef.current.bots[id];
+      camRef.current.cx = b.x + 0.5;
+      camRef.current.cy = b.y + 0.5;
     }
+  }, []);
 
-    // Borders between lands, and their names.
-    ctx.strokeStyle = "rgba(29,34,51,0.22)";
-    ctx.lineWidth = 1;
-    ctx.setLineDash([3, 4]);
-    for (const land of w.lands.slice(1)) {
-      ctx.beginPath();
-      ctx.moveTo(land.x0 * TILE + 0.5, 0);
-      ctx.lineTo(land.x0 * TILE + 0.5, ch);
-      ctx.stroke();
-    }
-    ctx.setLineDash([]);
-    ctx.font = "600 9px Inter, sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(29,34,51,0.5)";
-    for (const land of w.lands) {
-      const cx = ((land.x0 + land.x1) / 2) * TILE;
-      const maxW = (land.x1 - land.x0) * TILE - 6;
-      const lines = ctx.measureText(land.short).width > maxW ? land.short.replace(" & ", " &\n").split("\n") : [land.short];
-      lines.forEach((line, i) => ctx.fillText(line, cx, ch - 6 - (lines.length - 1 - i) * 10));
-    }
+  const startWorld = useCallback((seed: number) => {
+    const w = createWorld(seed);
+    worldRef.current = w;
+    lastEventRef.current = w.events[w.events.length - 1] ?? null;
+    particlesRef.current = makeParticles(w);
+    introStartRef.current = null;
+    setIntro(0);
+    setSelection(null);
+    follow(null);
+  }, [follow]);
 
-    for (const b of w.bots) drawBot(ctx, b, b.id === selectedRef.current);
-
-    // Night: a soft dusk over the whole world.
-    if (isNight(w.tick)) {
-      ctx.fillStyle = "rgba(29,34,51,0.07)";
-      ctx.fillRect(0, 0, cw, ch);
-    }
+  useEffect(() => {
+    rendererRef.current = new DotRenderer(window.devicePixelRatio || 1);
+    particlesRef.current = makeParticles(worldRef.current);
+    lastEventRef.current = worldRef.current.events[worldRef.current.events.length - 1] ?? null;
   }, []);
 
   useEffect(() => {
     let raf = 0;
     let lastHud = 0;
     const loop = (now: number) => {
-      if (playing) {
-        for (let i = 0; i < SPEEDS[speed].ticks; i++) step(worldRef.current);
-      }
-      draw();
-      if (now - lastHud > 120) {
-        lastHud = now;
-        setFrame((f) => f + 1);
+      const canvas = canvasRef.current;
+      const r = rendererRef.current;
+      const w = worldRef.current;
+      if (canvas && r) {
+        const { width, height } = r.size(w);
+        if (canvas.width !== width) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+        const ctx = canvas.getContext("2d")!;
+        if (introStartRef.current === null) introStartRef.current = now;
+        const t = (now - introStartRef.current) / 1000;
+        if (intro >= 0) {
+          drawGenesis(ctx, r, w, t, particlesRef.current);
+          if (t >= INTRO.end) setIntro(-1);
+        } else {
+          if (playing) for (let i = 0; i < SPEEDS[speed].ticks; i++) step(w);
+          watchEvents(now);
+          const cam = camRef.current;
+          if (followRef.current != null) {
+            const b = w.bots[followRef.current];
+            cam.cx += (b.x + 0.5 - cam.cx) * 0.12;
+            cam.cy += (b.y + 0.5 - cam.cy) * 0.12;
+          }
+          const sel = selectionRef.current;
+          r.draw(ctx, w, cam, {
+            selectedId: sel?.kind === "bot" ? sel.id : null,
+            followId: followRef.current,
+            highlightLand: sel?.kind === "land" && cam.zoom === 1 ? sel.index : null,
+          });
+        }
+        if (now - lastHud > 110) {
+          lastHud = now;
+          if (intro >= 0) setIntro(Math.min(t, INTRO.end));
+          setFrame((f) => f + 1);
+        }
       }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [playing, speed, draw]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, speed, intro >= 0]);
 
-  const newWorld = () => {
-    worldRef.current = createWorld(Math.floor(Math.random() * 1_000_000));
-    setSelected(null);
-  };
+  /** New events: cut-ins for big moments, and the director cuts to whoever they happened to. */
+  function watchEvents(now: number) {
+    const w = worldRef.current;
+    const fresh: WorldEvent[] = [];
+    for (let i = w.events.length - 1; i >= 0 && w.events[i] !== lastEventRef.current; i--) fresh.unshift(w.events[i]);
+    if (w.events.length) lastEventRef.current = w.events[w.events.length - 1];
+    for (const e of fresh) {
+      if (e.kind === "wake-ready" && e.botId != null) {
+        const b = w.bots[e.botId];
+        setCutin({
+          key: now + e.botId,
+          kind: b.wake === "need" ? "need" : "gold",
+          text: `Bot #${b.id} · ${b.birth.countryName} · ${b.wake} switch flipped`,
+        });
+        if (directorRef.current && now - lastCutRef.current > 4000) {
+          lastCutRef.current = now;
+          follow(e.botId);
+        }
+      } else if (e.kind === "halving") {
+        setCutin({ key: now, kind: "gold", text: e.text });
+      }
+    }
+    if (directorRef.current && now - lastCutRef.current > 12000) {
+      lastCutRef.current = now;
+      const picks = channels(w).filter((c) => c.id !== followRef.current);
+      const next = picks[rotateRef.current++ % picks.length];
+      follow(next.id);
+    }
+  }
 
   const onPick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const r = rendererRef.current;
+    if (!r || intro >= 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const w = worldRef.current;
-    const tx = ((e.clientX - rect.left) / rect.width) * w.width;
-    const ty = ((e.clientY - rect.top) / rect.height) * w.height;
+    const pt = r.pick(w, camRef.current, (e.clientX - rect.left) / rect.width, (e.clientY - rect.top) / rect.height);
     let best: Bot | null = null;
-    let bestD = 2.2;
+    let bestD = camRef.current.zoom === 1 ? 1.3 : 0.9;
     for (const b of w.bots) {
-      const d = Math.hypot(b.x + 0.5 - tx, b.y + 0.5 - ty);
+      const d = Math.hypot(b.x + 0.5 - pt.x, b.y + 0.5 - pt.y);
       if (d < bestD) {
         best = b;
         bestD = d;
       }
     }
-    setSelected(best ? best.id : null);
+    if (best) {
+      setSelection({ kind: "bot", id: best.id });
+      if (followRef.current != null) follow(best.id);
+    } else {
+      const col = Math.min(w.width - 1, Math.max(0, Math.floor(pt.x)));
+      setSelection({ kind: "land", index: w.landOfCol[col], tile: { x: pt.x, y: pt.y } });
+    }
   };
 
   const w = worldRef.current;
   const l = ledger(w);
   const c = census(w);
   const day = Math.floor(w.tick / LAWS.DAY_TICKS) + 1;
+  const dayFrac = (w.tick % LAWS.DAY_TICKS) / LAWS.DAY_TICKS;
+  const night = isNight(w.tick);
   const halvingsDone = Math.floor(w.tick / LAWS.HALVING_TICKS);
-  const nextHalving =
-    halvingsDone < LAWS.MAX_HALVINGS ? (halvingsDone + 1) * LAWS.HALVING_TICKS - w.tick : null;
-  const bot = selected !== null ? w.bots[selected] : null;
+  const nextHalving = halvingsDone < LAWS.MAX_HALVINGS ? (halvingsDone + 1) * LAWS.HALVING_TICKS - w.tick : null;
+  const followed = followId != null ? w.bots[followId] : null;
+  const lastAbout = followed ? [...w.events].reverse().find((e) => e.botId === followed.id) : null;
+  const chans = channels(w);
+  const introOn = intro >= 0;
 
   return (
-    <main className="page">
-      <header className="top">
-        <div>
-          <h1>The Bots Must Be Crazy</h1>
-          <p>
-            World #{w.seed} · Day {day}{isNight(w.tick) ? " · night" : ""} · {LAWS.POPULATION} bots, born the way real babies
-            are born this year. No minds yet.
-          </p>
+    <main className="game">
+      <header className="hud">
+        <div className="logo">
+          The Bots Must Be Crazy
+          <small>Born by the real birth lottery. One grain of compute a day. No minds yet.</small>
         </div>
-        <div className="controls">
-          <button className="btn" onClick={() => setPlaying((p) => !p)}>
+        <div className="spacer" />
+        <div className="panel clock">
+          <SunMoon night={night} />
+          <div>
+            <div className="num">Day {day}</div>
+            <div style={{ width: 90, height: 6, border: "1.5px solid var(--ink)", marginTop: 3 }}>
+              <div style={{ width: `${dayFrac * 100}%`, height: "100%", background: night ? COL.need : COL.gold }} />
+            </div>
+          </div>
+        </div>
+        <div className="btn-row">
+          <button className="pbtn" onClick={() => setPlaying((p) => !p)}>
             {playing ? "Pause" : "Play"}
           </button>
           {SPEEDS.map((s, i) => (
-            <button key={s.label} className={`btn ${speed === i ? "on" : ""}`} onClick={() => setSpeed(i)}>
+            <button key={s.label} className={`pbtn ${speed === i ? "on" : ""}`} onClick={() => setSpeed(i)}>
               {s.label}
             </button>
           ))}
-          <button className="btn" onClick={newWorld}>
+        </div>
+        <div className="btn-row">
+          <button className="pbtn" onClick={() => startWorld(Math.floor(Math.random() * 1_000_000))}>
             New world
           </button>
+          <Link className="pbtn gold" href="/report" style={{ textDecoration: "none" }}>
+            Impact report
+          </Link>
         </div>
       </header>
 
-      <div className="layout">
-        <section className="stage">
-          <canvas ref={canvasRef} onClick={onPick} style={{ aspectRatio: `${w.width} / ${w.height}` }} />
-          <div className="legend">
-            <span>
-              <i className="dot" style={{ background: "rgba(200,150,42,.8)", borderRadius: 2 }} /> metashi in the ground
-            </span>
-            <span>
-              <i className="dot" style={{ background: COLORS.digging }} /> digging
-            </span>
-            <span>
-              <i className="dot" style={{ background: COLORS.faint }} /> starving
-            </span>
-            <span>
-              <i className="dot" style={{ border: `2px solid ${COLORS.need}` }} /> need switch flipped
-            </span>
-            <span>
-              <i className="dot" style={{ border: `2px solid ${COLORS.plenty}` }} /> plenty switch flipped
-            </span>
-            <span>Click a bot to read its instincts.</span>
+      <div className="main">
+        <section>
+          <div className="panel screen">
+            <canvas ref={canvasRef} onClick={onPick} style={{ aspectRatio: `${w.width} / ${w.height}` }} />
+            <div className="overlay">
+              {introOn ? (
+                <GenesisCaption t={intro} onSkip={() => setIntro(-1)} />
+              ) : (
+                <>
+                  {camRef.current.zoom === 1 && (
+                    <div className="land-labels">
+                      {w.lands.map((land) => (
+                        <span key={land.name} style={{ left: `${((land.x0 + land.x1) / 2 / w.width) * 100}%` }}>
+                          {land.short}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="live-tag">
+                    <span className="chip live">● LIVE</span>
+                    <span className="chip">{followed ? `Following Bot #${followed.id}` : "Wide shot"}</span>
+                    {night && <span className="chip">Night</span>}
+                  </div>
+                  {cutin && (
+                    <div key={cutin.key} className={`cutin ${cutin.kind}`} onAnimationEnd={() => setCutin(null)}>
+                      {cutin.text}
+                    </div>
+                  )}
+                  {followed && (
+                    <div className="lower-third">
+                      <Portrait seed={w.seed} bot={followed} size={44} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="who">
+                          Bot #{followed.id} · {followed.birth.countryName}
+                        </div>
+                        <div className="what">
+                          {stateLabel(followed)} · {fmt(followed.wallet)} metashi · {followed.birth.schoolYears} years of school
+                          {followed.birth.electricity ? "" : " · no electricity"}
+                          {lastAbout ? ` · ${lastAbout.text.replace(/^Bot #\d+ (\([^)]*\) )?/, "")}` : ""}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="channels">
+            <button className={`channel ${followId == null ? "on" : ""}`} onClick={() => follow(null)}>
+              <WideIcon />
+              <span>
+                <div className="t">Whole world</div>
+                <div className="s">Wide shot</div>
+              </span>
+            </button>
+            {chans.map((ch) => (
+              <button
+                key={ch.key}
+                className={`channel ${followId === ch.id ? "on" : ""}`}
+                onClick={() => {
+                  follow(ch.id);
+                  setSelection({ kind: "bot", id: ch.id });
+                }}
+              >
+                <Portrait seed={w.seed} bot={w.bots[ch.id]} size={34} />
+                <span style={{ minWidth: 0 }}>
+                  <div className="t">{ch.label}</div>
+                  <div className="s">
+                    #{ch.id} · {w.bots[ch.id].birth.countryName}
+                  </div>
+                </span>
+              </button>
+            ))}
+            <button className={`channel ${director ? "on" : ""}`} onClick={() => setDirector((d) => !d)}>
+              <span style={{ fontSize: 22, width: 34, textAlign: "center" }}>🎬</span>
+              <span>
+                <div className="t">Director {director ? "on" : "off"}</div>
+                <div className="s">Cuts to big moments</div>
+              </span>
+            </button>
           </div>
         </section>
 
         <aside className="side">
-          <div className="card">
-            <h2>The ledger</h2>
-            <div className="row">
-              <span className="k">In the ground</span>
-              <span className="v">{fmt(l.ground)}</span>
-            </div>
-            <div className="row">
-              <span className="k">In pockets</span>
-              <span className="v">{fmt(l.pockets)}</span>
-            </div>
-            <div className="row">
-              <span className="k">In land treasuries</span>
-              <span className="v">{fmt(l.treasuries)}</span>
-            </div>
-            <div className="row total">
-              <span>Total metashi</span>
-              <span className="v">{fmt(l.total)}</span>
-            </div>
-            <p className="note">
-              {l.total === LAWS.SUPPLY
-                ? "The law holds: never more, never less than 21,000,000. Money spent on food goes back into the ground."
-                : "The law is broken. This should never happen."}
-            </p>
-          </div>
-
-          <div className="card">
-            <h2>The world</h2>
-            <div className="row">
-              <span className="k">A swing digs</span>
-              <span className="v">{yieldAt(w.tick)} metashi</span>
-            </div>
-            <div className="row">
-              <span className="k">Next halving</span>
-              <span className="v">
-                {nextHalving === null ? "none left" : `in ${(nextHalving / LAWS.DAY_TICKS).toFixed(1)} days`}
-              </span>
-            </div>
-            <div className="row">
-              <span className="k">Digging · starving · broke</span>
-              <span className="v">
-                {c.mining} · {c.faint} · {c.broke}
-              </span>
-            </div>
-            <div className="row">
-              <span className="k">Richest ten hold</span>
-              <span className="v">{Math.round(c.top10Share * 100)}% of pocket money</span>
-            </div>
-          </div>
-
-          <div className="card">
-            <h2>Minds</h2>
-            <div className="jar">
-              <Jar level={0} />
-              <div>
-                <div className="row" style={{ padding: 0 }}>
-                  <span className="k">Real compute today</span>
-                  <span className="v">$0.00</span>
-                </div>
-                <p className="note" style={{ marginTop: 2 }}>
-                  No grain of sugar yet. No one can wake until it arrives.
-                </p>
+          {selection?.kind === "bot" ? (
+            <BotCard
+              w={w}
+              bot={w.bots[selection.id]}
+              following={followId === selection.id}
+              onFollow={() => follow(followId === selection.id ? null : selection.id)}
+              onLand={() => setSelection({ kind: "land", index: w.bots[selection.id].birth.land, tile: null })}
+            />
+          ) : selection?.kind === "land" ? (
+            <LandCard w={w} index={selection.index} tile={selection.tile} onBot={(id) => setSelection({ kind: "bot", id })} />
+          ) : (
+            <div className="panel">
+              <div className="panel-h">How to watch</div>
+              <div className="panel-b" style={{ fontSize: 13.5, lineHeight: 1.55 }}>
+                Click a bot to read its birth certificate. Click anywhere else to open that land. Pick a channel below the screen
+                to follow one bot live; the director cuts to whoever has a big moment.
               </div>
-            </div>
-            <div className="row" style={{ marginTop: 8 }}>
-              <span className="k">Waiting to wake, by need</span>
-              <span className="v">{c.readyByNeed}</span>
-            </div>
-            <div className="row">
-              <span className="k">Waiting to wake, by plenty</span>
-              <span className="v">{c.readyByPlenty}</span>
-            </div>
-          </div>
-
-          {bot && (
-            <div className="card">
-              <h2>
-                Bot #{bot.id} · {bot.state === "faint" ? "starving" : bot.state}
-              </h2>
-              <div className="row">
-                <span className="k">Wallet</span>
-                <span className="v">{fmt(bot.wallet)} metashi</span>
-              </div>
-              <div className="row">
-                <span className="k">Hunger</span>
-                <span className="v">{bot.hunger}</span>
-              </div>
-              <div className="tag">
-                <b>Birth certificate</b>
-                <br />
-                born in {bot.birth.countryName} ({w.lands[bot.birth.land].short})
-                <br />
-                family: {familyLine(bot.birth.familyRank)}
-                <br />
-                family money: {fmt(bot.birth.inheritance)} metashi
-                <br />
-                school: {bot.birth.schoolYears} years · sees gold {bot.sight} tiles away
-                <br />
-                online, so has tools: {bot.birth.tools ? "yes" : "no"}
-                <br />
-                electricity: {bot.birth.electricity ? "yes" : "no, sleeps at night"}
-                <br />
-                bank account: {bot.birth.account ? "yes" : "no, welfare can't reach it"}
-                <br />
-                food here costs {w.lands[bot.birth.land].foodPrice} metashi
-              </div>
-              <div className="tag">
-                <b>Life so far</b>
-                <br />
-                dug {fmt(bot.life.mined)} metashi, paid {fmt(bot.life.taxPaid)} in tax
-                <br />
-                {bot.life.meals} meals, {bot.life.welfareMeals} of them from welfare
-                <br />
-                richest moment: {fmt(bot.life.peakWallet)} metashi
-                <br />
-                starved {bot.life.faints} {bot.life.faints === 1 ? "time" : "times"}
-                <br />
-                time spent: {timeSplit(bot)}
-              </div>
-              <p className="note">
-                {bot.wake
-                  ? `Its ${bot.wake} switch flipped on day ${Math.floor((bot.wakeTick ?? 0) / LAWS.DAY_TICKS) + 1}. It is still asleep.`
-                  : "Instincts, not a mind. It has never had a thought."}
-              </p>
             </div>
           )}
 
-          <div className="card">
-            <h2>What happened</h2>
-            <ul className="events">
-              {[...w.events].reverse().map((e, i) => (
-                <li key={`${e.tick}-${i}`}>
-                  <span className="t">d{Math.floor(e.tick / LAWS.DAY_TICKS) + 1}</span>
-                  {e.text}
-                </li>
-              ))}
-            </ul>
+          <div className="panel">
+            <div className="panel-h">
+              <span>Minds</span>
+              <span className="chip">$0.00 today</span>
+            </div>
+            <div className="panel-b">
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <Jar />
+                <p className="note" style={{ margin: 0 }}>
+                  No grain of real compute yet. When it arrives, you choose who wakes.
+                </p>
+              </div>
+              <div className="kv" style={{ marginTop: 10 }}>
+                <span className="k">Waiting to wake, by need</span>
+                <span className="v" style={{ color: COL.need }}>
+                  {c.readyByNeed}
+                </span>
+              </div>
+              <div className="kv">
+                <span className="k">Waiting to wake, by plenty</span>
+                <span className="v" style={{ color: "#a7781a" }}>
+                  {c.readyByPlenty}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-h">
+              <span>The ledger</span>
+              <span className="chip gold">{l.total === LAWS.SUPPLY ? "law holds" : "law broken"}</span>
+            </div>
+            <div className="panel-b">
+              <div className="kv">
+                <span className="k">In the ground</span>
+                <span className="v">{fmt(l.ground)}</span>
+              </div>
+              <div className="kv">
+                <span className="k">In pockets</span>
+                <span className="v">{fmt(l.pockets)}</span>
+              </div>
+              <div className="kv">
+                <span className="k">In land treasuries</span>
+                <span className="v">{fmt(l.treasuries)}</span>
+              </div>
+              <div className="kv" style={{ borderTop: "2px dashed var(--line)", marginTop: 4, paddingTop: 6 }}>
+                <span style={{ fontWeight: 600 }}>Total metashi</span>
+                <span className="v">{fmt(l.total)}</span>
+              </div>
+              <div className="kv">
+                <span className="k">A swing digs (before school and tools)</span>
+                <span className="v">{yieldAt(w.tick)}</span>
+              </div>
+              <div className="kv">
+                <span className="k">Next halving</span>
+                <span className="v">{nextHalving === null ? "none" : `${(nextHalving / LAWS.DAY_TICKS).toFixed(1)} d`}</span>
+              </div>
+              <div className="kv">
+                <span className="k">Richest ten hold</span>
+                <span className="v">{Math.round(c.top10Share * 100)}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-h">What happened</div>
+            <div className="panel-b">
+              <ul className="events">
+                {[...w.events].reverse().map((e, i) => (
+                  <li key={`${e.tick}-${i}`}>
+                    <span className="t">d{Math.floor(e.tick / LAWS.DAY_TICKS) + 1}</span>
+                    {e.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </aside>
       </div>
@@ -329,52 +418,153 @@ export default function WorldView() {
   );
 }
 
-function familyLine(rank: number) {
-  const pct = Math.round(rank * 100);
-  return pct >= 50 ? `richer than ${pct}% of families there` : `poorer than ${100 - pct}% of families there`;
+/** Live channels: who is worth following right now. */
+function channels(w: World) {
+  const by = (f: (b: Bot) => number) => w.bots.reduce((best, b) => (f(b) > f(best) ? b : best), w.bots[0]);
+  const lastFlip = [...w.events].reverse().find((e) => e.kind === "wake-ready")?.botId;
+  const list = [
+    { key: "richest", label: "Richest", id: by((b) => b.wallet).id },
+    { key: "hungriest", label: "Hungriest", id: by((b) => b.hunger + (b.state === "faint" ? 1000 : 0)).id },
+    { key: "poorest-start", label: "Born with least", id: by((b) => -b.birth.inheritance).id },
+    { key: "richest-start", label: "Born with most", id: by((b) => b.birth.inheritance).id },
+  ];
+  if (lastFlip != null) list.splice(2, 0, { key: "flip", label: "Latest switch", id: lastFlip });
+  return list;
 }
 
-function timeSplit(b: Bot) {
-  const l = b.life;
-  const total = l.ticksDigging + l.ticksSearching + l.ticksAsleep || 1;
-  const p = (v: number) => `${Math.round((v / total) * 100)}%`;
-  return `${p(l.ticksDigging)} digging, ${p(l.ticksSearching)} searching, ${p(l.ticksAsleep)} asleep`;
-}
-
-function drawBot(ctx: CanvasRenderingContext2D, b: Bot, selected: boolean) {
-  const cx = b.x * TILE + TILE / 2;
-  const cy = b.y * TILE + TILE / 2;
-  if (b.wake) {
-    ctx.beginPath();
-    ctx.arc(cx, cy, 7, 0, Math.PI * 2);
-    ctx.strokeStyle = b.wake === "need" ? COLORS.need : COLORS.plenty;
-    ctx.lineWidth = 2;
-    ctx.stroke();
+/** Targets for the opening's gold rain: the very dots the real gold will light. */
+function makeParticles(w: World): Particle[] {
+  const targets: Array<[number, number]> = [];
+  for (let i = 0; i < w.gold.length; i++) {
+    const k = goldDots(w.gold[i]);
+    if (!k) continue;
+    const order = goldOrder(i);
+    const tx = i % w.width;
+    const ty = Math.floor(i / w.width);
+    for (let j = 0; j < k; j++) targets.push([tx * DOTS + (order[j] % DOTS), ty * DOTS + Math.floor(order[j] / DOTS)]);
   }
-  if (selected) {
-    ctx.beginPath();
-    ctx.arc(cx, cy, 10, 0, Math.PI * 2);
-    ctx.strokeStyle = COLORS.digging;
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([2, 2]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-  ctx.beginPath();
-  ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-  ctx.fillStyle =
-    b.state === "faint" ? COLORS.faint : b.state === "asleep" ? COLORS.asleep : b.state === "mining" ? COLORS.digging : COLORS.bot;
-  ctx.fill();
+  const stride = Math.max(1, Math.floor(targets.length / 900));
+  let s = w.seed * 9301 + 49297;
+  const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+  return targets.filter((_, i) => i % stride === 0).map(([tx, ty]) => ({ tx, ty, delay: rnd() * 0.8, lift: 0.15 + rnd() * 0.35 }));
 }
 
-/** A glass jar for the day's real compute. Empty until the first grain arrives. */
-function Jar({ level }: { level: number }) {
-  const h = 30 * Math.max(0, Math.min(1, level));
+function drawGenesis(ctx: CanvasRenderingContext2D, r: DotRenderer, w: World, t: number, particles: Particle[]) {
+  const cam: Camera = { cx: 0, cy: 0, zoom: 1 };
+  r.draw(ctx, w, cam, {
+    goldAlpha: clamp01((t - (INTRO.settle - 0.4)) / 0.6),
+    landReveal: clamp01((t - INTRO.settle) / (INTRO.lands - INTRO.settle)),
+    botsShown: Math.floor(clamp01((t - INTRO.lands) / (INTRO.born - INTRO.lands)) * w.bots.length),
+  });
+  const p = r.base;
+  const W = ctx.canvas.width;
+  const H = ctx.canvas.height;
+  const cx = W / 2;
+  const cy = H * 0.36;
+
+  // Four dollar bills and two dimes fall, and turn to gold.
+  if (t < INTRO.burst) {
+    const toGold = t > INTRO.fall;
+    const shrink = toGold ? 1 - clamp01((t - INTRO.fall) / (INTRO.burst - INTRO.fall)) : 1;
+    const money = [
+      { kind: "bill", dx: -26, delay: 0 },
+      { kind: "bill", dx: -9, delay: 0.12 },
+      { kind: "bill", dx: 9, delay: 0.24 },
+      { kind: "bill", dx: 26, delay: 0.36 },
+      { kind: "coin", dx: -16, delay: 0.5 },
+      { kind: "coin", dx: 16, delay: 0.6 },
+    ];
+    for (const m of money) {
+      const k = ease(clamp01((t - m.delay) / (INTRO.fall - m.delay)));
+      const x = cx + (m.dx * p + Math.sin(t * 5 + m.dx) * 6 * p * (1 - k)) * shrink;
+      const y = -40 * p + (cy + 40 * p) * k;
+      const color = toGold ? COL.gold : m.kind === "bill" ? "#7f9a72" : "#a9a9a2";
+      const dot = r.dot(color, p);
+      const [cols, rows] = m.kind === "bill" ? [11, 5] : [3, 3];
+      for (let rr = 0; rr < rows; rr++) {
+        for (let cc = 0; cc < cols; cc++) {
+          if (m.kind === "coin" && (rr - 1) ** 2 + (cc - 1) ** 2 > 1.5) continue;
+          ctx.drawImage(dot, x + (cc - cols / 2) * p * shrink, y + (rr - rows / 2) * p * shrink);
+        }
+      }
+      if (m.kind === "bill" && !toGold) ctx.drawImage(r.dot("#4f6646", p), x - p / 2, y - p / 2);
+    }
+  }
+
+  // The burst: gold rains down onto the dots it will light.
+  if (t >= INTRO.burst && t < INTRO.settle + 0.4) {
+    const gold = r.dot(COL.gold, p);
+    for (const q of particles) {
+      const k = ease(clamp01((t - INTRO.burst - q.delay) / 1.0));
+      if (k <= 0) continue;
+      const tx = q.tx * p;
+      const ty = q.ty * p;
+      const ctrlY = cy - H * q.lift;
+      const x = cx + (tx - cx) * k;
+      const y = (1 - k) * (1 - k) * cy + 2 * (1 - k) * k * ctrlY + k * k * ty;
+      ctx.drawImage(gold, x, y);
+    }
+  }
+}
+
+function GenesisCaption({ t, onSkip }: { t: number; onSkip: () => void }) {
+  let big: string | null = null;
+  let line: string | null = null;
+  if (t < INTRO.fall) {
+    big = "$4.20";
+    line = "Somewhere, $4.20 slipped out of a stranger's pocket.";
+  } else if (t < INTRO.settle) {
+    const k = ease(clamp01((t - INTRO.fall) / (INTRO.settle - 0.6 - INTRO.fall)));
+    big = `${fmt(k * LAWS.SUPPLY)} metashi`;
+    line = t < INTRO.burst ? "On the way down, it turned to gold." : "It landed the way the world's wealth lands today.";
+  } else if (t < INTRO.lands) {
+    line = "Seven lands, drawn from the real world.";
+  } else {
+    const born = Math.floor(clamp01((t - INTRO.lands) / (INTRO.born - INTRO.lands)) * LAWS.POPULATION);
+    big = `${born} born`;
+    line = "Each one born the way a real baby is born this year.";
+  }
   return (
-    <svg width="34" height="42" viewBox="0 0 34 42" aria-hidden>
-      <rect x="9" y="2" width="16" height="5" rx="1.5" fill="none" stroke="#9aa0b2" strokeWidth="1.5" />
-      <path d="M8 8 h18 q3 0 3 3 v25 q0 4 -4 4 h-16 q-4 0 -4 -4 v-25 q0 -3 3 -3 z" fill="none" stroke="#9aa0b2" strokeWidth="1.5" />
-      {h > 0 && <rect x="7" y={39 - h} width="20" height={h} rx="2" fill="#f3e6c4" />}
+    <>
+      <div className="genesis-caption">
+        {big && <div className="big">{big}</div>}
+        {line && <div className="line">{line}</div>}
+      </div>
+      <button className="pbtn skip" onClick={onSkip}>
+        Skip
+      </button>
+    </>
+  );
+}
+
+function SunMoon({ night }: { night: boolean }) {
+  const px = night
+    ? ["..xxx..", ".xx....", "xx.....", "xx.....", "xx.....", ".xx....", "..xxx.."]
+    : ["...x...", ".x.x.x.", "..xxx..", "xxxxxxx", "..xxx..", ".x.x.x.", "...x..."];
+  return (
+    <svg width="28" height="28" viewBox="0 0 7 7" shapeRendering="crispEdges" aria-hidden>
+      {px.flatMap((row, y) =>
+        [...row].map((ch, x) => (ch === "x" ? <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill={night ? COL.need : COL.gold} /> : null)),
+      )}
+    </svg>
+  );
+}
+
+function WideIcon() {
+  return (
+    <svg width="34" height="34" viewBox="0 0 9 9" shapeRendering="crispEdges" aria-hidden style={{ border: "2px solid var(--ink)", background: "#fffaf0" }}>
+      {[1, 3, 5, 7].flatMap((x) => [2, 4, 6].map((y) => <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill={(x + y) % 3 ? "#5b5142" : COL.gold} />))}
+    </svg>
+  );
+}
+
+/** The day's jar of real compute. Empty until the first grain arrives. */
+function Jar() {
+  return (
+    <svg width="36" height="44" viewBox="0 0 9 11" shapeRendering="crispEdges" aria-hidden style={{ flex: "none" }}>
+      {["..xxxxx..", "..x...x..", ".xx...xx.", "x.......x", "x.......x", "x.......x", "x.......x", "x.......x", "x.......x", "x.......x", ".xxxxxxx."].flatMap(
+        (row, y) => [...row].map((ch, x) => (ch === "x" ? <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="#2b2417" /> : null)),
+      )}
     </svg>
   );
 }
