@@ -4,8 +4,8 @@
 
 import { isNight } from "@/engine/laws.ts";
 import type { World } from "@/engine/world.ts";
-import { ART, buildArt, type MapArt } from "./mapArt.ts";
-import { DOTS, EYES, spriteFor, type Sprite } from "./sprite.ts";
+import { ART, buildArt, type ArtCaption, type MapArt } from "./mapArt.ts";
+import { H as AH, W as AW, avatarCanvas } from "./avatar.ts";
 
 export const COL = {
   gold: "#d4a12a",
@@ -25,7 +25,7 @@ export const COL = {
 /** Buffer size of the main canvas, in device pixels. Follows the window: the board fills the screen. */
 export const BUFFER = { width: 2400, height: 1350 };
 /** Above this many device pixels per tile, pieces open into tokens with the bot's body. */
-export const DOT_ZOOM = 44;
+export const DOT_ZOOM = 26;
 
 export type Camera = { cx: number; cy: number; s: number };
 export type Rect = { x0: number; y0: number; x1: number; y1: number };
@@ -78,16 +78,19 @@ export function toScreen(c: Camera, x: number, y: number) {
 export class MapRenderer {
   private art: MapArt | null = null;
   private artWorld: World | null = null;
-  private sprites: Sprite[] = [];
   private glow: HTMLCanvasElement | null = null;
   private dots = new Map<string, HTMLCanvasElement>();
 
-  /** Paint the planet once per world. */
+  private captionKey = "";
+  caption: ArtCaption | undefined;
+
+  /** Paint the planet once per world (and again if the words on it change language). */
   prepare(w: World) {
-    if (this.artWorld === w) return;
+    const key = this.caption ? `${this.caption.title}|${this.caption.sub}` : "";
+    if (this.artWorld === w && key === this.captionKey) return;
     this.artWorld = w;
-    this.art = buildArt(w);
-    this.sprites = w.bots.map((b) => spriteFor(w.seed, b.id));
+    this.captionKey = key;
+    this.art = buildArt(w, this.caption);
   }
 
   draw(ctx: CanvasRenderingContext2D, w: World, cam: Camera, o: DrawOptions = {}) {
@@ -167,7 +170,7 @@ export class MapRenderer {
         ctx.arc(cx, cy, Math.max(s * 0.9, 9), 0, Math.PI * 2);
         ctx.fill();
       }
-      if (tokens) this.token(ctx, cx, cy, s * 0.46, bot.id, body, bot.wake);
+      if (tokens) standee(ctx, w.seed, bot, cx, oy + (bot.y + 1) * s, s * 1.7);
       else pawn(ctx, cx, cy, Math.max(7, s * 0.55), body, bot.wake);
       if (area && bot.x >= area.x0 - 0.5 && bot.x <= area.x1 && bot.y >= area.y0 - 0.5 && bot.y <= area.y1) {
         const r = Math.max(9, s * 0.62);
@@ -277,33 +280,28 @@ export class MapRenderer {
     return c;
   }
 
-  /** Close up: a parchment token with the bot's dot-matrix body on it. */
-  private token(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, id: number, body: string, wake: "need" | "plenty" | null) {
-    ctx.fillStyle = "rgba(43, 36, 23, 0.28)";
+}
+
+/** Close up: the bot's pixel figure standing on the board, with a shadow at its feet. */
+function standee(ctx: CanvasRenderingContext2D, seed: number, bot: World["bots"][number], cx: number, feet: number, h: number) {
+  const w = (h * AW) / AH;
+  ctx.fillStyle = "rgba(43, 36, 23, 0.28)";
+  ctx.beginPath();
+  ctx.ellipse(cx, feet - h * 0.06, w * 0.42, h * 0.07, 0, 0, Math.PI * 2);
+  ctx.fill();
+  if (bot.wake) {
+    ctx.strokeStyle = bot.wake === "need" ? COL.need : COL.plenty;
+    ctx.lineWidth = Math.max(2, h * 0.04);
     ctx.beginPath();
-    ctx.ellipse(cx + r * 0.12, cy + r * 0.9, r * 0.95, r * 0.3, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#f7eed6";
-    ctx.strokeStyle = wake === "need" ? COL.need : wake === "plenty" ? COL.plenty : COL.ink;
-    ctx.lineWidth = Math.max(2, r * 0.12);
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.ellipse(cx, feet - h * 0.06, w * 0.5, h * 0.09, 0, 0, Math.PI * 2);
     ctx.stroke();
-    const p = (r * 1.5) / DOTS;
-    const bodyDot = this.dot(body, p);
-    const eyeDot = wake ? this.dot(wake === "need" ? COL.need : COL.plenty, p) : bodyDot;
-    const sp = this.sprites[id];
-    const left = cx - (DOTS * p) / 2;
-    const top = cy - (DOTS * p) / 2;
-    for (let rr = 0; rr < DOTS; rr++) {
-      for (let c = 0; c < DOTS; c++) {
-        if (!sp[rr * DOTS + c]) continue;
-        const eye = EYES.some(([er, ec]) => er === rr && ec === c);
-        ctx.drawImage(eye ? eyeDot : bodyDot, left + c * p, top + rr * p);
-      }
-    }
   }
+  const look = bot.state === "faint" ? "faint" : bot.state === "asleep" ? "asleep" : "normal";
+  const fig = avatarCanvas(seed, bot.id, bot.birth.familyRank, look, bot.wake);
+  const smooth = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(fig, cx - w / 2, feet - h * 0.98, w, h);
+  ctx.imageSmoothingEnabled = smooth;
 }
 
 /** The player's mark: a gold star above their bot. */

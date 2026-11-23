@@ -147,7 +147,21 @@ export type Mod = {
   botId?: number;
   label: string;
 };
-export type WorldEvent = { tick: number; kind: EventKind; botId?: number; text: string };
+/** Params fill a message template: numbers and names. */
+export type Params = Record<string, string | number>;
+
+/**
+ * An event, kept as a message template plus its params so the page can show it in any language.
+ * `text` is the English rendering, for scripts and logs.
+ */
+export type WorldEvent = { tick: number; kind: EventKind; botId?: number; key: string; params: Params; text: string };
+
+/** Fill a template's {placeholders}. */
+export function fill(template: string, params: Params = {}) {
+  return template.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`));
+}
+
+export const fmtN = (v: number) => v.toLocaleString("en-US");
 
 export type WorldOptions = { planet?: "earth" | "new"; levers?: Levers };
 
@@ -382,7 +396,7 @@ export function createWorld(seed: number, levers: Levers = {}, opts: { planet?: 
   }
   rainInto(w, first - pool, earth);
 
-  log(w, "genesis", `${first.toLocaleString("en-US")} metashi fell from the sky. ${LAWS.POPULATION} bots were born the way real babies are born this year.`);
+  log(w, "genesis", "{amount} metashi fell from the sky. {count} bots were born the way real babies are born this year.", { amount: fmtN(first), count: LAWS.POPULATION });
   return w;
 }
 
@@ -414,7 +428,7 @@ export function step(w: World): void {
     if (amount > 0) {
       w.sky -= amount;
       rainInto(w, amount);
-      log(w, "rain", `Halving rain: ${amount.toLocaleString("en-US")} metashi fell, half the last. ${w.sky.toLocaleString("en-US")} left in the sky.`);
+      log(w, "rain", "Halving rain: {amount} metashi fell, half the last. {sky} left in the sky.", { amount: fmtN(amount), sky: fmtN(w.sky) });
     }
     w.rains++;
   }
@@ -492,7 +506,7 @@ function act(w: World, b: Bot, occupied: Uint8Array, taken: Uint8Array, night: b
     if (b.state !== "faint") {
       b.state = "faint";
       b.life.faints++;
-      log(w, "faint", `Bot #${b.id} (${b.birth.countryName}) is starving and slows down.`, b.id);
+      log(w, "faint", "Bot #{id} ({nation}) is starving and slows down.", { id: b.id, nation: b.birth.countryName }, b.id);
     }
     b.life.ticksStarving++;
     stats.starvingTicks++;
@@ -591,7 +605,7 @@ function eat(w: World, b: Bot, price: number) {
   b.needTicks = 0;
   if (b.state === "faint") {
     b.state = "roaming";
-    log(w, "recover", `Bot #${b.id} ate and got back on its feet.`, b.id);
+    log(w, "recover", "Bot #{id} ate and got back on its feet.", { id: b.id }, b.id);
   }
 }
 
@@ -601,8 +615,10 @@ function flip(w: World, b: Bot, reason: WakeReason) {
   const stats = w.landStats[b.birth.land];
   if (reason === "need") stats.needFlips++;
   else stats.plentyFlips++;
-  const why = reason === "need" ? `is starving with nothing left` : `has saved ${b.wallet.toLocaleString("en-US")} metashi`;
-  log(w, "wake-ready", `Bot #${b.id} (${b.birth.countryName}) ${why}. Its ${reason} switch has flipped; it will wake when compute arrives.`, b.id);
+  if (reason === "need")
+    log(w, "wake-ready", "Bot #{id} ({nation}) is starving with nothing left. Its need switch has flipped; it will wake when compute arrives.", { id: b.id, nation: b.birth.countryName }, b.id);
+  else
+    log(w, "wake-ready", "Bot #{id} ({nation}) has saved {amount} metashi. Its plenty switch has flipped; it will wake when compute arrives.", { id: b.id, nation: b.birth.countryName, amount: fmtN(b.wallet) }, b.id);
 }
 
 function findWork(w: World, b: Bot, occupied: Uint8Array, taken: Uint8Array): { x: number; y: number } | null {
@@ -640,8 +656,8 @@ export function returnToEconomy(w: World, ci: number, amount: number) {
   w.money[reach[nextInt(w, 0, Math.min(reach.length, 13) - 1)]] += amount;
 }
 
-export function log(w: World, kind: EventKind, text: string, botId?: number) {
-  w.events.push({ tick: w.tick, kind, botId, text });
+export function log(w: World, kind: EventKind, key: string, params: Params = {}, botId?: number) {
+  w.events.push({ tick: w.tick, kind, botId, key, params, text: fill(key, params) });
   if (w.events.length > LAWS.EVENT_MEMORY) w.events.shift();
 }
 

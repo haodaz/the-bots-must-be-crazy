@@ -4,9 +4,10 @@ import { useEffect, useMemo, useRef } from "react";
 import { EARTH } from "@/engine/earth.ts";
 import { LAWS, wageFor } from "@/engine/laws.ts";
 import { TERRAIN_NAMES } from "@/engine/planet.ts";
+import { useLang } from "@/i18n.tsx";
 import type { Bot, World } from "@/engine/world.ts";
 import { COL, type Rect } from "./map.ts";
-import { DOTS, EYES, spriteFor } from "./sprite.ts";
+import { H as AH, W as AW, avatarCanvas } from "./avatar.ts";
 
 export const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
 const pct = (x: number) => `${Math.round(x)}%`;
@@ -15,36 +16,27 @@ export function stateLabel(b: Bot) {
   return b.state === "faint" ? "starving" : b.state === "working" ? "working" : b.state === "asleep" ? "asleep" : "looking for work";
 }
 
-/** A bot drawn large on its own little dot-matrix screen. */
+/** A bot's pixel figure: full body when there is room, head and shoulders when small. */
 export function Portrait({ seed, bot, size = 96 }: { seed: number; bot: Bot; size?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const sprite = useMemo(() => spriteFor(seed, bot.id), [seed, bot.id]);
-  const body = bot.state === "faint" ? COL.faint : bot.state === "asleep" ? COL.asleep : COL.working;
-  const eye = bot.wake === "need" ? COL.need : bot.wake === "plenty" ? COL.plenty : body;
+  const look = bot.state === "faint" ? "faint" : bot.state === "asleep" ? "asleep" : "normal";
+  const bust = size < 56;
+  const width = bust ? size : Math.round((size * AW) / AH);
   useEffect(() => {
     const c = ref.current;
     if (!c) return;
     const dpr = window.devicePixelRatio || 1;
-    const n = DOTS + 2;
-    const cell = (size * dpr) / n;
-    c.width = c.height = size * dpr;
+    c.width = Math.round(width * dpr);
+    c.height = Math.round(size * dpr);
     const x = c.getContext("2d")!;
-    x.fillStyle = "#fffaf0";
+    x.imageSmoothingEnabled = false;
+    x.fillStyle = "#fbf3dc";
     x.fillRect(0, 0, c.width, c.height);
-    for (let r = 0; r < n; r++) {
-      for (let k = 0; k < n; k++) {
-        const sr = r - 1;
-        const sc = k - 1;
-        const on = sr >= 0 && sc >= 0 && sr < DOTS && sc < DOTS && sprite[sr * DOTS + sc];
-        const isEye = EYES.some(([er, ec]) => er === sr && ec === sc);
-        x.fillStyle = on ? (isEye ? eye : body) : "#e6dcc6";
-        x.beginPath();
-        x.arc(k * cell + cell / 2, r * cell + cell / 2, cell * 0.4, 0, Math.PI * 2);
-        x.fill();
-      }
-    }
-  }, [sprite, body, eye, size]);
-  return <canvas ref={ref} style={{ width: size, height: size, border: "2px solid var(--ink)", flex: "none" }} />;
+    const fig = avatarCanvas(seed, bot.id, bot.birth.familyRank, look, bot.wake);
+    if (bust) x.drawImage(fig, 2, 0, 16, 16, 0, 0, c.width, c.height);
+    else x.drawImage(fig, 0, 0, AW, AH, 0, 0, c.width, c.height);
+  }, [seed, bot.id, bot.birth.familyRank, look, bot.wake, size, width, bust]);
+  return <canvas ref={ref} style={{ width, height: size, border: "2px solid var(--ink)", flex: "none", imageRendering: "pixelated" }} />;
 }
 
 /** A small pixel scene of a place: its terrain, its economy, its people. Drawn in code, no model. */
@@ -111,9 +103,10 @@ function familyLine(rank: number) {
 }
 
 function Row({ k, v, num = false }: { k: string; v: React.ReactNode; num?: boolean }) {
+  const { t: tr } = useLang();
   return (
     <div className="kv">
-      <span className="k">{k}</span>
+      <span className="k">{tr(k)}</span>
       <span className={num ? "v" : undefined} style={num ? undefined : { textAlign: "right" }}>
         {v}
       </span>
@@ -134,6 +127,7 @@ export function BotCard({
   onFollow: () => void;
   onCountry: () => void;
 }) {
+  const { t: tr } = useLang();
   const home = w.countries[bot.birth.countryIdx];
   const l = bot.life;
   const total = l.ticksWorking + l.ticksSearching + l.ticksAsleep || 1;
@@ -141,9 +135,9 @@ export function BotCard({
   return (
     <div className="panel">
       <div className="panel-h">
-        <span>Bot #{bot.id}</span>
+        <span>{tr("Bot #{id}", { id: bot.id })}</span>
         <span className={`chip ${bot.wake === "need" ? "need" : bot.wake === "plenty" ? "gold" : ""}`}>
-          {bot.wake ? `${bot.wake} switch flipped` : stateLabel(bot)}
+          {bot.wake ? tr(`${bot.wake} switch flipped`) : tr(stateLabel(bot))}
         </span>
       </div>
       <div className="panel-b">
@@ -153,15 +147,15 @@ export function BotCard({
             <div className="num" style={{ fontSize: 30 }}>
               {fmt(bot.wallet)}
             </div>
-            <div style={{ fontSize: 12.5, color: "var(--ink-2)" }}>metashi in its pocket</div>
+            <div style={{ fontSize: 12.5, color: "var(--ink-2)" }}>{tr("metashi in its pocket")}</div>
             <button className={`pbtn ${following ? "on" : "gold"}`} style={{ marginTop: 10 }} onClick={onFollow}>
-              {following ? "Following" : "Follow live"}
+              {following ? tr("Following") : tr("Follow live")}
             </button>
           </div>
         </div>
 
         <div className="cert">
-          <h4>Birth certificate</h4>
+          <h4>{tr("Birth certificate")}</h4>
           <Row
             k="Born in"
             v={
@@ -174,19 +168,19 @@ export function BotCard({
               </>
             }
           />
-          <Row k="Family" v={`${familyLine(bot.birth.familyRank)} of families there`} />
+          <Row k="Family" v={tr(`${familyLine(bot.birth.familyRank).split(" ")[0]} than {p}% of families there`, { p: Number(familyLine(bot.birth.familyRank).match(/\d+/)?.[0] ?? 0) })} />
           <Row k="Family money" v={fmt(bot.birth.inheritance)} num />
-          <Row k="School" v={`${bot.birth.schoolYears} yrs`} num />
-          <Row k="Online, has tools" v={bot.birth.tools ? "yes" : "no"} />
-          <Row k="Electricity" v={bot.birth.electricity ? "yes" : "no, sleeps at night"} />
-          <Row k="Bank account" v={bot.birth.account ? "yes" : "no, help can't reach it"} />
+          <Row k="School" v={tr("{n} yrs", { n: bot.birth.schoolYears })} num />
+          <Row k="Online, has tools" v={bot.birth.tools ? tr("yes") : tr("no")} />
+          <Row k="Electricity" v={bot.birth.electricity ? tr("yes") : tr("no, sleeps at night")} />
+          <Row k="Bank account" v={bot.birth.account ? tr("yes") : tr("no, help can't reach it")} />
           <Row k="An hour of work earns" v={wageFor(bot.birth.schoolYears, bot.birth.tools)} num />
           <Row k="A meal costs here" v={home.foodPrice} num />
-          <Row k="Real-world twin" v="sealed until its life ends" />
+          <Row k="Real-world twin" v={tr("sealed until its life ends")} />
         </div>
 
         <div className="cert">
-          <h4>Life so far</h4>
+          <h4>{tr("Life so far")}</h4>
           <Row k="Earned" v={fmt(l.earned)} num />
           <Row k="Paid in tax" v={fmt(l.taxPaid)} num />
           <Row k="Spent in town" v={fmt(l.spent)} num />
@@ -194,7 +188,7 @@ export function BotCard({
           <Row k="Richest moment" v={fmt(l.peakWallet)} num />
           <Row k="Times it starved" v={l.faints} num />
           <p className="note" style={{ marginTop: 4 }}>
-            {share(l.ticksWorking)} of its time working, {share(l.ticksSearching)} looking for work, {share(l.ticksAsleep)} asleep in the dark.
+            {tr("{a} of its time working, {b} looking for work, {c} asleep in the dark.", { a: share(l.ticksWorking), b: share(l.ticksSearching), c: share(l.ticksAsleep) })}
           </p>
         </div>
       </div>
@@ -203,7 +197,8 @@ export function BotCard({
 }
 
 function Residents({ w, bots, onBot }: { w: World; bots: Bot[]; onBot: (id: number) => void }) {
-  if (!bots.length) return <p className="note">No bots live here in this world.</p>;
+  const { t: tr } = useLang();
+  if (!bots.length) return <p className="note">{tr("No bots live here in this world.")}</p>;
   return (
     <ul className="residents">
       {[...bots]
@@ -214,7 +209,7 @@ function Residents({ w, bots, onBot }: { w: World; bots: Bot[]; onBot: (id: numb
             <span className="grow">
               #{b.id} <span className="c">{b.birth.countryName}</span>
               <br />
-              <span className="c">{stateLabel(b)}</span>
+              <span className="c">{tr(stateLabel(b))}</span>
             </span>
             <span className="num" style={{ fontSize: 18 }}>
               {fmt(b.wallet)}
@@ -226,6 +221,7 @@ function Residents({ w, bots, onBot }: { w: World; bots: Bot[]; onBot: (id: numb
 }
 
 export function CountryCard({ w, ci, onBot }: { w: World; ci: number; onBot: (id: number) => void }) {
+  const { t: tr } = useLang();
   const c = w.countries[ci];
   const real = EARTH.countries[ci];
   const residents = w.bots.filter((b) => b.birth.countryIdx === ci);
@@ -243,25 +239,25 @@ export function CountryCard({ w, ci, onBot }: { w: World; ci: number; onBot: (id
       <div className="panel-b">
         <Vignette w={w} tiles={c.tiles} people={residents.length} seed={ci} />
         <p className="note" style={{ marginTop: 8 }}>
-          In {w.lands[c.land].name}, on {w.geo.kind === "earth" ? "Earth" : w.geo.name}: {c.tiles.length} tiles, mostly {TERRAIN_NAMES[mainTerrain]}.
+          {tr("In {land}, on {planet}: {n} tiles, mostly {terrain}.", { land: w.lands[c.land].name, planet: w.geo.name, n: c.tiles.length, terrain: tr(TERRAIN_NAMES[mainTerrain]) })}
         </p>
 
         <div className="cert">
-          <h4>From the real world</h4>
+          <h4>{tr("From the real world")}</h4>
           <Row k="Babies born here, of the world's" v={`${((real.births / EARTH.totalBirths) * 100).toFixed(2)}%`} num />
           <Row k="Income per person (PPP)" v={`$${fmt(real.gdpPerCapitaPpp)}`} num />
-          <Row k="Expected school" v={`${real.schoolYears.toFixed(1)} yrs`} num />
+          <Row k="Expected school" v={tr("{n} yrs", { n: real.schoolYears.toFixed(1) })} num />
           <Row k="Electricity" v={pct(real.electricityPct)} num />
           <Row k="Online" v={pct(real.internetPct)} num />
           <Row k="Bank accounts" v={pct(real.accountPct)} num />
-          <Row k="Richest 10% hold" v={`${pct(real.top10Share)} of income`} num />
+          <Row k="Richest 10% hold" v={tr("{p} of income", { p: pct(real.top10Share) })} num />
           <p className="note" style={{ marginTop: 4 }}>
-            These numbers belong to a real country (World Bank Open Data). Which one stays sealed until the end.
+            {tr("These numbers belong to a real country (World Bank Open Data). Which one stays sealed until the end.")}
           </p>
         </div>
 
         <div className="cert">
-          <h4>In this world, now</h4>
+          <h4>{tr("In this world, now")}</h4>
           <Row k="Money in its economy" v={fmt(money)} num />
           <Row k="Treasury for welfare" v={fmt(c.treasury)} num />
           <Row k="A meal costs · tax" v={`${c.foodPrice} · ${Math.round(c.taxRate * 100)}%`} num />
@@ -269,10 +265,10 @@ export function CountryCard({ w, ci, onBot }: { w: World; ci: number; onBot: (id
           <Row k="Starving now" v={residents.filter((b) => b.state === "faint").length} num />
         </div>
 
-        <h4 style={{ margin: "14px 0 0", fontFamily: "var(--pixel)", fontSize: 14 }}>Who lives here · {residents.length}</h4>
+        <h4 style={{ margin: "14px 0 0", fontFamily: "var(--pixel)", fontSize: 14 }}>{tr("Who lives here · {n}", { n: residents.length })}</h4>
         <Residents w={w} bots={residents} onBot={onBot} />
         <p className="note">
-          {LAWS.POPULATION} bots stand for a year of births: each one is about {fmt(EARTH.totalBirths / LAWS.POPULATION)} real babies.
+          {tr("{n} bots stand for a year of births: each one is about {babies} real babies.", { n: LAWS.POPULATION, babies: fmt(EARTH.totalBirths / LAWS.POPULATION) })}
         </p>
       </div>
     </div>
@@ -286,6 +282,7 @@ export function AreaCard({ w, rect, onBot, onCountry }: { w: World; rect: Rect; 
   const y1 = Math.min(w.height - 1, Math.floor(Math.max(rect.y0, rect.y1)));
   const tiles: number[] = [];
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) tiles.push(y * w.width + x);
+  const { t: tr } = useLang();
   const land = tiles.filter((t) => w.geo.cells[t] >= 0);
   const bots = w.bots.filter((b) => b.x >= x0 && b.x <= x1 && b.y >= y0 && b.y <= y1);
   const money = land.reduce((a, t) => a + w.money[t], 0);
@@ -295,14 +292,14 @@ export function AreaCard({ w, rect, onBot, onCountry }: { w: World; rect: Rect; 
   return (
     <div className="panel">
       <div className="panel-h">
-        <span>Selected area</span>
-        <span className="chip">{bots.length} bots</span>
+        <span>{tr("Selected area")}</span>
+        <span className="chip">{tr("{n} bots", { n: bots.length })}</span>
       </div>
       <div className="panel-b">
         <Vignette w={w} tiles={land} people={bots.length} seed={x0 * 31 + y0} />
         <div className="cert">
-          <h4>This area</h4>
-          <Row k="Land · sea" v={`${land.length} · ${tiles.length - land.length} tiles`} num />
+          <h4>{tr("This area")}</h4>
+          <Row k="Land · sea" v={tr("{a} · {b} tiles", { a: land.length, b: tiles.length - land.length })} num />
           <Row k="Money in its economies" v={fmt(money)} num />
           <Row k="Working · looking · asleep" v={`${bots.filter((b) => b.state === "working").length} · ${bots.filter((b) => b.state === "roaming").length} · ${bots.filter((b) => b.state === "asleep").length}`} num />
           <Row k="Starving now" v={bots.filter((b) => b.state === "faint").length} num />
@@ -310,7 +307,7 @@ export function AreaCard({ w, rect, onBot, onCountry }: { w: World; rect: Rect; 
         </div>
         {countries.length > 0 && (
           <p className="note">
-            Countries here:{" "}
+            {tr("Nations here:")}{" "}
             {countries.slice(0, 8).map(([ci], k) => (
               <span key={ci}>
                 {k > 0 && ", "}
@@ -319,10 +316,10 @@ export function AreaCard({ w, rect, onBot, onCountry }: { w: World; rect: Rect; 
                 </a>
               </span>
             ))}
-            {countries.length > 8 ? ` and ${countries.length - 8} more` : ""}.
+            {countries.length > 8 ? tr(" and {n} more", { n: countries.length - 8 }) : ""}.
           </p>
         )}
-        <h4 style={{ margin: "14px 0 0", fontFamily: "var(--pixel)", fontSize: 14 }}>AIs in this area</h4>
+        <h4 style={{ margin: "14px 0 0", fontFamily: "var(--pixel)", fontSize: 14 }}>{tr("AIs in this area")}</h4>
         <Residents w={w} bots={bots} onBot={onBot} />
       </div>
     </div>

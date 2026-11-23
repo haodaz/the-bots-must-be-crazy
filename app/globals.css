@@ -15,9 +15,9 @@
   --need-soft: #dbe6f1;
   --faint: #b5a99a;
   --live: #c4462f;
-  --pixel: "Pixelify Sans", "IBM Plex Sans", system-ui, sans-serif;
+  --pixel: "Pixelify Sans", "Noto Sans SC", "PingFang SC", "IBM Plex Sans", system-ui, sans-serif;
   --num: "VT323", ui-monospace, Menlo, monospace;
-  --body: "IBM Plex Sans", "PingFang SC", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
 }
 
 * {

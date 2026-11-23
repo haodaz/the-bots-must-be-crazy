@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { LangSwitch, useLang } from "@/i18n.tsx";
 import report from "../../reports/impact.json" with { type: "json" };
 
 type Effect = { base: number; changed: number; diff: number; low: number; high: number; relative: number | null };
@@ -42,18 +45,19 @@ function Bars({
   const rel = base !== 0 ? (changed - base) / base : null;
   const good = rel != null && (better === "lower" ? rel < -0.02 : rel > 0.02);
   const bad = rel != null && (better === "lower" ? rel > 0.02 : rel < -0.02);
+  const { t } = useLang();
   return (
     <div style={{ marginTop: 10 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{t(label)}</div>
       <div className="bar-row">
-        <span style={{ color: "var(--ink-2)" }}>As it is · {fmt(base)}</span>
+        <span style={{ color: "var(--ink-2)" }}>{t("As it is · {v}", { v: fmt(base) })}</span>
         <div className="bar-track">
           <div className="bar" style={{ width: `${(base / max) * 100}%` }} />
         </div>
         <span />
       </div>
       <div className="bar-row">
-        <span style={{ color: "var(--ink-2)" }}>Changed · {fmt(changed)}</span>
+        <span style={{ color: "var(--ink-2)" }}>{t("Changed · {v}", { v: fmt(changed) })}</span>
         <div className="bar-track">
           <div className="bar gold" style={{ width: `${(changed / max) * 100}%` }} />
         </div>
@@ -64,6 +68,7 @@ function Bars({
 }
 
 export default function ReportView() {
+  const { t } = useLang();
   const base = R.baseline;
   const sorted = [...R.results].sort((a, b) => a.effects.starvingDays.diff - b.effects.starvingDays.diff);
   const maxLand = Math.max(...base.landStarvingDays, 1e-9);
@@ -72,50 +77,57 @@ export default function ReportView() {
     <main className="report">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <div>
-          <h1>Impact report</h1>
+          <h1>{t("Impact report")}</h1>
           <p className="lede" style={{ margin: "6px 0 0" }}>
-            {R.seeds} pairs of worlds, {R.days} days each. In every pair the same {R.population} bots are born the same way and get
-            the same luck. Only one thing is changed. Whatever differs is the worth of that one thing.
+            {t(
+              "{seeds} pairs of worlds, {days} days each. In every pair the same {n} bots are born the same way and get the same luck. Only one thing is changed. Whatever differs is the worth of that one thing.",
+              { seeds: R.seeds, days: R.days, n: R.population },
+            )}
           </p>
         </div>
-        <Link className="pbtn" href="/" style={{ textDecoration: "none" }}>
-          Back to the world
-        </Link>
+        <div className="btn-row">
+          <LangSwitch />
+          <Link className="pbtn" href="/" style={{ textDecoration: "none" }}>
+            {t("Back to the world")}
+          </Link>
+        </div>
       </div>
 
       <p className="lede" style={{ fontStyle: "italic", marginTop: 18 }}>
-        We don&apos;t have big money to help others. But a little money can help us understand them.
+        {t("We don't have big money to help others. But a little money can help us understand them.")}
       </p>
 
       <div className="panel" style={{ marginTop: 18 }}>
         <div className="panel-h">
-          <span>The world as it is</span>
-          <span className="chip">{R.seeds} worlds</span>
+          <span>{t("The world as it is")}</span>
+          <span className="chip">{t("{n} worlds", { n: R.seeds })}</span>
         </div>
         <div className="panel-b" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20 }}>
           <div>
             <div className="kv">
-              <span className="k">Days each bot spent starving</span>
+              <span className="k">{t("Days each bot spent starving")}</span>
               <span className="v">{base.starvingDays.toFixed(2)}</span>
             </div>
             <div className="kv">
-              <span className="k">Bots who ran out of food and money</span>
+              <span className="k">{t("Bots who ran out of food and money")}</span>
               <span className="v">{pct(base.needShare)}</span>
             </div>
             <div className="kv">
-              <span className="k">Money held by the poorer half</span>
+              <span className="k">{t("Money held by the poorer half")}</span>
               <span className="v">{pct(base.poorestHalfShare)}</span>
             </div>
             <p className="note">
-              Hunger is not spread evenly. A bot born in {R.lands[hardest]} spends {base.landStarvingDays[hardest].toFixed(2)} days
-              starving on average.
+              {t("Hunger is not spread evenly. A bot born in {land} spends {days} days starving on average.", {
+                land: t(R.lands[hardest]),
+                days: base.landStarvingDays[hardest].toFixed(2),
+              })}
             </p>
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Days starving, by land of birth</div>
             {R.lands.map((name, i) => (
               <div key={name} className="bar-row">
-                <span style={{ color: "var(--ink-2)" }}>{name}</span>
+                <span style={{ color: "var(--ink-2)" }}>{t(name)}</span>
                 <div className="bar-track">
                   <div className="bar" style={{ width: `${(base.landStarvingDays[i] / maxLand) * 100}%` }} />
                 </div>
@@ -132,10 +144,10 @@ export default function ReportView() {
         {sorted.map((r) => (
           <div key={r.key} className="panel">
             <div className="panel-h">
-              <span>{r.label}</span>
+              <span>{t(r.label)}</span>
             </div>
             <div className="panel-b">
-              <div style={{ fontFamily: "var(--pixel)", fontSize: 15, color: "var(--ink-2)" }}>{r.question}</div>
+              <div style={{ fontFamily: "var(--pixel)", fontSize: 15, color: "var(--ink-2)" }}>{t(r.question)}</div>
               <Bars
                 label="Days starving per bot"
                 base={r.effects.starvingDays.base}
@@ -158,9 +170,13 @@ export default function ReportView() {
                 better="higher"
               />
               <p className="note">
-                In {R.lands[hardest]}, days starving go from {base.landStarvingDays[hardest].toFixed(2)} to{" "}
-                {r.world.landStarvingDays[hardest].toFixed(2)}. 95% range for the change in days starving per bot:{" "}
-                {r.effects.starvingDays.low.toFixed(2)} to {r.effects.starvingDays.high.toFixed(2)}.
+                {t("In {land}, days starving go from {a} to {b}. 95% range for the change in days starving per bot: {low} to {high}.", {
+                  land: t(R.lands[hardest]),
+                  a: base.landStarvingDays[hardest].toFixed(2),
+                  b: r.world.landStarvingDays[hardest].toFixed(2),
+                  low: r.effects.starvingDays.low.toFixed(2),
+                  high: r.effects.starvingDays.high.toFixed(2),
+                })}
               </p>
             </div>
           </div>
@@ -168,19 +184,17 @@ export default function ReportView() {
       </div>
 
       <div className="panel" style={{ marginTop: 22 }}>
-        <div className="panel-h">How this was measured</div>
+        <div className="panel-h">{t("How this was measured")}</div>
         <div className="panel-b" style={{ fontSize: 13.5, lineHeight: 1.6 }}>
           <p style={{ margin: 0 }}>
-            Each lever is tested on the same {R.seeds} seeds as the world as it is, so each pair has the very same people, places
-            and luck; every seed runs on its own newly generated planet, so no result rests on one map. Ranges are 95% intervals of
-            the paired differences. Births, wealth, schooling, internet, electricity, bank accounts, taxes and prices come from{" "}
-            {R.data.source} (fetched {R.data.fetched}). metashi is money with a fixed supply: it circulates, so productivity shows up
-            as lower prices. Each extra year of school raises productivity by 9%, the global average return to schooling
-            (Psacharopoulos & Patrinos, World Bank, 2018); tools and the night hours that electricity allows raise it too. The
-            price of food is set so that the share of bots who run out of food and money matches the real prevalence of
-            undernourishment (FAO, about 9% worldwide).
+            {t(
+              "Each lever is tested on the same {seeds} seeds as the world as it is, so each pair has the very same people, places and luck; every seed runs on its own newly generated planet, so no result rests on one map. Ranges are 95% intervals of the paired differences. Births, wealth, schooling, internet, electricity, bank accounts, taxes and prices come from {source} (fetched {fetched}). metashi is money with a fixed supply: it circulates, so productivity shows up as lower prices. Each extra year of school raises productivity by 9%, the global average return to schooling (Psacharopoulos & Patrinos, World Bank, 2018); tools and the night hours that electricity allows raise it too. The price of food is set so that the share of bots who run out of food and money matches the real prevalence of undernourishment (FAO, about 9% worldwide).",
+              { seeds: R.seeds, source: R.data.source, fetched: R.data.fetched },
+            )}
           </p>
-          <p className="note">{R.caveat} Generated {R.generated.slice(0, 10)}. Running it costs $0: no model is called.</p>
+          <p className="note">
+            {t(R.caveat)} {t("Generated {date}. Running it costs $0: no model is called.", { date: R.generated.slice(0, 10) })}
+          </p>
         </div>
       </div>
     </main>

@@ -7,6 +7,7 @@ import { census, createWorld, ledger, step, type Bot, type World, type WorldEven
 import { AreaCard, BotCard, CountryCard, Portrait, fmt, stateLabel } from "./cards.tsx";
 import { DEFS, HAND_MAX, HAND_START, PLAYS_PER_DAY, REACH, dealDeck, playCard, type Card, type Role } from "@/engine/cards.ts";
 import { GameCard, RoleCard } from "./GameCard.tsx";
+import { LangSwitch, useLang } from "@/i18n.tsx";
 import { BUFFER, COL, MapRenderer, clampCamera, fitCamera, toScreen, toWorld, type Camera, type Rect } from "./map.ts";
 
 const SPEEDS = [
@@ -62,6 +63,7 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export default function WorldView() {
+  const { t } = useLang();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const miniRef = useRef<HTMLCanvasElement>(null);
   const worldRef = useRef<World>(createWorld(1, {}, { planet: "new" }));
@@ -75,6 +77,7 @@ export default function WorldView() {
   const rotateRef = useRef(0);
   const dragRef = useRef<Drag | null>(null);
   const playerRef = useRef<Player>(newPlayer());
+  const captionRef = useRef<{ title: string; sub: string } | undefined>(undefined);
   const aimRef = useRef<{ x: number; y: number } | null>(null);
 
   const [, setFrame] = useState(0);
@@ -209,6 +212,7 @@ export default function WorldView() {
       const r = rendererRef.current;
       const w = worldRef.current;
       if (canvas && r) {
+        r.caption = captionRef.current;
         if (canvas.width !== BUFFER.width || canvas.height !== BUFFER.height) {
           canvas.width = BUFFER.width;
           canvas.height = BUFFER.height;
@@ -289,7 +293,11 @@ export default function WorldView() {
     p.waiting = true;
     const drew = p.deck.length > 0 && p.hand.length < HAND_MAX;
     if (drew) p.hand.push(p.deck.shift()!);
-    setCutin({ key: performance.now(), kind: "gold", text: `Day ${day + 1}. ${drew ? "You drew a card." : p.deck.length ? "Your hand is full." : "Your deck is empty."} Play, then press on.` });
+    setCutin({
+      key: performance.now(),
+      kind: "gold",
+      text: t(drew ? "Day {n}. You drew a card. Play, then press on." : p.deck.length ? "Day {n}. Your hand is full. Play, then press on." : "Day {n}. Your deck is empty. Play, then press on.", { n: day + 1 }),
+    });
   }
 
   function chooseRole(role: Role) {
@@ -322,22 +330,22 @@ export default function WorldView() {
     const p = playerRef.current;
     const r = playCard(worldRef.current, card, { ...ctx, kingdom: p.kingdom ?? undefined, botId: p.meId ?? undefined });
     if (!r.ok) {
-      announce(r.reason, "need");
+      announce(t(r.key, r.params), "need");
       return;
     }
     p.hand = p.hand.filter((c) => c.uid !== card.uid);
     p.plays--;
     p.chosen = null;
-    announce(r.text);
+    announce(t(r.key, r.params));
     setFrame((f) => f + 1);
   }
 
   function onCard(card: Card) {
     const p = playerRef.current;
-    if (p.plays <= 0) return announce("You have played today's card. Wait for the next day.", "need");
-    const t = DEFS[card.kind].target;
+    if (p.plays <= 0) return announce(t("You have played today's card. Wait for the next day."), "need");
+    const target = DEFS[card.kind].target;
     if (p.chosen === card.uid) {
-      if (t === "world" || t === "kingdom" || t === "self") play(card, {});
+      if (target === "world" || target === "kingdom" || target === "self") play(card, {});
       else p.chosen = null;
     } else p.chosen = card.uid;
     setFrame((f) => f + 1);
@@ -367,13 +375,17 @@ export default function WorldView() {
     for (const e of fresh) {
       if (e.kind === "wake-ready" && e.botId != null) {
         const b = w.bots[e.botId];
-        setCutin({ key: now + e.botId, kind: b.wake === "need" ? "need" : "gold", text: `Bot #${b.id} · ${b.birth.countryName} · ${b.wake} switch flipped` });
+        setCutin({
+          key: now + e.botId,
+          kind: b.wake === "need" ? "need" : "gold",
+          text: t(b.wake === "need" ? "Bot #{id} · {nation} · need switch flipped" : "Bot #{id} · {nation} · plenty switch flipped", { id: b.id, nation: b.birth.countryName }),
+        });
         if (directorRef.current && now - lastCutRef.current > 4000) {
           lastCutRef.current = now;
           follow(e.botId);
         }
       } else if (e.kind === "rain") {
-        setCutin({ key: now, kind: "gold", text: e.text.split(".")[0] });
+        setCutin({ key: now, kind: "gold", text: t(e.key, e.params).split(/[.。]/)[0] });
       }
     }
     if (directorRef.current && now - lastCutRef.current > 12000) {
@@ -423,19 +435,19 @@ export default function WorldView() {
     const p = playerRef.current;
     const nationAt = w.geo.cells[Math.floor(pt.y) * w.width + Math.floor(pt.x)] ?? -1;
     if (p.pickKingdom) {
-      if (nationAt < 0) return announce("Choose land: click a nation to rule.", "need");
+      if (nationAt < 0) return announce(t("Choose land: click a nation to rule."), "need");
       p.kingdom = nationAt;
       p.pickKingdom = false;
       setSelection({ kind: "country", ci: nationAt });
-      announce(`You rule ${w.countries[nationAt].name}.`);
+      announce(t("You rule {nation}.", { nation: w.countries[nationAt].name }));
       return;
     }
     const card = p.hand.find((c) => c.uid === p.chosen);
     if (card) {
-      const t = DEFS[card.kind].target;
-      if (t === "area") return play(card, { at: pt });
-      if (t === "nation") {
-        if (nationAt < 0) return announce("Choose a nation, not the sea.", "need");
+      const target = DEFS[card.kind].target;
+      if (target === "area") return play(card, { at: pt });
+      if (target === "nation") {
+        if (nationAt < 0) return announce(t("Choose a nation, not the sea."), "need");
         return play(card, { ci: nationAt });
       }
     }
@@ -482,6 +494,10 @@ export default function WorldView() {
   const lastAbout = followed ? [...w.events].reverse().find((e) => e.botId === followed.id) : null;
   const chans = channels(w);
   const introOn = intro >= 0;
+  captionRef.current = {
+    title: t("Planet {name}", { name: w.geo.name }),
+    sub: t("{a} nations · {b} lands · {c} souls", { a: w.countries.length, b: w.lands.length, c: w.bots.length }),
+  };
   const player = playerRef.current;
   const playing_ = player.role != null && player.role !== "watch";
   const chosenCard = player.hand.find((c) => c.uid === player.chosen);
@@ -515,13 +531,13 @@ export default function WorldView() {
 
       <header className="hud-top">
         <div className="panel plaque logo">
-          The Bots Must Be Crazy
-          <small>Born by the real birth lottery. One grain of compute a day. No minds yet.</small>
+          {t("The Bots Must Be Crazy")}
+          <small>{t("Born by the real birth lottery. One grain of compute a day. No minds yet.")}</small>
         </div>
         <div className="panel plaque clock">
           <SunMoon night={night} />
           <div>
-            <div className="num">Day {day}</div>
+            <div className="num">{t("Day {n}", { n: day })}</div>
             <div style={{ width: 90, height: 6, border: "1.5px solid var(--ink)", marginTop: 3 }}>
               <div style={{ width: `${dayFrac * 100}%`, height: "100%", background: night ? COL.need : COL.gold }} />
             </div>
@@ -530,7 +546,7 @@ export default function WorldView() {
         <div className="spacer" />
         <div className="btn-row">
           <button className="pbtn" onClick={() => setPlaying((p) => !p)}>
-            {playing ? "Pause" : "Play"}
+            {playing ? t("Pause") : t("Play")}
           </button>
           {SPEEDS.map((sp, i) => (
             <button key={sp.label} className={`pbtn ${speed === i ? "on" : ""}`} onClick={() => setSpeed(i)}>
@@ -538,24 +554,31 @@ export default function WorldView() {
             </button>
           ))}
           <button className="pbtn" onClick={() => startWorld("new")}>
-            New planet
+            {t("New planet")}
           </button>
           <Link className="pbtn gold" href="/report" style={{ textDecoration: "none" }}>
-            Impact report
+            {t("Impact report")}
           </Link>
+          <LangSwitch />
         </div>
       </header>
 
       {!introOn && (
         <div className="hud-left">
           <div className="btn-row">
-            <span className="chip live">● LIVE</span>
-            <span className="chip">{`Planet ${w.geo.name}`}</span>
-            <span className="chip">{followed ? `Following Bot #${followed.id}` : zoomedOut ? "Whole world" : "Exploring"}</span>
-            {night && <span className="chip">Night</span>}
+            <span className="chip live">● {t("LIVE")}</span>
+            <span className="chip">{t("Planet {name}", { name: w.geo.name })}</span>
+            <span className="chip">{followed ? t("Following Bot #{id}", { id: followed.id }) : zoomedOut ? t("Whole world") : t("Exploring")}</span>
+            {night && <span className="chip">{t("Night")}</span>}
             {player.role && player.role !== "watch" && (
               <span className="chip gold">
-                {player.role === "god" ? "You are God" : player.role === "king" ? (player.kingdom != null ? `King of ${w.countries[player.kingdom].name}` : "King, choosing") : `You are Bot #${player.meId}`}
+                {player.role === "god"
+                  ? t("You are God")
+                  : player.role === "king"
+                    ? player.kingdom != null
+                      ? t("King of {nation}", { nation: w.countries[player.kingdom].name })
+                      : t("King, choosing")
+                    : t("You are Bot #{id}", { id: player.meId ?? 0 })}
               </span>
             )}
           </div>
@@ -573,7 +596,7 @@ export default function WorldView() {
                 camRef.current = fitCamera(w);
               }}
             >
-              Fit
+              {t("Fit")}
             </button>
           </div>
           <canvas ref={miniRef} className="minimap" onPointerDown={onMini} onPointerMove={onMini} />
@@ -589,9 +612,9 @@ export default function WorldView() {
               Bot #{followed.id} · {followed.birth.countryName}
             </div>
             <div className="what">
-              {stateLabel(followed)} · {fmt(followed.wallet)} metashi · {followed.birth.schoolYears} years of school
-              {followed.birth.electricity ? "" : " · no electricity"}
-              {lastAbout ? ` · ${lastAbout.text.replace(/^Bot #\d+ (\([^)]*\) )?/, "")}` : ""}
+              {t("{state} · {amount} metashi · {years} years of school", { state: t(stateLabel(followed)), amount: fmt(followed.wallet), years: followed.birth.schoolYears })}
+              {followed.birth.electricity ? "" : ` · ${t("no electricity")}`}
+              {lastAbout ? ` · ${t(lastAbout.key, lastAbout.params)}` : ""}
             </div>
           </div>
         </div>
@@ -617,35 +640,35 @@ export default function WorldView() {
               <AreaCard w={w} rect={selection.rect} onBot={(id) => setSelection({ kind: "bot", id })} onCountry={(ci) => setSelection({ kind: "country", ci })} />
             ) : (
               <div className="panel">
-                <div className="panel-h">How to watch</div>
+                <div className="panel-h">{t("How to watch")}</div>
                 <div className="panel-b" style={{ fontSize: 13.5, lineHeight: 1.55 }}>
-                  Gold is money: it glows where an economy is, like lamplight. Bots work there to earn it and spend it back on food.
-                  Scroll to zoom, drag a box to see everyone in an area, right-drag to move. Click a bot for its birth certificate,
-                  or a nation for its story.
+                  {t(
+                    "Gold is money: it glows where an economy is, like lamplight. Bots work there to earn it and spend it back on food. Scroll to zoom, drag a box to see everyone in an area, right-drag to move. Click a bot for its birth certificate, or a nation for its story.",
+                  )}
                 </div>
               </div>
             )}
 
             <div className="panel">
               <div className="panel-h">
-                <span>Minds</span>
-                <span className="chip">$0.00 today</span>
+                <span>{t("Minds")}</span>
+                <span className="chip">{t("$0.00 today")}</span>
               </div>
               <div className="panel-b">
                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                   <Jar />
                   <p className="note" style={{ margin: 0 }}>
-                    No grain of real compute yet. When it arrives, you choose who wakes.
+                    {t("No grain of real compute yet. When it arrives, you choose who wakes.")}
                   </p>
                 </div>
                 <div className="kv" style={{ marginTop: 10 }}>
-                  <span className="k">Waiting to wake, by need</span>
+                  <span className="k">{t("Waiting to wake, by need")}</span>
                   <span className="v" style={{ color: COL.need }}>
                     {c.readyByNeed}
                   </span>
                 </div>
                 <div className="kv">
-                  <span className="k">Waiting to wake, by plenty</span>
+                  <span className="k">{t("Waiting to wake, by plenty")}</span>
                   <span className="v" style={{ color: "#a7781a" }}>
                     {c.readyByPlenty}
                   </span>
@@ -655,51 +678,51 @@ export default function WorldView() {
 
             <div className="panel">
               <div className="panel-h">
-                <span>The ledger</span>
-                <span className="chip gold">{l.total === LAWS.SUPPLY ? "law holds" : "law broken"}</span>
+                <span>{t("The ledger")}</span>
+                <span className="chip gold">{l.total === LAWS.SUPPLY ? t("law holds") : t("law broken")}</span>
               </div>
               <div className="panel-b">
                 <div className="kv">
-                  <span className="k">Still in the sky</span>
+                  <span className="k">{t("Still in the sky")}</span>
                   <span className="v">{fmt(l.sky)}</span>
                 </div>
                 <div className="kv">
-                  <span className="k">In the economies</span>
+                  <span className="k">{t("In the economies")}</span>
                   <span className="v">{fmt(l.economy)}</span>
                 </div>
                 <div className="kv">
-                  <span className="k">In pockets</span>
+                  <span className="k">{t("In pockets")}</span>
                   <span className="v">{fmt(l.pockets)}</span>
                 </div>
                 <div className="kv">
-                  <span className="k">In treasuries</span>
+                  <span className="k">{t("In treasuries")}</span>
                   <span className="v">{fmt(l.treasuries)}</span>
                 </div>
                 <div className="kv" style={{ borderTop: "2px dashed var(--line)", marginTop: 4, paddingTop: 6 }}>
-                  <span style={{ fontWeight: 600 }}>Total metashi</span>
+                  <span style={{ fontWeight: 600 }}>{t("Total metashi")}</span>
                   <span className="v">{fmt(l.total)}</span>
                 </div>
                 <div className="kv">
-                  <span className="k">Next halving rain</span>
+                  <span className="k">{t("Next halving rain")}</span>
                   <span className="v">
-                    {fmt(nextRain)} in {(nextRainIn / LAWS.DAY_TICKS).toFixed(1)} d
+                    {t("{amount} in {days} d", { amount: fmt(nextRain), days: (nextRainIn / LAWS.DAY_TICKS).toFixed(1) })}
                   </span>
                 </div>
                 <div className="kv">
-                  <span className="k">Richest ten hold</span>
+                  <span className="k">{t("Richest ten hold")}</span>
                   <span className="v">{Math.round(c.top10Share * 100)}%</span>
                 </div>
               </div>
             </div>
 
             <div className="panel">
-              <div className="panel-h">What happened</div>
+              <div className="panel-h">{t("What happened")}</div>
               <div className="panel-b">
                 <ul className="events">
                   {[...w.events].reverse().map((e, i) => (
                     <li key={`${e.tick}-${i}`}>
                       <span className="t">d{Math.floor(e.tick / LAWS.DAY_TICKS) + 1}</span>
-                      {e.text}
+                      {t(e.key, e.params)}
                     </li>
                   ))}
                 </ul>
@@ -711,7 +734,7 @@ export default function WorldView() {
 
       {!introOn && playing_ && (
         <div className="hand-tray">
-          <div className="deck-pile" title="Cards left in your deck">
+          <div className="deck-pile" title={t("Cards left in your deck")}>
             {player.deck.length}
           </div>
           <div className="hand">
@@ -726,8 +749,8 @@ export default function WorldView() {
                     hint={
                       player.chosen === card.uid
                         ? ["world", "kingdom", "self"].includes(DEFS[card.kind].target)
-                          ? "Click again to play"
-                          : "Now choose on the map"
+                          ? t("Click again to play")
+                          : t("Now choose on the map")
                         : undefined
                     }
                     onClick={() => onCard(card)}
@@ -737,27 +760,27 @@ export default function WorldView() {
             })}
           </div>
           <button className={`next-day ${player.waiting ? "ready" : ""}`} onClick={nextDay}>
-            {player.waiting ? `Begin day ${day}` : "Skip to dawn"}
-            <small>{player.plays > 0 ? "1 play left" : "played"}</small>
+            {player.waiting ? t("Begin day {n}", { n: day }) : t("Skip to dawn")}
+            <small>{player.plays > 0 ? t("1 play left") : t("played")}</small>
           </button>
         </div>
       )}
 
       {!introOn && chosenCard && ["area", "nation"].includes(DEFS[chosenCard.kind].target) && (
         <div className="aim-banner">
-          {DEFS[chosenCard.kind].target === "area" ? `${DEFS[chosenCard.kind].title}: click a place on the map` : `${DEFS[chosenCard.kind].title}: click a nation`}
+          {DEFS[chosenCard.kind].target === "area"
+            ? t("{card}: click a place on the map", { card: t(DEFS[chosenCard.kind].title) })
+            : t("{card}: click a nation", { card: t(DEFS[chosenCard.kind].title) })}
         </div>
       )}
-      {!introOn && player.pickKingdom && <div className="aim-banner">Click a nation to rule</div>}
+      {!introOn && player.pickKingdom && <div className="aim-banner">{t("Click a nation to rule")}</div>}
 
       {!introOn && player.role === null && (
         <div className="veil">
           <div className="veil-inner">
             <div className="veil-title">
-              How will you enter this world?
-              <small>
-                Planet {w.geo.name}: {w.bots.length} souls, born by the real birth lottery.
-              </small>
+              {t("How will you enter this world?")}
+              <small>{t("Planet {name}: {n} souls, born by the real birth lottery.", { name: w.geo.name, n: w.bots.length })}</small>
             </div>
             <div className="role-row">
               {(["watch", "god", "king", "human"] as Role[]).map((r) => (
@@ -775,8 +798,8 @@ export default function WorldView() {
           <button className={`channel ${followId == null ? "on" : ""}`} onClick={() => (follow(null), (camRef.current = fitCamera(w)))}>
             <WideIcon />
             <span>
-              <div className="t">Whole world</div>
-              <div className="s">Wide shot</div>
+              <div className="t">{t("Whole world")}</div>
+              <div className="s">{t("Wide shot")}</div>
             </span>
           </button>
           {chans.map((ch) => (
@@ -790,7 +813,7 @@ export default function WorldView() {
             >
               <Portrait seed={w.seed} bot={w.bots[ch.id]} size={34} />
               <span style={{ minWidth: 0 }}>
-                <div className="t">{ch.label}</div>
+                <div className="t">{t(ch.label)}</div>
                 <div className="s">
                   #{ch.id} · {w.bots[ch.id].birth.countryName}
                 </div>
@@ -800,8 +823,8 @@ export default function WorldView() {
           <button className={`channel ${director ? "on" : ""}`} onClick={() => setDirector((d) => !d)}>
             <DirectorIcon />
             <span>
-              <div className="t">Director {director ? "on" : "off"}</div>
-              <div className="s">Cuts to big moments</div>
+              <div className="t">{director ? t("Director on") : t("Director off")}</div>
+              <div className="s">{t("Cuts to big moments")}</div>
             </span>
           </button>
         </div>
@@ -935,22 +958,23 @@ function drawGenesis(ctx: CanvasRenderingContext2D, r: MapRenderer, w: World, t:
   }
 }
 
-function GenesisCaption({ t, w, onSkip }: { t: number; w: World; onSkip: () => void }) {
+function GenesisCaption({ t: time, w, onSkip }: { t: number; w: World; onSkip: () => void }) {
+  const { t } = useLang();
   let big: string | null = null;
   let line: string | null = null;
-  if (t < INTRO.fall) {
+  if (time < INTRO.fall) {
     big = "$4.20";
-    line = "Somewhere, $4.20 slipped out of a stranger's pocket.";
-  } else if (t < INTRO.settle) {
-    const k = ease(clamp01((t - INTRO.fall) / (INTRO.settle - 0.6 - INTRO.fall)));
-    big = `${fmt(k * rainOf(0))} metashi`;
-    line = t < INTRO.burst ? "On the way down, it turned to gold: the first of 21,000,000." : "It landed the way the world's wealth lands today.";
-  } else if (t < INTRO.borders) {
-    line = `A new planet, ${w.geo.name}: ${w.countries.length} nations, each one drawn from a real country.`;
+    line = t("Somewhere, $4.20 slipped out of a stranger's pocket.");
+  } else if (time < INTRO.settle) {
+    const k = ease(clamp01((time - INTRO.fall) / (INTRO.settle - 0.6 - INTRO.fall)));
+    big = t("{amount} metashi", { amount: fmt(k * rainOf(0)) });
+    line = time < INTRO.burst ? t("On the way down, it turned to gold: the first of 21,000,000.") : t("It landed the way the world's wealth lands today.");
+  } else if (time < INTRO.borders) {
+    line = t("A new planet, {name}: {n} nations, each one drawn from a real country.", { name: w.geo.name, n: w.countries.length });
   } else {
-    const born = Math.floor(clamp01((t - INTRO.borders) / (INTRO.born - INTRO.borders)) * LAWS.POPULATION);
-    big = `${born} born`;
-    line = "Each one born the way a real baby is born this year.";
+    const born = Math.floor(clamp01((time - INTRO.borders) / (INTRO.born - INTRO.borders)) * LAWS.POPULATION);
+    big = t("{n} born", { n: born });
+    line = t("Each one born the way a real baby is born this year.");
   }
   return (
     <>
@@ -959,7 +983,7 @@ function GenesisCaption({ t, w, onSkip }: { t: number; w: World; onSkip: () => v
         {line && <div className="line">{line}</div>}
       </div>
       <button className="pbtn skip" onClick={onSkip}>
-        Skip
+        {t("Skip")}
       </button>
     </>
   );
@@ -1014,32 +1038,33 @@ function Jar() {
 
 /** The human's one draw: the birth certificate, line by line. */
 function BirthReveal({ w, id, onBegin }: { w: World; id: number; onBegin: () => void }) {
+  const { t } = useLang();
   const b = w.bots[id];
   const home = w.countries[b.birth.countryIdx];
   const rank = Math.round(b.birth.familyRank * 100);
   const rows: Array<[string, string]> = [
-    ["Born in", `${b.birth.countryName}, in ${w.lands[b.birth.land].name}`],
-    ["Family", rank >= 50 ? `richer than ${rank}% of families there` : `poorer than ${100 - rank}% of families there`],
-    ["Family money", `${fmt(b.birth.inheritance)} metashi`],
-    ["School", `${b.birth.schoolYears} years`],
-    ["Online, has tools", b.birth.tools ? "yes" : "no"],
-    ["Electricity", b.birth.electricity ? "yes" : "no: you will sleep through the nights"],
-    ["Bank account", b.birth.account ? "yes" : "no: help can't reach you"],
-    ["A meal costs", `${home.foodPrice} metashi`],
-    ["Real-world twin", "sealed until your life ends"],
+    [t("Born in"), t("{nation}, in {land}", { nation: b.birth.countryName, land: w.lands[b.birth.land].name })],
+    [t("Family"), rank >= 50 ? t("richer than {p}% of families there", { p: rank }) : t("poorer than {p}% of families there", { p: 100 - rank })],
+    [t("Family money"), t("{amount} metashi", { amount: fmt(b.birth.inheritance) })],
+    [t("School"), t("{n} years", { n: b.birth.schoolYears })],
+    [t("Online, has tools"), b.birth.tools ? t("yes") : t("no")],
+    [t("Electricity"), b.birth.electricity ? t("yes") : t("no: you will sleep through the nights")],
+    [t("Bank account"), b.birth.account ? t("yes") : t("no: help can't reach you")],
+    [t("A meal costs"), t("{amount} metashi", { amount: home.foodPrice })],
+    [t("Real-world twin"), t("sealed until your life ends")],
   ];
   return (
     <div className="veil">
       <div className="veil-inner">
         <div className="veil-title">
-          You were born.
-          <small>One draw. No redraw.</small>
+          {t("You were born.")}
+          <small>{t("One draw. No redraw.")}</small>
         </div>
         <div className="birth-sheet">
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
             <Portrait seed={w.seed} bot={b} size={88} />
           </div>
-          <h3>Birth certificate · Bot #{b.id}</h3>
+          <h3>{t("Birth certificate · Bot #{id}", { id: b.id })}</h3>
           {rows.map(([k, v], i) => (
             <div key={k} className="kv" style={{ animationDelay: `${0.4 + i * 0.45}s` }}>
               <span className="k">{k}</span>
@@ -1048,7 +1073,7 @@ function BirthReveal({ w, id, onBegin }: { w: World; id: number; onBegin: () => 
           ))}
         </div>
         <button className="pbtn gold" style={{ fontSize: 18, padding: "8px 22px" }} onClick={onBegin}>
-          Begin this life
+          {t("Begin this life")}
         </button>
       </div>
     </div>

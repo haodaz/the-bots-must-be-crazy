@@ -4,7 +4,8 @@
 // The art is an engraved emblem drawn in code for now; illustrated art can replace it later.
 
 import type { ReactNode } from "react";
-import { DEFS, type Card, type Kind, type Role } from "@/engine/cards.ts";
+import { DEFS, cardParams, type Card, type Kind, type Role } from "@/engine/cards.ts";
+import { useLang } from "@/i18n.tsx";
 
 const INK = "#2b2417";
 const GOLD = "#d4a12a";
@@ -259,8 +260,18 @@ export function GameCard({
   onClick?: () => void;
   style?: React.CSSProperties;
 }) {
+  const { t } = useLang();
   const d = DEFS[card.kind];
-  const target = d.target === "area" ? `${card.reach} area` : d.target === "nation" ? "another nation" : d.target === "kingdom" ? "your nation" : d.target === "self" ? "your life" : "the world";
+  const target =
+    d.target === "area"
+      ? t(`${card.reach} area`)
+      : d.target === "nation"
+        ? t("another nation")
+        : d.target === "kingdom"
+          ? t("your nation")
+          : d.target === "self"
+            ? t("your life")
+            : t("the world");
   return (
     <button className={`gcard fam-${d.family} ${selected ? "selected" : ""} ${disabled ? "disabled" : ""}`} onClick={onClick} style={style}>
       <span className="gcard-corner tl" />
@@ -268,15 +279,15 @@ export function GameCard({
       <span className="gcard-corner bl" />
       <span className="gcard-corner br" />
       {card.days > 0 && <span className="gcard-gem">{ROMAN[card.days] ?? card.days}</span>}
-      <span className="gcard-title">{d.title}</span>
+      <span className="gcard-title">{t(d.title)}</span>
       <span className="gcard-art">
         <Emblem name={card.kind} />
       </span>
       <span className="gcard-type">
-        {d.family === "god" ? "God" : d.family === "king" ? "King" : "Human"} · {target}
+        {d.family === "god" ? t("God") : d.family === "king" ? t("King") : t("Human")} · {target}
       </span>
-      <span className="gcard-text">{d.text(card)}</span>
-      <span className="gcard-flavor">{hint ?? `“${d.flavor}”`}</span>
+      <span className="gcard-text">{t(d.text, cardParams(card))}</span>
+      <span className="gcard-flavor">{hint ?? `“${t(d.flavor)}”`}</span>
     </button>
   );
 }
@@ -306,6 +317,7 @@ const ROLE_TEXT: Record<Role, { title: string; line: string; detail: string }> =
 
 /** The big cards for choosing how to enter the world. */
 export function RoleCard({ role, onClick }: { role: Role; onClick: () => void }) {
+  const { t: tr } = useLang();
   const t = ROLE_TEXT[role];
   return (
     <button className={`gcard big fam-${role}`} onClick={onClick}>
@@ -313,13 +325,13 @@ export function RoleCard({ role, onClick }: { role: Role; onClick: () => void })
       <span className="gcard-corner tr" />
       <span className="gcard-corner bl" />
       <span className="gcard-corner br" />
-      <span className="gcard-title">{t.title}</span>
+      <span className="gcard-title">{tr(t.title)}</span>
       <span className="gcard-art">
         <Emblem name={role} />
       </span>
-      <span className="gcard-type">{t.line}</span>
-      <span className="gcard-text">{t.detail}</span>
-      <span className="gcard-flavor">{role === "watch" ? "No cards" : "A hand of 4 · draw 1 a day · play 1 a day"}</span>
+      <span className="gcard-type">{tr(t.line)}</span>
+      <span className="gcard-text">{tr(t.detail)}</span>
+      <span className="gcard-flavor">{role === "watch" ? tr("No cards") : tr("A hand of 4 · draw 1 a day · play 1 a day")}</span>
     </button>
   );
 }

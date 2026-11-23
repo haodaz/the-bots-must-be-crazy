@@ -5,7 +5,7 @@
 import { EARTH } from "./earth.ts";
 import { LAWS } from "./laws.ts";
 import { nextFloat, nextInt, type HasRng } from "./rng.ts";
-import { log, productivity, returnToEconomy, splitInteger, type Bot, type World } from "./world.ts";
+import { fill, fmtN, log, productivity, returnToEconomy, splitInteger, type Bot, type Params, type World } from "./world.ts";
 
 export type Family = "god" | "king" | "human";
 export type Role = "watch" | Family;
@@ -44,13 +44,19 @@ type Def = {
   pct: [number, number];
   days?: [number, number];
   flavor: string;
-  text: (c: Card) => string;
+  /** Template: {pct} strength, {pts} points, {reach} small/wide/vast, {days} length. */
+  text: string;
   /** How often it turns up in a deck. */
   weight: number;
 };
 
 const P = (x: number) => `${Math.round(x * 100)}%`;
 const D = (d: number) => `${d} day${d === 1 ? "" : "s"}`;
+
+/** The numbers that fill a card's text (in English; the page translates reach and days). */
+export function cardParams(c: Card): Params {
+  return { pct: P(c.pct), pts: Math.round(c.pct * 100), reach: c.reach, days: D(c.days), dayCount: c.days };
+}
 
 export const DEFS: Record<Kind, Def> = {
   // ---- God: the land, the weather, the sky. ----
@@ -61,7 +67,7 @@ export const DEFS: Record<Kind, Def> = {
     pct: [0.2, 0.5],
     days: [2, 4],
     flavor: "The fields remember the rain.",
-    text: (c) => `Food costs ${P(c.pct)} less in a ${c.reach} area for ${D(c.days)}.`,
+    text: "Food costs {pct} less in a {reach} area for {days}.",
     weight: 3,
   },
   drought: {
@@ -71,7 +77,7 @@ export const DEFS: Record<Kind, Def> = {
     pct: [0.3, 0.8],
     days: [2, 4],
     flavor: "The sky forgets.",
-    text: (c) => `Food costs ${P(c.pct)} more in a ${c.reach} area for ${D(c.days)}.`,
+    text: "Food costs {pct} more in a {reach} area for {days}.",
     weight: 2,
   },
   skyGift: {
@@ -80,7 +86,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "area",
     pct: [0.04, 0.12],
     flavor: "What the sky was keeping, it gives early.",
-    text: (c) => `${P(c.pct)} of the gold still in the sky falls now on a ${c.reach} area.`,
+    text: "{pct} of the gold still in the sky falls now on a {reach} area.",
     weight: 2,
   },
   flood: {
@@ -90,7 +96,7 @@ export const DEFS: Record<Kind, Def> = {
     pct: [1, 1],
     days: [1, 3],
     flavor: "Water first, then mud, then waiting.",
-    text: (c) => `No one can work in a ${c.reach} area for ${D(c.days)}.`,
+    text: "No one can work in a {reach} area for {days}.",
     weight: 1,
   },
   plenty: {
@@ -100,7 +106,7 @@ export const DEFS: Record<Kind, Def> = {
     pct: [0.15, 0.35],
     days: [1, 3],
     flavor: "Everything grows at once.",
-    text: (c) => `Food costs ${P(c.pct)} less everywhere for ${D(c.days)}.`,
+    text: "Food costs {pct} less everywhere for {days}.",
     weight: 1,
   },
 
@@ -111,7 +117,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "kingdom",
     pct: [0.3, 0.6],
     flavor: "A chalkboard in every village.",
-    text: (c) => `Spend ${P(c.pct)} of your treasury: everyone in your nation gets at least 12 years of school.`,
+    text: "Spend {pct} of your treasury: everyone in your nation gets at least 12 years of school.",
     weight: 2,
   },
   power: {
@@ -120,7 +126,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "kingdom",
     pct: [0.3, 0.6],
     flavor: "The night shift begins.",
-    text: (c) => `Spend ${P(c.pct)} of your treasury: everyone in your nation gets electricity.`,
+    text: "Spend {pct} of your treasury: everyone in your nation gets electricity.",
     weight: 2,
   },
   accounts: {
@@ -129,7 +135,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "kingdom",
     pct: [0.1, 0.25],
     flavor: "Help needs an address.",
-    text: (c) => `Spend ${P(c.pct)} of your treasury: everyone in your nation gets an account, so welfare can reach them.`,
+    text: "Spend {pct} of your treasury: everyone in your nation gets an account, so welfare can reach them.",
     weight: 2,
   },
   taxCut: {
@@ -138,7 +144,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "kingdom",
     pct: [0.03, 0.08],
     flavor: "Lighter purses at the gate.",
-    text: (c) => `Your nation's tax falls by ${Math.round(c.pct * 100)} points.`,
+    text: "Your nation's tax falls by {pts} points.",
     weight: 1,
   },
   taxRaise: {
@@ -147,7 +153,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "kingdom",
     pct: [0.03, 0.08],
     flavor: "A fuller treasury, a thinner loaf.",
-    text: (c) => `Your nation's tax rises by ${Math.round(c.pct * 100)} points.`,
+    text: "Your nation's tax rises by {pts} points.",
     weight: 1,
   },
   trade: {
@@ -157,7 +163,7 @@ export const DEFS: Record<Kind, Def> = {
     pct: [0.1, 0.3],
     days: [3, 6],
     flavor: "Grain one way, cloth the other.",
-    text: (c) => `Choose a nation: food costs ${P(c.pct)} less in both of yours for ${D(c.days)}.`,
+    text: "Choose a nation: food costs {pct} less in both of yours for {days}.",
     weight: 2,
   },
   aid: {
@@ -166,7 +172,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "nation",
     pct: [0.2, 0.5],
     flavor: "A wagon of coin over the border.",
-    text: (c) => `Choose a nation: send it ${P(c.pct)} of your treasury.`,
+    text: "Choose a nation: send it {pct} of your treasury.",
     weight: 1,
   },
   sanction: {
@@ -176,7 +182,7 @@ export const DEFS: Record<Kind, Def> = {
     pct: [0.2, 0.5],
     days: [3, 6],
     flavor: "The gates close; the market empties.",
-    text: (c) => `Choose a nation: food there costs ${P(c.pct)} more for ${D(c.days)}.`,
+    text: "Choose a nation: food there costs {pct} more for {days}.",
     weight: 1,
   },
 
@@ -187,7 +193,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "self",
     pct: [0, 0],
     flavor: "Everyone you know stays behind.",
-    text: () => `Walk to your nation's capital, where the work is.`,
+    text: "Walk to your nation's capital, where the work is.",
     weight: 2,
   },
   nightSchool: {
@@ -196,7 +202,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "self",
     pct: [0.25, 0.5],
     flavor: "Tired eyes, a borrowed book.",
-    text: (c) => `Pay ${P(c.pct)} of your money: two more years of school.`,
+    text: "Pay {pct} of your money: two more years of school.",
     weight: 2,
   },
   getOnline: {
@@ -205,7 +211,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "self",
     pct: [0.3, 0.6],
     flavor: "A secondhand phone and a signal.",
-    text: (c) => `Pay ${P(c.pct)} of your money: you have tools from now on.`,
+    text: "Pay {pct} of your money: you have tools from now on.",
     weight: 2,
   },
   openAccount: {
@@ -214,7 +220,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "self",
     pct: [0.05, 0.15],
     flavor: "A name on a ledger.",
-    text: (c) => `Pay ${P(c.pct)} of your money: welfare can reach you from now on.`,
+    text: "Pay {pct} of your money: welfare can reach you from now on.",
     weight: 1,
   },
   workHarder: {
@@ -224,7 +230,7 @@ export const DEFS: Record<Kind, Def> = {
     pct: [0.2, 0.5],
     days: [2, 4],
     flavor: "Up before the sun.",
-    text: (c) => `You earn ${P(c.pct)} more an hour for ${D(c.days)}.`,
+    text: "You earn {pct} more an hour for {days}.",
     weight: 2,
   },
   helpNeighbor: {
@@ -233,7 +239,7 @@ export const DEFS: Record<Kind, Def> = {
     target: "self",
     pct: [0.1, 0.3],
     flavor: "Bread on the doorstep.",
-    text: (c) => `Give ${P(c.pct)} of your money to the poorest bot in your nation.`,
+    text: "Give {pct} of your money to the poorest bot in your nation.",
     weight: 1,
   },
 };
@@ -267,7 +273,8 @@ export function dealDeck(s: HasRng, family: Family): Card[] {
 }
 
 export type PlayContext = { at?: { x: number; y: number }; ci?: number; kingdom?: number; botId?: number };
-export type PlayResult = { ok: true; text: string } | { ok: false; reason: string };
+/** What happened, as a message template and its params (so the page can say it in any language). */
+export type PlayResult = { ok: true; key: string; params: Params; text: string } | { ok: false; key: string; params: Params; reason: string };
 
 /** Play a card on the world. */
 export function playCard(w: World, c: Card, ctx: PlayContext): PlayResult {
@@ -278,37 +285,38 @@ export function playCard(w: World, c: Card, ctx: PlayContext): PlayResult {
   const target = ctx.ci != null ? w.countries[ctx.ci] : null;
   const me = ctx.botId != null ? w.bots[ctx.botId] : null;
   const where = area ? placeName(w, area.x, area.y) : "";
-  const done = (text: string): PlayResult => {
-    log(w, "card", text, me?.id);
-    return { ok: true, text };
+  const done = (key: string, params: Params = {}): PlayResult => {
+    log(w, "card", key, params, me?.id);
+    return { ok: true, key, params, text: fill(key, params) };
   };
+  const no = (key: string, params: Params = {}): PlayResult => ({ ok: false, key, params, reason: fill(key, params) });
 
-  if (d.target === "area" && !area) return { ok: false, reason: "Choose a place on the map." };
-  if ((d.target === "kingdom" || d.target === "nation") && !kingdom) return { ok: false, reason: "You have no kingdom." };
-  if (d.target === "nation" && (!target || ctx.ci === ctx.kingdom)) return { ok: false, reason: "Choose another nation." };
-  if (d.target === "self" && !me) return { ok: false, reason: "You have no life in this world yet." };
+  if (d.target === "area" && !area) return no("Choose a place on the map.");
+  if ((d.target === "kingdom" || d.target === "nation") && !kingdom) return no("You have no kingdom.");
+  if (d.target === "nation" && (!target || ctx.ci === ctx.kingdom)) return no("Choose another nation.");
+  if (d.target === "self" && !me) return no("You have no life in this world yet.");
 
   switch (c.kind) {
     case "harvest":
       w.mods.push({ kind: "food", mult: 1 - c.pct, until, area, label: d.title });
-      return done(`A bountiful harvest around ${where}: food ${P(c.pct)} cheaper for ${D(c.days)}.`);
+      return done("A bountiful harvest around {place}: food {pct} cheaper for {days}.", { place: where, pct: P(c.pct), days: D(c.days), dayCount: c.days });
     case "drought":
       w.mods.push({ kind: "food", mult: 1 + c.pct, until, area, label: d.title });
-      return done(`Drought around ${where}: food ${P(c.pct)} dearer for ${D(c.days)}.`);
+      return done("Drought around {place}: food {pct} dearer for {days}.", { place: where, pct: P(c.pct), days: D(c.days), dayCount: c.days });
     case "plenty":
       w.mods.push({ kind: "food", mult: 1 - c.pct, until, label: d.title });
-      return done(`A season of plenty: food ${P(c.pct)} cheaper everywhere for ${D(c.days)}.`);
+      return done("A season of plenty: food {pct} cheaper everywhere for {days}.", { pct: P(c.pct), days: D(c.days), dayCount: c.days });
     case "flood":
       w.mods.push({ kind: "noWork", mult: 0, until, area, label: d.title });
-      return done(`Flood around ${where}: no work there for ${D(c.days)}.`);
+      return done("Flood around {place}: no work there for {days}.", { place: where, days: D(c.days), dayCount: c.days });
     case "skyGift": {
       const tiles = landTiles(w, area!);
-      if (!tiles.length) return { ok: false, reason: "The gold would fall into the sea. Choose land." };
+      if (!tiles.length) return no("The gold would fall into the sea. Choose land.");
       const amount = Math.floor(w.sky * c.pct);
-      if (amount <= 0) return { ok: false, reason: "The sky is empty." };
+      if (amount <= 0) return no("The sky is empty.");
       w.sky -= amount;
       splitInteger(amount, tiles.map(() => 1)).forEach((v, i) => (w.money[tiles[i]] += v));
-      return done(`A gift from the sky: ${amount.toLocaleString("en-US")} metashi fell early around ${where}.`);
+      return done("A gift from the sky: {amount} metashi fell early around {place}.", { amount: fmtN(amount), place: where });
     }
 
     case "schools":
@@ -316,7 +324,7 @@ export function playCard(w: World, c: Card, ctx: PlayContext): PlayResult {
     case "accounts": {
       const k = kingdom!;
       const cost = Math.floor(k.treasury * c.pct);
-      if (cost <= 0) return { ok: false, reason: "Your treasury is empty." };
+      if (cost <= 0) return no("Your treasury is empty.");
       // Public works: the money becomes wages in your own economy.
       k.treasury -= cost;
       returnToEconomy(w, ctx.kingdom!, cost);
@@ -335,43 +343,43 @@ export function playCard(w: World, c: Card, ctx: PlayContext): PlayResult {
         for (const b of people) b.birth.account = true;
       }
       repriceNation(w, ctx.kingdom!);
-      return done(`${k.name}: ${d.title.toLowerCase()}. ${cost.toLocaleString("en-US")} metashi from the treasury became wages at home.`);
+      return done("{nation}: {policy}. {amount} metashi from the treasury became wages at home.", { nation: k.name, policy: d.title, amount: fmtN(cost) });
     }
     case "taxCut":
     case "taxRaise": {
       const k = kingdom!;
       k.taxRate = Math.max(0, Math.min(0.6, k.taxRate + (c.kind === "taxCut" ? -c.pct : c.pct)));
-      return done(`${k.name}: tax is now ${Math.round(k.taxRate * 100)}%.`);
+      return done("{nation}: tax is now {rate}.", { nation: k.name, rate: `${Math.round(k.taxRate * 100)}%` });
     }
     case "trade":
       w.mods.push({ kind: "food", mult: 1 - c.pct, until, ci: ctx.kingdom, label: d.title });
       w.mods.push({ kind: "food", mult: 1 - c.pct, until, ci: ctx.ci, label: d.title });
-      return done(`A trade route between ${kingdom!.name} and ${target!.name}: food ${P(c.pct)} cheaper in both for ${D(c.days)}.`);
+      return done("A trade route between {a} and {b}: food {pct} cheaper in both for {days}.", { a: kingdom!.name, b: target!.name, pct: P(c.pct), days: D(c.days), dayCount: c.days });
     case "aid": {
       const amount = Math.floor(kingdom!.treasury * c.pct);
-      if (amount <= 0) return { ok: false, reason: "Your treasury is empty." };
+      if (amount <= 0) return no("Your treasury is empty.");
       kingdom!.treasury -= amount;
       target!.treasury += amount;
-      return done(`${kingdom!.name} sent ${amount.toLocaleString("en-US")} metashi in aid to ${target!.name}.`);
+      return done("{a} sent {amount} metashi in aid to {b}.", { a: kingdom!.name, b: target!.name, amount: fmtN(amount) });
     }
     case "sanction":
       w.mods.push({ kind: "food", mult: 1 + c.pct, until, ci: ctx.ci, label: d.title });
-      return done(`${kingdom!.name} sanctions ${target!.name}: food there ${P(c.pct)} dearer for ${D(c.days)}.`);
+      return done("{a} sanctions {b}: food there {pct} dearer for {days}.", { a: kingdom!.name, b: target!.name, pct: P(c.pct), days: D(c.days), dayCount: c.days });
 
     case "toCity": {
       const home = w.countries[me!.birth.countryIdx];
       const capital = home.cities[0];
       me!.x = capital % w.width;
       me!.y = Math.floor(capital / w.width);
-      return done(`Bot #${me!.id} left for the capital of ${home.name}.`);
+      return done("Bot #{id} left for the capital of {nation}.", { id: me!.id, nation: home.name });
     }
     case "nightSchool":
     case "getOnline":
     case "openAccount": {
       const fee = Math.floor(me!.wallet * c.pct);
-      if (fee <= 0) return { ok: false, reason: "You have no money to pay for it." };
-      if (c.kind === "openAccount" && me!.birth.account) return { ok: false, reason: "You already have an account." };
-      if (c.kind === "getOnline" && me!.birth.tools) return { ok: false, reason: "You are already online." };
+      if (fee <= 0) return no("You have no money to pay for it.");
+      if (c.kind === "openAccount" && me!.birth.account) return no("You already have an account.");
+      if (c.kind === "getOnline" && me!.birth.tools) return no("You are already online.");
       me!.wallet -= fee;
       returnToEconomy(w, me!.birth.countryIdx, fee);
       if (c.kind === "nightSchool") {
@@ -379,21 +387,21 @@ export function playCard(w: World, c: Card, ctx: PlayContext): PlayResult {
         me!.sight = Math.min(6, 2 + Math.floor(me!.birth.schoolYears / 4));
       } else if (c.kind === "getOnline") me!.birth.tools = true;
       else me!.birth.account = true;
-      return done(`Bot #${me!.id}: ${d.title.toLowerCase()}, for ${fee.toLocaleString("en-US")} metashi.`);
+      return done("Bot #{id}: {choice}, for {amount} metashi.", { id: me!.id, choice: d.title, amount: fmtN(fee) });
     }
     case "workHarder":
       w.mods.push({ kind: "wage", mult: 1 + c.pct, until, botId: me!.id, label: d.title });
-      return done(`Bot #${me!.id} works harder: ${P(c.pct)} more an hour for ${D(c.days)}.`);
+      return done("Bot #{id} works harder: {pct} more an hour for {days}.", { id: me!.id, pct: P(c.pct), days: D(c.days), dayCount: c.days });
     case "helpNeighbor": {
       const poorest = w.bots
         .filter((b: Bot) => b.birth.countryIdx === me!.birth.countryIdx && b.id !== me!.id)
         .sort((a, b) => a.wallet - b.wallet)[0];
-      if (!poorest) return { ok: false, reason: "No one else lives in your nation." };
+      if (!poorest) return no("No one else lives in your nation.");
       const gift = Math.floor(me!.wallet * c.pct);
-      if (gift <= 0) return { ok: false, reason: "You have nothing to give." };
+      if (gift <= 0) return no("You have nothing to give.");
       me!.wallet -= gift;
       poorest.wallet += gift;
-      return done(`Bot #${me!.id} gave ${gift.toLocaleString("en-US")} metashi to Bot #${poorest.id}.`);
+      return done("Bot #{id} gave {amount} metashi to Bot #{other}.", { id: me!.id, other: poorest.id, amount: fmtN(gift) });
     }
   }
 }

@@ -67,6 +67,12 @@ At the start you choose how to enter the world. **Watch** follows the live chann
 - **King** (choose a nation to rule): Schools for All, Light the Nation, Accounts for All (each paid from the treasury, which becomes wages at home), Tax Relief, Tax the Harvest, Trade Route, Aid, Sanctions. There is no war.
 - **Human**: one draw of a birth certificate, no redraw; then Go to the City, Night School, Get Online, Open an Account, Work Harder, Help a Neighbour.
 
+## Languages and people
+
+The page speaks English and Simplified Chinese (the button in the top bar, or `?lang=zh`). Every string on screen goes through one translator; engine events and card results are stored as templates with params, so they render in either language. A test fails if any string lacks a translation or a placeholder.
+
+Each bot is a 20×32 pixel figure built from random parts: skin (a human range plus a few otherworldly tones), eyes and their colour, brows, mouth, marks, facial hair, hair style and colour, bangs, tops with prints, sleeves, bottoms, belts, socks, shoes, headwear, glasses, jewellery and a few strange features (antennae, horns, cat ears, a halo, a sprout). Families of means wear a little gold. On the board they stand as pieces; up close they are standees.
+
 ## Staying under $10
 
 Spending more than $10 of Muse Ember credit disqualifies the project, and the platform has no hard cap. So the app keeps its own:
@@ -115,3 +121,4 @@ All work in this repository was done during the hackathon window.
 | Nov 23 | metashi becomes money, not ore: halving gold rains like Bitcoin's block rewards, wages paid from local economies, spending that becomes someone else's wage, and prices that fall as productivity rises. The world is now a zoomable pixel map: the real Earth (Natural Earth borders, real deserts and mountains) or a new planet each time with the real countries on it. Minimap, red-box area selection, country and area cards. Food price calibrated to FAO hunger figures. The impact report reruns on 50 new planets. |
 | Nov 23 | The board-game look: every world is a new planet with made-up nation and land names (the real twin stays sealed until the end), painted once like an old map: parchment, smooth inked coastlines with ripples, mountains, trees, dunes, dotted borders, a compass rose and a name plaque. The board fills the window, with a gilded top bar, a side panel that opens when you pick something, a card tray, and the minimap. Planet shuffles are now the same on every JavaScript engine. |
 | Nov 23 | Cards. Choose to watch, or to enter as God, King or Human, from four big cards. Card players get a hand of four from a shuffled deck of twelve (a fixed mix per role, each copy with its own strength, reach and length), draw one and play one a day, and the world waits at each dawn. God cards change prices, stop work or bring the sky's gold early; King cards enact policies paid from the treasury, set taxes, open trade routes, send aid or sanction; Human cards are the crossroads of one life, which begins with a one-time birth-certificate draw. Gilded cards with arched art windows and engraved emblems. Tests check that no card makes or destroys a metashi. |
+| Nov 23 | People and languages. Bots are now 20×32 pixel figures built from random parts and stand on the board as standees. The page speaks English and Simplified Chinese: every string goes through one translator, events and card results are templates with params, and a test checks that every string has a translation with the same placeholders. |
