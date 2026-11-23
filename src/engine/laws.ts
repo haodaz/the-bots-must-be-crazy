@@ -22,7 +22,7 @@ export const LAWS = {
   /** One day in the world. Real compute will arrive once per day, like sunlight. */
   DAY_TICKS: 600,
 
-  /** Food costs metashi. What is paid goes back into the ground, to be mined again. */
+  /** Food costs metashi (at world-average prices). What is paid goes back into the ground, to be mined again. */
   FOOD_PRICE: 1_000,
   /** Hunger at which a creature is starving and too weak to walk every tick. */
   STARVING: 150,
@@ -30,7 +30,18 @@ export const LAWS = {
   /** The need switch: starving with no money for food for this many ticks. */
   NEED_WAKE_TICKS: 60,
   /** The plenty switch: savings at or above this. */
-  PLENTY_WAKE: 200_000,
+  PLENTY_WAKE: 500_000,
+
+  /** At genesis this share of the fallen money lands in pockets as family money; the rest in the ground. */
+  INHERITANCE_SHARE: 0.2,
+  /** Each land's strip is at least this many columns wide. */
+  MIN_LAND_COLS: 4,
+  /** Night starts at this point of the day. Bots without electricity sleep through it. */
+  NIGHT_FROM: 0.7,
+  /** Bots with tools (they grew up online) dig this many times faster. */
+  TOOLS_MULTIPLIER: 2,
+  /** A land's food price follows its real cost of living, kept within this range of the world average. */
+  PRICE_RANGE: [0.4, 1.6] as const,
 
   /** How many recent events the world remembers for the page. */
   EVENT_MEMORY: 40,
@@ -41,3 +52,5 @@ export function yieldAt(tick: number): number {
   const halvings = Math.min(Math.floor(tick / LAWS.HALVING_TICKS), LAWS.MAX_HALVINGS);
   return LAWS.BASE_YIELD >> halvings;
 }
+
+export const isNight = (tick: number) => tick % LAWS.DAY_TICKS >= LAWS.DAY_TICKS * LAWS.NIGHT_FROM;

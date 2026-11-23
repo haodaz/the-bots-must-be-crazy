@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { LAWS, yieldAt } from "@/engine/laws.ts";
+import { LAWS, isNight, yieldAt } from "@/engine/laws.ts";
 import { census, createWorld, ledger, step, type Bot, type World } from "@/engine/world.ts";
 
 const TILE = 16;
@@ -16,6 +16,7 @@ const COLORS = {
   bot: "#4a5064",
   digging: "#1d2233",
   faint: "#b9bdc8",
+  asleep: "#9aa3b8",
   need: "#3b6fe0",
   plenty: "#c8962a",
 };
@@ -57,7 +58,34 @@ export default function WorldView() {
       ctx.fillRect((i % w.width) * TILE + 1, Math.floor(i / w.width) * TILE + 1, TILE - 2, TILE - 2);
     }
 
+    // Borders between lands, and their names.
+    ctx.strokeStyle = "rgba(29,34,51,0.22)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 4]);
+    for (const land of w.lands.slice(1)) {
+      ctx.beginPath();
+      ctx.moveTo(land.x0 * TILE + 0.5, 0);
+      ctx.lineTo(land.x0 * TILE + 0.5, ch);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.font = "600 9px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(29,34,51,0.5)";
+    for (const land of w.lands) {
+      const cx = ((land.x0 + land.x1) / 2) * TILE;
+      const maxW = (land.x1 - land.x0) * TILE - 6;
+      const lines = ctx.measureText(land.short).width > maxW ? land.short.replace(" & ", " &\n").split("\n") : [land.short];
+      lines.forEach((line, i) => ctx.fillText(line, cx, ch - 6 - (lines.length - 1 - i) * 10));
+    }
+
     for (const b of w.bots) drawBot(ctx, b, b.id === selectedRef.current);
+
+    // Night: a soft dusk over the whole world.
+    if (isNight(w.tick)) {
+      ctx.fillStyle = "rgba(29,34,51,0.07)";
+      ctx.fillRect(0, 0, cw, ch);
+    }
   }, []);
 
   useEffect(() => {
@@ -115,7 +143,8 @@ export default function WorldView() {
         <div>
           <h1>The Bots Must Be Crazy</h1>
           <p>
-            World #{w.seed} · Day {day} · {LAWS.POPULATION} bots living on instinct. No minds yet.
+            World #{w.seed} · Day {day}{isNight(w.tick) ? " · night" : ""} · {LAWS.POPULATION} bots, born the way real babies
+            are born this year. No minds yet.
           </p>
         </div>
         <div className="controls">
@@ -166,6 +195,10 @@ export default function WorldView() {
             <div className="row">
               <span className="k">In pockets</span>
               <span className="v">{fmt(l.pockets)}</span>
+            </div>
+            <div className="row">
+              <span className="k">In land treasuries</span>
+              <span className="v">{fmt(l.treasuries)}</span>
             </div>
             <div className="row total">
               <span>Total metashi</span>
@@ -240,13 +273,36 @@ export default function WorldView() {
                 <span className="v">{bot.hunger}</span>
               </div>
               <div className="tag">
-                eat when hunger ≥ {bot.strategy.eatAt}
+                <b>Birth certificate</b>
                 <br />
-                walk straight {Math.round(bot.strategy.straightness * 100)}% of the time
+                born in {bot.birth.countryName} ({w.lands[bot.birth.land].short})
                 <br />
-                avoid crowds: {bot.strategy.avoidCrowds ? "yes" : "no"}
+                family: {familyLine(bot.birth.familyRank)}
                 <br />
-                sees gold {bot.sight} tiles away
+                family money: {fmt(bot.birth.inheritance)} metashi
+                <br />
+                school: {bot.birth.schoolYears} years · sees gold {bot.sight} tiles away
+                <br />
+                online, so has tools: {bot.birth.tools ? "yes" : "no"}
+                <br />
+                electricity: {bot.birth.electricity ? "yes" : "no, sleeps at night"}
+                <br />
+                bank account: {bot.birth.account ? "yes" : "no, welfare can't reach it"}
+                <br />
+                food here costs {w.lands[bot.birth.land].foodPrice} metashi
+              </div>
+              <div className="tag">
+                <b>Life so far</b>
+                <br />
+                dug {fmt(bot.life.mined)} metashi, paid {fmt(bot.life.taxPaid)} in tax
+                <br />
+                {bot.life.meals} meals, {bot.life.welfareMeals} of them from welfare
+                <br />
+                richest moment: {fmt(bot.life.peakWallet)} metashi
+                <br />
+                starved {bot.life.faints} {bot.life.faints === 1 ? "time" : "times"}
+                <br />
+                time spent: {timeSplit(bot)}
               </div>
               <p className="note">
                 {bot.wake
@@ -273,6 +329,18 @@ export default function WorldView() {
   );
 }
 
+function familyLine(rank: number) {
+  const pct = Math.round(rank * 100);
+  return pct >= 50 ? `richer than ${pct}% of families there` : `poorer than ${100 - pct}% of families there`;
+}
+
+function timeSplit(b: Bot) {
+  const l = b.life;
+  const total = l.ticksDigging + l.ticksSearching + l.ticksAsleep || 1;
+  const p = (v: number) => `${Math.round((v / total) * 100)}%`;
+  return `${p(l.ticksDigging)} digging, ${p(l.ticksSearching)} searching, ${p(l.ticksAsleep)} asleep`;
+}
+
 function drawBot(ctx: CanvasRenderingContext2D, b: Bot, selected: boolean) {
   const cx = b.x * TILE + TILE / 2;
   const cy = b.y * TILE + TILE / 2;
@@ -294,7 +362,8 @@ function drawBot(ctx: CanvasRenderingContext2D, b: Bot, selected: boolean) {
   }
   ctx.beginPath();
   ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-  ctx.fillStyle = b.state === "faint" ? COLORS.faint : b.state === "mining" ? COLORS.digging : COLORS.bot;
+  ctx.fillStyle =
+    b.state === "faint" ? COLORS.faint : b.state === "asleep" ? COLORS.asleep : b.state === "mining" ? COLORS.digging : COLORS.bot;
   ctx.fill();
 }
 

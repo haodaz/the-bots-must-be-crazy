@@ -1,33 +1,35 @@
-// Run the mindless world headless and print how it unfolds, day by day.
+// Run one world headless and print how each land fares.
 // Usage: node scripts/simulate.ts [seed] [days]
 
-import { LAWS, yieldAt } from "../src/engine/laws.ts";
+import { LAWS } from "../src/engine/laws.ts";
 import { census, createWorld, ledger, step } from "../src/engine/world.ts";
 
 const seed = Number(process.argv[2] ?? 1);
 const days = Number(process.argv[3] ?? 30);
 const w = createWorld(seed);
+for (let i = 0; i < days * LAWS.DAY_TICKS; i++) step(w);
 
-const pct = (v: number) => `${Math.round(v * 100)}%`;
-console.log(`seed ${seed} · ${LAWS.POPULATION} bots · ${days} days of ${LAWS.DAY_TICKS} ticks\n`);
-console.log("day  yield  ground      pockets     mining faint broke top10  need plenty");
-
-for (let day = 1; day <= days; day++) {
-  for (let i = 0; i < LAWS.DAY_TICKS; i++) step(w);
-  const l = ledger(w);
-  const c = census(w);
+const l = ledger(w);
+const c = census(w);
+const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
+console.log(`seed ${seed} · ${days} days · ground ${fmt(l.ground)} · pockets ${fmt(l.pockets)} · treasuries ${fmt(l.treasuries)} · total ${fmt(l.total)}`);
+console.log(`starving now ${c.faint} · need ${c.readyByNeed} · plenty ${c.readyByPlenty} · richest ten hold ${Math.round(c.top10Share * 100)}%\n`);
+console.log("land                      bots  food  tax  median wallet  starving days/bot  need  plenty  welfare");
+w.lands.forEach((land, i) => {
+  const bots = w.bots.filter((b) => b.birth.land === i);
+  const wallets = bots.map((b) => b.wallet).sort((a, b) => a - b);
+  const s = w.landStats[i];
   console.log(
     [
-      String(day).padStart(3),
-      String(yieldAt(w.tick)).padStart(6),
-      l.ground.toLocaleString("en-US").padStart(11),
-      l.pockets.toLocaleString("en-US").padStart(11),
-      String(c.mining).padStart(6),
-      String(c.faint).padStart(5),
-      String(c.broke).padStart(5),
-      pct(c.top10Share).padStart(5),
-      String(c.readyByNeed).padStart(5),
-      String(c.readyByPlenty).padStart(6),
+      land.short.padEnd(24),
+      String(bots.length).padStart(5),
+      String(land.foodPrice).padStart(5),
+      `${Math.round(land.taxRate * 100)}%`.padStart(4),
+      fmt(wallets[Math.floor(wallets.length / 2)] ?? 0).padStart(14),
+      (bots.length ? s.starvingTicks / bots.length / LAWS.DAY_TICKS : 0).toFixed(2).padStart(18),
+      String(s.needFlips).padStart(5),
+      String(s.plentyFlips).padStart(7),
+      fmt(s.welfarePaid).padStart(8),
     ].join(" "),
   );
-}
+});
