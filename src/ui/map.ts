@@ -1,14 +1,17 @@
-// The map: a pixel world you can zoom. Far out, every tile is one pixel block (terrain, borders, and the economy
-// glowing like city lights). Close in, every tile opens into a 7×7 dot matrix and each bot shows its own little body.
+// The board. The planet is painted once (mapArt.ts); every frame adds what moves on it:
+// the economy glowing like lamplight, the bots as little game pieces, night, and selections.
+// Zoom in far enough and each piece becomes a token showing the bot's own dot-matrix body.
 
 import { isNight } from "@/engine/laws.ts";
 import type { World } from "@/engine/world.ts";
-import { DOTS, EYES, goldDots, goldOrder, spriteFor, type Sprite } from "./sprite.ts";
+import { ART, buildArt, type MapArt } from "./mapArt.ts";
+import { DOTS, EYES, spriteFor, type Sprite } from "./sprite.ts";
 
 export const COL = {
   gold: "#d4a12a",
   goldRGB: "212, 161, 42",
-  body: "#5b5142",
+  ink: "#56422a",
+  body: "#6b5536",
   working: "#2b2417",
   faint: "#a99d8e",
   asleep: "#8d8576",
@@ -16,11 +19,12 @@ export const COL = {
   plenty: "#e0a91f",
   select: "#c4462f",
   lamp: "rgba(240, 200, 90, 0.45)",
+  paper: "#ece1c8",
 };
 
-/** Buffer size of the main canvas, in device pixels. The map is 160×60 tiles. */
-export const BUFFER = { width: 2400, height: 900 };
-/** Above this many device pixels per tile, tiles open into dot matrices. */
+/** Buffer size of the main canvas, in device pixels. Follows the window: the board fills the screen. */
+export const BUFFER = { width: 2400, height: 1350 };
+/** Above this many device pixels per tile, pieces open into tokens with the bot's body. */
 export const DOT_ZOOM = 44;
 
 export type Camera = { cx: number; cy: number; s: number };
@@ -32,22 +36,23 @@ export type DrawOptions = {
   area?: Rect | null;
   dragging?: Rect | null;
   highlightCountry?: number | null;
-  /** Opening: 0..1 share of land that has appeared. */
+  /** Opening: 0..1 how far the map has been painted in. */
   landReveal?: number;
-  /** Opening: 0..1 strength of borders. */
-  borders?: number;
   /** Opening: 0..1 visibility of the economy. */
   economy?: number;
   /** Opening: how many bots are born so far. */
   botsShown?: number;
+  /** Unused now that borders are painted into the map; kept for the opening's timing. */
+  borders?: number;
 };
 
+/** The whole planet in view; the paper around it holds the top bar and the card tray. */
 export function fitCamera(w: World): Camera {
-  return { cx: w.width / 2, cy: w.height / 2, s: BUFFER.width / w.width };
+  return { cx: w.width / 2, cy: w.height / 2, s: Math.min(BUFFER.width / w.width, BUFFER.height / w.height) * 0.96 };
 }
 
 export function clampCamera(w: World, c: Camera): Camera {
-  const minS = BUFFER.width / w.width;
+  const minS = Math.min(BUFFER.width / w.width, BUFFER.height / w.height) * 0.96;
   const s = Math.max(minS, Math.min(minS * 8, c.s));
   const vw = BUFFER.width / s;
   const vh = BUFFER.height / s;
@@ -67,100 +72,50 @@ export function toScreen(c: Camera, x: number, y: number) {
 }
 
 export class MapRenderer {
-  private tileColor: string[] = [];
-  private reveal: number[] = [];
+  private art: MapArt | null = null;
+  private artWorld: World | null = null;
   private sprites: Sprite[] = [];
-  private orders: number[][] = [];
+  private glow: HTMLCanvasElement | null = null;
   private dots = new Map<string, HTMLCanvasElement>();
-  private keyWorld: World | null = null;
 
-  /** Per-world caches: tile colours with a little pixel grain, reveal order, bot sprites. */
-  private prepare(w: World) {
-    if (this.keyWorld === w) return;
-    this.keyWorld = w;
-    const pal = w.geo.palette.terrain;
-    this.tileColor = w.geo.terrain.map((t, i) => grain(pal[t], i));
-    this.reveal = w.geo.terrain.map((_, i) => hash(i * 2 + 1));
+  /** Paint the planet once per world. */
+  prepare(w: World) {
+    if (this.artWorld === w) return;
+    this.artWorld = w;
+    this.art = buildArt(w);
     this.sprites = w.bots.map((b) => spriteFor(w.seed, b.id));
-    this.orders = [];
   }
 
   draw(ctx: CanvasRenderingContext2D, w: World, cam: Camera, o: DrawOptions = {}) {
     this.prepare(w);
+    const art = this.art!;
     const { s } = cam;
-    const geo = w.geo;
-    const pal = geo.palette;
     const W = BUFFER.width;
     const H = BUFFER.height;
-    const dotMode = s >= DOT_ZOOM;
-    const p = s / DOTS;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = pal.terrain[0];
+    ctx.fillStyle = COL.paper;
     ctx.fillRect(0, 0, W, H);
 
     const tl = toWorld(cam, 0, 0);
     const br = toWorld(cam, W, H);
+    const ox = W / 2 - cam.cx * s;
+    const oy = H / 2 - cam.cy * s;
+
+    // The painted planet.
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.globalAlpha = o.landReveal ?? 1;
+    ctx.drawImage(art.canvas, tl.x * ART, tl.y * ART, (br.x - tl.x) * ART, (br.y - tl.y) * ART, 0, 0, W, H);
+    ctx.globalAlpha = 1;
+
     const x0 = Math.max(0, Math.floor(tl.x));
     const y0 = Math.max(0, Math.floor(tl.y));
     const x1 = Math.min(w.width, Math.ceil(br.x));
     const y1 = Math.min(w.height, Math.ceil(br.y));
-    const ox = W / 2 - cam.cx * s;
-    const oy = H / 2 - cam.cy * s;
-    const reveal = o.landReveal ?? 1;
-
-    // Land, sea depth and terrain.
-    for (let ty = y0; ty < y1; ty++) {
-      for (let tx = x0; tx < x1; tx++) {
-        const i = ty * w.width + tx;
-        const land = geo.terrain[i] !== 0 && this.reveal[i] <= reveal;
-        const X = ox + tx * s;
-        const Y = oy + ty * s;
-        if (!land) {
-          if (geo.terrain[i] === 0 && (ty + tx) % 2 === 0 && nearLand(w, tx, ty) === false) {
-            ctx.fillStyle = pal.seaDeep;
-            ctx.fillRect(X + s * 0.35, Y + s * 0.45, Math.max(1, s * 0.3), Math.max(1, s * 0.1));
-          }
-          continue;
-        }
-        if (dotMode) {
-          const d = this.dot(this.tileColor[i], p);
-          for (let r = 0; r < DOTS; r++) for (let c = 0; c < DOTS; c++) ctx.drawImage(d, X + c * p, Y + r * p);
-        } else {
-          ctx.fillStyle = this.tileColor[i];
-          ctx.fillRect(X, Y, Math.ceil(s), Math.ceil(s));
-        }
-      }
-    }
-
-    // Borders between countries, and the coastline.
-    const b = o.borders ?? 1;
-    if (b > 0) {
-      ctx.globalAlpha = b;
-      ctx.strokeStyle = pal.border;
-      ctx.lineWidth = Math.max(1.5, s / 16);
-      ctx.beginPath();
-      for (let ty = y0; ty < y1; ty++) {
-        for (let tx = x0; tx < x1; tx++) {
-          const i = ty * w.width + tx;
-          const c = geo.cells[i];
-          if (c < 0) continue;
-          if (tx + 1 < w.width && geo.cells[i + 1] >= 0 && geo.cells[i + 1] !== c) {
-            ctx.moveTo(ox + (tx + 1) * s, oy + ty * s);
-            ctx.lineTo(ox + (tx + 1) * s, oy + (ty + 1) * s);
-          }
-          if (ty + 1 < w.height && geo.cells[i + w.width] >= 0 && geo.cells[i + w.width] !== c) {
-            ctx.moveTo(ox + tx * s, oy + (ty + 1) * s);
-            ctx.lineTo(ox + (tx + 1) * s, oy + (ty + 1) * s);
-          }
-        }
-      }
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
 
     if (o.highlightCountry != null) {
-      ctx.fillStyle = "rgba(196, 70, 47, 0.16)";
+      ctx.fillStyle = "rgba(196, 70, 47, 0.18)";
       for (const t of w.countries[o.highlightCountry].tiles) {
         const tx = t % w.width;
         const ty = Math.floor(t / w.width);
@@ -168,128 +123,98 @@ export class MapRenderer {
       }
     }
 
-    // The economy: money glows where it circulates, like city lights.
+    // The economy, glowing like lamplight where money circulates.
     const econ = o.economy ?? 1;
     if (econ > 0) {
-      const gold = this.dot(COL.gold, p);
+      const glow = this.glowSprite();
       for (let ty = y0; ty < y1; ty++) {
         for (let tx = x0; tx < x1; tx++) {
-          const i = ty * w.width + tx;
-          const m = w.money[i];
+          const m = w.money[ty * w.width + tx];
           if (m <= 0) continue;
-          const X = ox + tx * s;
-          const Y = oy + ty * s;
-          if (dotMode) {
-            const k = goldDots(m);
-            const order = (this.orders[i] ??= goldOrder(i));
-            ctx.globalAlpha = econ;
-            for (let j = 0; j < k; j++) ctx.drawImage(gold, X + (order[j] % DOTS) * p, Y + Math.floor(order[j] / DOTS) * p);
-            ctx.globalAlpha = 1;
-          } else {
-            const a = Math.min(1, Math.max(0.18, (Math.log10(m) - 2) / 4)) * econ;
-            ctx.fillStyle = `rgba(${COL.goldRGB}, ${a})`;
-            const inset = s * (0.5 - 0.42 * Math.min(1, a + 0.2));
-            ctx.fillRect(X + inset, Y + inset, s - 2 * inset, s - 2 * inset);
-          }
+          const lv = Math.log10(m);
+          const size = s * Math.min(2.4, 0.7 + Math.max(0, lv - 2) * 0.32);
+          ctx.globalAlpha = econ * Math.min(0.95, 0.3 + Math.max(0, lv - 2) * 0.16);
+          ctx.drawImage(glow, ox + (tx + 0.5) * s - size / 2, oy + (ty + 0.5) * s - size / 2, size, size);
         }
       }
+      ctx.globalAlpha = 1;
     }
 
     const shown = o.botsShown ?? w.bots.length;
     const night = isNight(w.tick) && shown >= w.bots.length;
     if (night) {
-      ctx.fillStyle = "rgba(43, 36, 23, 0.17)";
+      ctx.fillStyle = "rgba(40, 32, 60, 0.2)";
       ctx.fillRect(0, 0, W, H);
     }
 
-    // Bots.
-    const inArea = (bx: number, by: number) =>
-      o.area != null && bx >= Math.min(o.area.x0, o.area.x1) - 1 && bx <= Math.max(o.area.x0, o.area.x1) && by >= Math.min(o.area.y0, o.area.y1) - 1 && by <= Math.max(o.area.y0, o.area.y1);
+    // The pieces.
+    const area = o.area ? norm(o.area) : null;
+    const tokens = s >= DOT_ZOOM;
     for (const bot of w.bots) {
       if (bot.id >= shown) continue;
       if (bot.x < x0 - 1 || bot.x > x1 || bot.y < y0 - 1 || bot.y > y1) continue;
-      const X = ox + bot.x * s;
-      const Y = oy + bot.y * s;
+      const cx = ox + (bot.x + 0.5) * s;
+      const cy = oy + (bot.y + 0.5) * s;
       const body =
         bot.state === "faint" ? COL.faint : bot.state === "asleep" ? COL.asleep : bot.state === "working" ? COL.working : COL.body;
       if (night && bot.birth.electricity) {
         ctx.fillStyle = COL.lamp;
         ctx.beginPath();
-        ctx.arc(X + s / 2, Y + s / 2, Math.max(s * 0.8, 6), 0, Math.PI * 2);
+        ctx.arc(cx, cy, Math.max(s * 0.9, 9), 0, Math.PI * 2);
         ctx.fill();
       }
-      if (dotMode) {
-        const bodyDot = this.dot(body, p);
-        const eyeDot = bot.wake ? this.dot(bot.wake === "need" ? COL.need : COL.plenty, p) : bodyDot;
-        const sp = this.sprites[bot.id];
-        for (let r = 0; r < DOTS; r++) {
-          for (let c = 0; c < DOTS; c++) {
-            if (!sp[r * DOTS + c]) continue;
-            const eye = EYES.some(([er, ec]) => er === r && ec === c);
-            ctx.drawImage(eye ? eyeDot : bodyDot, X + c * p, Y + r * p);
-          }
-        }
-      } else {
-        const r = Math.max(3, s * 0.3);
-        if (bot.wake) {
-          ctx.strokeStyle = bot.wake === "need" ? COL.need : COL.plenty;
-          ctx.lineWidth = Math.max(2, s * 0.1);
-          ctx.beginPath();
-          ctx.arc(X + s / 2, Y + s / 2, r + Math.max(2, s * 0.14), 0, Math.PI * 2);
-          ctx.stroke();
-        }
-        ctx.fillStyle = body;
-        ctx.fillRect(X + s / 2 - r, Y + s / 2 - r, r * 2, r * 2);
+      if (tokens) this.token(ctx, cx, cy, s * 0.46, bot.id, body, bot.wake);
+      else pawn(ctx, cx, cy, Math.max(7, s * 0.55), body, bot.wake);
+      if (area && bot.x >= area.x0 - 0.5 && bot.x <= area.x1 && bot.y >= area.y0 - 0.5 && bot.y <= area.y1) {
+        const r = Math.max(9, s * 0.62);
+        brackets(ctx, cx - r, cy - r, r * 2, r * 2, COL.select, Math.max(2, s / 14));
       }
-      if (inArea(bot.x, bot.y)) brackets(ctx, X - 2, Y - 2, s + 4, s + 4, COL.select, Math.max(2, s / 12));
     }
 
     for (const id of [o.selectedId, o.followId]) {
       if (id == null) continue;
       const bot = w.bots[id];
-      brackets(ctx, ox + bot.x * s - s * 0.25, oy + bot.y * s - s * 0.25, s * 1.5, s * 1.5, COL.select, Math.max(2.5, s / 10));
+      const r = Math.max(14, s * 0.8);
+      brackets(ctx, ox + (bot.x + 0.5) * s - r, oy + (bot.y + 0.5) * s - r, r * 2, r * 2, COL.select, Math.max(3, s / 10));
     }
 
-    for (const r of [o.area, o.dragging]) {
-      if (!r) continue;
-      const a = toScreen(cam, Math.min(r.x0, r.x1), Math.min(r.y0, r.y1));
-      const z = toScreen(cam, Math.max(r.x0, r.x1), Math.max(r.y0, r.y1));
+    for (const rect of [o.area, o.dragging]) {
+      if (!rect) continue;
+      const n = norm(rect);
+      const a = toScreen(cam, n.x0, n.y0);
+      const z = toScreen(cam, n.x1, n.y1);
       ctx.fillStyle = "rgba(196, 70, 47, 0.08)";
       ctx.fillRect(a.px, a.py, z.px - a.px, z.py - a.py);
       ctx.strokeStyle = COL.select;
       ctx.lineWidth = 3;
-      ctx.setLineDash(r === o.dragging ? [10, 6] : []);
+      ctx.setLineDash(rect === o.dragging ? [10, 6] : []);
       ctx.strokeRect(a.px, a.py, z.px - a.px, z.py - a.py);
       ctx.setLineDash([]);
-      brackets(ctx, a.px - 6, a.py - 6, z.px - a.px + 12, z.py - a.py + 12, COL.select, 5);
+      brackets(ctx, a.px - 7, a.py - 7, z.px - a.px + 14, z.py - a.py + 14, COL.select, 5);
     }
   }
 
-  /** The whole map, one pixel per tile, for the minimap. */
+  /** The whole board, small, with the camera's view marked. */
   drawMini(ctx: CanvasRenderingContext2D, w: World, cam: Camera) {
     this.prepare(w);
-    const img = ctx.createImageData(w.width, w.height);
-    const pal = w.geo.palette;
-    for (let i = 0; i < w.geo.terrain.length; i++) {
-      let hex = w.geo.terrain[i] === 0 ? pal.terrain[0] : pal.terrain[w.geo.terrain[i]];
-      if (w.money[i] > 0 && w.geo.terrain[i] !== 0) hex = Math.log10(w.money[i]) > 3.5 ? COL.gold : mix(hex, COL.gold, 0.45);
-      const n = parseInt(hex.slice(1), 16);
-      img.data.set([n >> 16, (n >> 8) & 255, n & 255, 255], i * 4);
-    }
+    const c = ctx.canvas;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(this.art!.canvas, 0, 0, c.width, c.height);
+    const k = c.width / w.width;
     for (const b of w.bots) {
-      const i = (b.y * w.width + b.x) * 4;
-      img.data.set(b.wake === "need" ? [58, 110, 165, 255] : b.state === "faint" ? [169, 157, 142, 255] : [43, 36, 23, 255], i);
+      ctx.fillStyle = b.wake === "need" ? COL.need : b.state === "faint" ? COL.faint : COL.working;
+      ctx.fillRect(b.x * k, b.y * k, Math.max(2, k), Math.max(2, k));
     }
-    ctx.putImageData(img, 0, 0);
     const vw = BUFFER.width / cam.s;
     const vh = BUFFER.height / cam.s;
     if (vw < w.width - 0.5 || vh < w.height - 0.5) {
       ctx.strokeStyle = COL.select;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(cam.cx - vw / 2 + 0.5, cam.cy - vh / 2 + 0.5, vw - 1, vh - 1);
+      ctx.lineWidth = 2;
+      ctx.strokeRect((cam.cx - vw / 2) * k + 1, (cam.cy - vh / 2) * k + 1, vw * k - 2, vh * k - 2);
     }
   }
 
+  /** A round dot of a colour, at a pitch. */
   dot(color: string, p: number): HTMLCanvasElement {
     const q = Math.max(1, Math.round(p * 4) / 4);
     const key = `${color}|${q}`;
@@ -305,6 +230,80 @@ export class MapRenderer {
       this.dots.set(key, c);
     }
     return c;
+  }
+
+  private glowSprite() {
+    if (this.glow) return this.glow;
+    const c = document.createElement("canvas");
+    c.width = c.height = 64;
+    const x = c.getContext("2d")!;
+    const g = x.createRadialGradient(32, 32, 2, 32, 32, 32);
+    g.addColorStop(0, "rgba(255, 214, 110, 1)");
+    g.addColorStop(0.35, "rgba(226, 170, 50, 0.75)");
+    g.addColorStop(1, "rgba(212, 161, 42, 0)");
+    x.fillStyle = g;
+    x.fillRect(0, 0, 64, 64);
+    this.glow = c;
+    return c;
+  }
+
+  /** Close up: a parchment token with the bot's dot-matrix body on it. */
+  private token(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, id: number, body: string, wake: "need" | "plenty" | null) {
+    ctx.fillStyle = "rgba(43, 36, 23, 0.28)";
+    ctx.beginPath();
+    ctx.ellipse(cx + r * 0.12, cy + r * 0.9, r * 0.95, r * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#f7eed6";
+    ctx.strokeStyle = wake === "need" ? COL.need : wake === "plenty" ? COL.plenty : COL.ink;
+    ctx.lineWidth = Math.max(2, r * 0.12);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    const p = (r * 1.5) / DOTS;
+    const bodyDot = this.dot(body, p);
+    const eyeDot = wake ? this.dot(wake === "need" ? COL.need : COL.plenty, p) : bodyDot;
+    const sp = this.sprites[id];
+    const left = cx - (DOTS * p) / 2;
+    const top = cy - (DOTS * p) / 2;
+    for (let rr = 0; rr < DOTS; rr++) {
+      for (let c = 0; c < DOTS; c++) {
+        if (!sp[rr * DOTS + c]) continue;
+        const eye = EYES.some(([er, ec]) => er === rr && ec === c);
+        ctx.drawImage(eye ? eyeDot : bodyDot, left + c * p, top + rr * p);
+      }
+    }
+  }
+}
+
+/** Far out: a little game pawn. */
+function pawn(ctx: CanvasRenderingContext2D, cx: number, cy: number, h: number, color: string, wake: "need" | "plenty" | null) {
+  const head = h * 0.22;
+  ctx.fillStyle = "rgba(43, 36, 23, 0.25)";
+  ctx.beginPath();
+  ctx.ellipse(cx + h * 0.08, cy + h * 0.46, h * 0.32, h * 0.1, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = "#f3e7c9";
+  ctx.lineWidth = Math.max(1, h * 0.07);
+  ctx.beginPath();
+  ctx.moveTo(cx - h * 0.3, cy + h * 0.45);
+  ctx.quadraticCurveTo(cx - h * 0.26, cy, cx - h * 0.1, cy - h * 0.06);
+  ctx.lineTo(cx + h * 0.1, cy - h * 0.06);
+  ctx.quadraticCurveTo(cx + h * 0.26, cy, cx + h * 0.3, cy + h * 0.45);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy - h * 0.2, head, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  if (wake) {
+    ctx.strokeStyle = wake === "need" ? COL.need : COL.plenty;
+    ctx.lineWidth = Math.max(2, h * 0.1);
+    ctx.beginPath();
+    ctx.arc(cx, cy - h * 0.2, head + h * 0.14, 0, Math.PI * 2);
+    ctx.stroke();
   }
 }
 
@@ -329,34 +328,6 @@ function brackets(ctx: CanvasRenderingContext2D, x: number, y: number, w: number
   ctx.stroke();
 }
 
-function nearLand(w: World, tx: number, ty: number) {
-  for (let dy = -1; dy <= 1; dy++)
-    for (let dx = -1; dx <= 1; dx++) {
-      const x = tx + dx;
-      const y = ty + dy;
-      if (x >= 0 && y >= 0 && x < w.width && y < w.height && w.geo.terrain[y * w.width + x] !== 0) return true;
-    }
-  return false;
-}
-
-function hash(n: number) {
-  let t = (n * 0x6d2b79f5) | 0;
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-}
-
-/** A little pixel grain: each tile a shade lighter or darker, so the map reads as hand-placed pixels. */
-function grain(hex: string, i: number) {
-  const n = parseInt(hex.slice(1), 16);
-  const d = Math.round((hash(i) - 0.5) * 14);
-  const f = (v: number) => Math.max(0, Math.min(255, v + d));
-  return `#${[f(n >> 16), f((n >> 8) & 255), f(n & 255)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
-}
-
-function mix(a: string, b: string, t: number) {
-  const pa = parseInt(a.slice(1), 16);
-  const pb = parseInt(b.slice(1), 16);
-  const ch = (sh: number) => Math.round(((pa >> sh) & 255) * (1 - t) + ((pb >> sh) & 255) * t);
-  return `#${[ch(16), ch(8), ch(0)].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+function norm(r: Rect): Rect {
+  return { x0: Math.min(r.x0, r.x1), y0: Math.min(r.y0, r.y1), x1: Math.max(r.x0, r.x1), y1: Math.max(r.y0, r.y1) };
 }

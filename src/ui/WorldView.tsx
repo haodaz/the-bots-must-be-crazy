@@ -32,7 +32,7 @@ const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 export default function WorldView() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const miniRef = useRef<HTMLCanvasElement>(null);
-  const worldRef = useRef<World>(createWorld(1));
+  const worldRef = useRef<World>(createWorld(1, {}, { planet: "new" }));
   const rendererRef = useRef<MapRenderer | null>(null);
   const camRef = useRef<Camera>(fitCamera(worldRef.current));
   const zoomTargetRef = useRef<number | null>(null);
@@ -51,6 +51,12 @@ export default function WorldView() {
   const [followId, setFollowId] = useState<number | null>(null);
   const [director, setDirector] = useState(false);
   const [cutin, setCutin] = useState<Cutin | null>(null);
+  const [drawer, setDrawer] = useState(false);
+
+  // The side panel opens when something is picked, and otherwise stays out of the map's way.
+  useEffect(() => {
+    if (selection) setDrawer(true);
+  }, [selection]);
 
   const followRef = useRef(followId);
   followRef.current = followId;
@@ -84,6 +90,32 @@ export default function WorldView() {
     },
     [follow],
   );
+
+  // The board fills the window: its buffer follows the canvas size (capped, for speed).
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const fit = () => {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      let W = Math.round(el.clientWidth * dpr);
+      let H = Math.round(el.clientHeight * dpr);
+      const k = Math.min(1, 3000 / Math.max(1, W));
+      W = Math.max(1, Math.round(W * k));
+      H = Math.max(1, Math.round(H * k));
+      if (W === BUFFER.width && H === BUFFER.height && el.width === W) return;
+      const wasFit = camRef.current.s <= fitCamera(worldRef.current).s * 1.01;
+      BUFFER.width = W;
+      BUFFER.height = H;
+      el.width = W;
+      el.height = H;
+      camRef.current = wasFit ? fitCamera(worldRef.current) : clampCamera(worldRef.current, camRef.current);
+      particlesRef.current = makeParticles(worldRef.current);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     rendererRef.current = new MapRenderer();
@@ -142,7 +174,7 @@ export default function WorldView() {
       const r = rendererRef.current;
       const w = worldRef.current;
       if (canvas && r) {
-        if (canvas.width !== BUFFER.width) {
+        if (canvas.width !== BUFFER.width || canvas.height !== BUFFER.height) {
           canvas.width = BUFFER.width;
           canvas.height = BUFFER.height;
         }
@@ -172,9 +204,9 @@ export default function WorldView() {
           });
           const mini = miniRef.current;
           if (mini) {
-            if (mini.width !== w.width) {
-              mini.width = w.width;
-              mini.height = w.height;
+            if (mini.width !== 320) {
+              mini.width = 320;
+              mini.height = 120;
             }
             r.drawMini(mini.getContext("2d")!, w, cam);
           }
@@ -298,14 +330,37 @@ export default function WorldView() {
   const zoomedOut = cam.s < fitCamera(w).s * 2.2;
 
   return (
-    <main className="game">
-      <header className="hud">
-        <div className="logo">
+    <main className="board-screen">
+      <canvas
+        ref={canvasRef}
+        className="board"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onContextMenu={(e) => e.preventDefault()}
+      />
+
+      <div className="board-overlay">
+        {introOn ? (
+          <GenesisCaption t={intro} w={w} onSkip={() => setIntro(-1)} />
+        ) : (
+          <>
+            <MapLabels w={w} cam={cam} zoomedOut={zoomedOut} />
+            {cutin && (
+              <div key={cutin.key} className={`cutin ${cutin.kind}`} onAnimationEnd={() => setCutin(null)}>
+                {cutin.text}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <header className="hud-top">
+        <div className="panel plaque logo">
           The Bots Must Be Crazy
           <small>Born by the real birth lottery. One grain of compute a day. No minds yet.</small>
         </div>
-        <div className="spacer" />
-        <div className="panel clock">
+        <div className="panel plaque clock">
           <SunMoon night={night} />
           <div>
             <div className="num">Day {day}</div>
@@ -314,21 +369,17 @@ export default function WorldView() {
             </div>
           </div>
         </div>
+        <div className="spacer" />
         <div className="btn-row">
           <button className="pbtn" onClick={() => setPlaying((p) => !p)}>
             {playing ? "Pause" : "Play"}
           </button>
-          {SPEEDS.map((s, i) => (
-            <button key={s.label} className={`pbtn ${speed === i ? "on" : ""}`} onClick={() => setSpeed(i)}>
-              {s.label}
+          {SPEEDS.map((sp, i) => (
+            <button key={sp.label} className={`pbtn ${speed === i ? "on" : ""}`} onClick={() => setSpeed(i)}>
+              {sp.label}
             </button>
           ))}
-        </div>
-        <div className="btn-row">
-          <button className={`pbtn ${w.geo.kind === "earth" ? "on" : ""}`} onClick={() => startWorld("earth")}>
-            Earth
-          </button>
-          <button className={`pbtn ${w.geo.kind === "planet" ? "on" : ""}`} onClick={() => startWorld("new")}>
+          <button className="pbtn" onClick={() => startWorld("new")}>
             New planet
           </button>
           <Link className="pbtn gold" href="/report" style={{ textDecoration: "none" }}>
@@ -337,216 +388,200 @@ export default function WorldView() {
         </div>
       </header>
 
-      <div className="main">
-        <section>
-          <div className="panel screen">
-            <canvas
-              ref={canvasRef}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onContextMenu={(e) => e.preventDefault()}
-              style={{ aspectRatio: `${BUFFER.width} / ${BUFFER.height}`, touchAction: "none" }}
-            />
-            <div className="overlay">
-              {introOn ? (
-                <GenesisCaption t={intro} w={w} onSkip={() => setIntro(-1)} />
-              ) : (
-                <>
-                  <MapLabels w={w} cam={cam} zoomedOut={zoomedOut} />
-                  <div className="live-tag">
-                    <span className="chip live">● LIVE</span>
-                    <span className="chip">{w.geo.kind === "earth" ? "Earth" : `Planet ${w.geo.name}`}</span>
-                    <span className="chip">{followed ? `Following Bot #${followed.id}` : zoomedOut ? "Whole world" : "Exploring"}</span>
-                    {night && <span className="chip">Night</span>}
-                  </div>
-                  <div className="zoom-box">
-                    <button className="pbtn" onClick={() => zoomBy(1.5)} aria-label="Zoom in" style={{ pointerEvents: "auto" }}>
-                      +
-                    </button>
-                    <button className="pbtn" onClick={() => zoomBy(1 / 1.5)} aria-label="Zoom out" style={{ pointerEvents: "auto" }}>
-                      −
-                    </button>
-                    <button
-                      className="pbtn"
-                      onClick={() => {
-                        follow(null);
-                        camRef.current = fitCamera(w);
-                      }}
-                      style={{ pointerEvents: "auto" }}
-                    >
-                      Fit
-                    </button>
-                  </div>
-                  <canvas ref={miniRef} className="minimap" onPointerDown={onMini} onPointerMove={onMini} />
-                  {cutin && (
-                    <div key={cutin.key} className={`cutin ${cutin.kind}`} onAnimationEnd={() => setCutin(null)}>
-                      {cutin.text}
-                    </div>
-                  )}
-                  {followed && (
-                    <div className="lower-third">
-                      <Portrait seed={w.seed} bot={followed} size={44} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="who">
-                          Bot #{followed.id} · {followed.birth.countryName}
-                        </div>
-                        <div className="what">
-                          {stateLabel(followed)} · {fmt(followed.wallet)} metashi · {followed.birth.schoolYears} years of school
-                          {followed.birth.electricity ? "" : " · no electricity"}
-                          {lastAbout ? ` · ${lastAbout.text.replace(/^Bot #\d+ (\([^)]*\) )?/, "")}` : ""}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
+      {!introOn && (
+        <div className="hud-left">
+          <div className="btn-row">
+            <span className="chip live">● LIVE</span>
+            <span className="chip">{`Planet ${w.geo.name}`}</span>
+            <span className="chip">{followed ? `Following Bot #${followed.id}` : zoomedOut ? "Whole world" : "Exploring"}</span>
+            {night && <span className="chip">Night</span>}
+          </div>
+          <div className="btn-row">
+            <button className="pbtn" onClick={() => zoomBy(1.5)} aria-label="Zoom in">
+              +
+            </button>
+            <button className="pbtn" onClick={() => zoomBy(1 / 1.5)} aria-label="Zoom out">
+              −
+            </button>
+            <button
+              className="pbtn"
+              onClick={() => {
+                follow(null);
+                camRef.current = fitCamera(w);
+              }}
+            >
+              Fit
+            </button>
+          </div>
+          <canvas ref={miniRef} className="minimap" onPointerDown={onMini} onPointerMove={onMini} />
+        </div>
+      )}
+
+
+      {followed && !introOn && (
+        <div className="lower-third">
+          <Portrait seed={w.seed} bot={followed} size={44} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="who">
+              Bot #{followed.id} · {followed.birth.countryName}
+            </div>
+            <div className="what">
+              {stateLabel(followed)} · {fmt(followed.wallet)} metashi · {followed.birth.schoolYears} years of school
+              {followed.birth.electricity ? "" : " · no electricity"}
+              {lastAbout ? ` · ${lastAbout.text.replace(/^Bot #\d+ (\([^)]*\) )?/, "")}` : ""}
             </div>
           </div>
-          <p className="note" style={{ margin: "10px 2px 0" }}>
-            Scroll to zoom · drag to draw a selection box · right-drag or shift-drag to move · click a bot or a country · the minimap jumps
-          </p>
+        </div>
+      )}
 
-          <div className="channels">
-            <button className={`channel ${followId == null ? "on" : ""}`} onClick={() => (follow(null), (camRef.current = fitCamera(w)))}>
-              <WideIcon />
-              <span>
-                <div className="t">Whole world</div>
-                <div className="s">Wide shot</div>
-              </span>
-            </button>
-            {chans.map((ch) => (
-              <button
-                key={ch.key}
-                className={`channel ${followId === ch.id ? "on" : ""}`}
-                onClick={() => {
-                  follow(ch.id);
-                  setSelection({ kind: "bot", id: ch.id });
-                }}
-              >
-                <Portrait seed={w.seed} bot={w.bots[ch.id]} size={34} />
-                <span style={{ minWidth: 0 }}>
-                  <div className="t">{ch.label}</div>
-                  <div className="s">
-                    #{ch.id} · {w.bots[ch.id].birth.countryName}
-                  </div>
-                </span>
-              </button>
-            ))}
-            <button className={`channel ${director ? "on" : ""}`} onClick={() => setDirector((d) => !d)}>
-              <DirectorIcon />
-              <span>
-                <div className="t">Director {director ? "on" : "off"}</div>
-                <div className="s">Cuts to big moments</div>
-              </span>
-            </button>
-          </div>
-        </section>
+      {!introOn && (
+        <aside className={`drawer ${drawer ? "" : "closed"}`}>
+          <button className="pbtn drawer-tab" onClick={() => setDrawer((d) => !d)} aria-label={drawer ? "Hide panel" : "Show panel"}>
+            {drawer ? "›" : "‹"}
+          </button>
+          <div className="drawer-body">
+            {selection?.kind === "bot" ? (
+              <BotCard
+                w={w}
+                bot={w.bots[selection.id]}
+                following={followId === selection.id}
+                onFollow={() => follow(followId === selection.id ? null : selection.id)}
+                onCountry={() => setSelection({ kind: "country", ci: w.bots[selection.id].birth.countryIdx })}
+              />
+            ) : selection?.kind === "country" ? (
+              <CountryCard w={w} ci={selection.ci} onBot={(id) => setSelection({ kind: "bot", id })} />
+            ) : selection?.kind === "area" ? (
+              <AreaCard w={w} rect={selection.rect} onBot={(id) => setSelection({ kind: "bot", id })} onCountry={(ci) => setSelection({ kind: "country", ci })} />
+            ) : (
+              <div className="panel">
+                <div className="panel-h">How to watch</div>
+                <div className="panel-b" style={{ fontSize: 13.5, lineHeight: 1.55 }}>
+                  Gold is money: it glows where an economy is, like lamplight. Bots work there to earn it and spend it back on food.
+                  Scroll to zoom, drag a box to see everyone in an area, right-drag to move. Click a bot for its birth certificate,
+                  or a nation for its story.
+                </div>
+              </div>
+            )}
 
-        <aside className="side">
-          {selection?.kind === "bot" ? (
-            <BotCard
-              w={w}
-              bot={w.bots[selection.id]}
-              following={followId === selection.id}
-              onFollow={() => follow(followId === selection.id ? null : selection.id)}
-              onCountry={() => setSelection({ kind: "country", ci: w.bots[selection.id].birth.countryIdx })}
-            />
-          ) : selection?.kind === "country" ? (
-            <CountryCard w={w} ci={selection.ci} onBot={(id) => setSelection({ kind: "bot", id })} />
-          ) : selection?.kind === "area" ? (
-            <AreaCard w={w} rect={selection.rect} onBot={(id) => setSelection({ kind: "bot", id })} onCountry={(ci) => setSelection({ kind: "country", ci })} />
-          ) : (
             <div className="panel">
-              <div className="panel-h">How to watch</div>
-              <div className="panel-b" style={{ fontSize: 13.5, lineHeight: 1.55 }}>
-                Gold is money: it glows where an economy is, like city lights at night. Bots work there to earn it and spend it back
-                on food. Click a bot for its birth certificate, a country for its story, or drag a box to see everyone in an area.
+              <div className="panel-h">
+                <span>Minds</span>
+                <span className="chip">$0.00 today</span>
+              </div>
+              <div className="panel-b">
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <Jar />
+                  <p className="note" style={{ margin: 0 }}>
+                    No grain of real compute yet. When it arrives, you choose who wakes.
+                  </p>
+                </div>
+                <div className="kv" style={{ marginTop: 10 }}>
+                  <span className="k">Waiting to wake, by need</span>
+                  <span className="v" style={{ color: COL.need }}>
+                    {c.readyByNeed}
+                  </span>
+                </div>
+                <div className="kv">
+                  <span className="k">Waiting to wake, by plenty</span>
+                  <span className="v" style={{ color: "#a7781a" }}>
+                    {c.readyByPlenty}
+                  </span>
+                </div>
               </div>
             </div>
-          )}
 
-          <div className="panel">
-            <div className="panel-h">
-              <span>Minds</span>
-              <span className="chip">$0.00 today</span>
+            <div className="panel">
+              <div className="panel-h">
+                <span>The ledger</span>
+                <span className="chip gold">{l.total === LAWS.SUPPLY ? "law holds" : "law broken"}</span>
+              </div>
+              <div className="panel-b">
+                <div className="kv">
+                  <span className="k">Still in the sky</span>
+                  <span className="v">{fmt(l.sky)}</span>
+                </div>
+                <div className="kv">
+                  <span className="k">In the economies</span>
+                  <span className="v">{fmt(l.economy)}</span>
+                </div>
+                <div className="kv">
+                  <span className="k">In pockets</span>
+                  <span className="v">{fmt(l.pockets)}</span>
+                </div>
+                <div className="kv">
+                  <span className="k">In treasuries</span>
+                  <span className="v">{fmt(l.treasuries)}</span>
+                </div>
+                <div className="kv" style={{ borderTop: "2px dashed var(--line)", marginTop: 4, paddingTop: 6 }}>
+                  <span style={{ fontWeight: 600 }}>Total metashi</span>
+                  <span className="v">{fmt(l.total)}</span>
+                </div>
+                <div className="kv">
+                  <span className="k">Next halving rain</span>
+                  <span className="v">
+                    {fmt(nextRain)} in {(nextRainIn / LAWS.DAY_TICKS).toFixed(1)} d
+                  </span>
+                </div>
+                <div className="kv">
+                  <span className="k">Richest ten hold</span>
+                  <span className="v">{Math.round(c.top10Share * 100)}%</span>
+                </div>
+              </div>
             </div>
-            <div className="panel-b">
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                <Jar />
-                <p className="note" style={{ margin: 0 }}>
-                  No grain of real compute yet. When it arrives, you choose who wakes.
-                </p>
-              </div>
-              <div className="kv" style={{ marginTop: 10 }}>
-                <span className="k">Waiting to wake, by need</span>
-                <span className="v" style={{ color: COL.need }}>
-                  {c.readyByNeed}
-                </span>
-              </div>
-              <div className="kv">
-                <span className="k">Waiting to wake, by plenty</span>
-                <span className="v" style={{ color: "#a7781a" }}>
-                  {c.readyByPlenty}
-                </span>
-              </div>
-            </div>
-          </div>
 
-          <div className="panel">
-            <div className="panel-h">
-              <span>The ledger</span>
-              <span className="chip gold">{l.total === LAWS.SUPPLY ? "law holds" : "law broken"}</span>
-            </div>
-            <div className="panel-b">
-              <div className="kv">
-                <span className="k">Still in the sky</span>
-                <span className="v">{fmt(l.sky)}</span>
+            <div className="panel">
+              <div className="panel-h">What happened</div>
+              <div className="panel-b">
+                <ul className="events">
+                  {[...w.events].reverse().map((e, i) => (
+                    <li key={`${e.tick}-${i}`}>
+                      <span className="t">d{Math.floor(e.tick / LAWS.DAY_TICKS) + 1}</span>
+                      {e.text}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div className="kv">
-                <span className="k">In the economies</span>
-                <span className="v">{fmt(l.economy)}</span>
-              </div>
-              <div className="kv">
-                <span className="k">In pockets</span>
-                <span className="v">{fmt(l.pockets)}</span>
-              </div>
-              <div className="kv">
-                <span className="k">In treasuries</span>
-                <span className="v">{fmt(l.treasuries)}</span>
-              </div>
-              <div className="kv" style={{ borderTop: "2px dashed var(--line)", marginTop: 4, paddingTop: 6 }}>
-                <span style={{ fontWeight: 600 }}>Total metashi</span>
-                <span className="v">{fmt(l.total)}</span>
-              </div>
-              <div className="kv">
-                <span className="k">Next halving rain</span>
-                <span className="v">
-                  {fmt(nextRain)} in {(nextRainIn / LAWS.DAY_TICKS).toFixed(1)} d
-                </span>
-              </div>
-              <div className="kv">
-                <span className="k">Richest ten hold</span>
-                <span className="v">{Math.round(c.top10Share * 100)}%</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="panel">
-            <div className="panel-h">What happened</div>
-            <div className="panel-b">
-              <ul className="events">
-                {[...w.events].reverse().map((e, i) => (
-                  <li key={`${e.tick}-${i}`}>
-                    <span className="t">d{Math.floor(e.tick / LAWS.DAY_TICKS) + 1}</span>
-                    {e.text}
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
         </aside>
-      </div>
+      )}
+
+      {!introOn && (
+        <div className="tray">
+          <button className={`channel ${followId == null ? "on" : ""}`} onClick={() => (follow(null), (camRef.current = fitCamera(w)))}>
+            <WideIcon />
+            <span>
+              <div className="t">Whole world</div>
+              <div className="s">Wide shot</div>
+            </span>
+          </button>
+          {chans.map((ch) => (
+            <button
+              key={ch.key}
+              className={`channel ${followId === ch.id ? "on" : ""}`}
+              onClick={() => {
+                follow(ch.id);
+                setSelection({ kind: "bot", id: ch.id });
+              }}
+            >
+              <Portrait seed={w.seed} bot={w.bots[ch.id]} size={34} />
+              <span style={{ minWidth: 0 }}>
+                <div className="t">{ch.label}</div>
+                <div className="s">
+                  #{ch.id} · {w.bots[ch.id].birth.countryName}
+                </div>
+              </span>
+            </button>
+          ))}
+          <button className={`channel ${director ? "on" : ""}`} onClick={() => setDirector((d) => !d)}>
+            <DirectorIcon />
+            <span>
+              <div className="t">Director {director ? "on" : "off"}</div>
+              <div className="s">Cuts to big moments</div>
+            </span>
+          </button>
+        </div>
+      )}
     </main>
   );
 }
@@ -687,7 +722,7 @@ function GenesisCaption({ t, w, onSkip }: { t: number; w: World; onSkip: () => v
     big = `${fmt(k * rainOf(0))} metashi`;
     line = t < INTRO.burst ? "On the way down, it turned to gold: the first of 21,000,000." : "It landed the way the world's wealth lands today.";
   } else if (t < INTRO.borders) {
-    line = w.geo.kind === "earth" ? "217 countries, drawn from the real world." : `A new planet, ${w.geo.name}. The 217 countries on it are real.`;
+    line = `A new planet, ${w.geo.name}: ${w.countries.length} nations, each one drawn from a real country.`;
   } else {
     const born = Math.floor(clamp01((t - INTRO.borders) / (INTRO.born - INTRO.borders)) * LAWS.POPULATION);
     big = `${born} born`;

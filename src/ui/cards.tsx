@@ -182,6 +182,7 @@ export function BotCard({
           <Row k="Bank account" v={bot.birth.account ? "yes" : "no, help can't reach it"} />
           <Row k="An hour of work earns" v={wageFor(bot.birth.schoolYears, bot.birth.tools)} num />
           <Row k="A meal costs here" v={home.foodPrice} num />
+          <Row k="Real-world twin" v="sealed until its life ends" />
         </div>
 
         <div className="cert">
@@ -242,7 +243,7 @@ export function CountryCard({ w, ci, onBot }: { w: World; ci: number; onBot: (id
       <div className="panel-b">
         <Vignette w={w} tiles={c.tiles} people={residents.length} seed={ci} />
         <p className="note" style={{ marginTop: 8 }}>
-          {w.geo.kind === "earth" ? "On Earth" : `On ${w.geo.name}`}: {c.tiles.length} tiles, mostly {TERRAIN_NAMES[mainTerrain]}.
+          In {w.lands[c.land].name}, on {w.geo.kind === "earth" ? "Earth" : w.geo.name}: {c.tiles.length} tiles, mostly {TERRAIN_NAMES[mainTerrain]}.
         </p>
 
         <div className="cert">
@@ -255,7 +256,7 @@ export function CountryCard({ w, ci, onBot }: { w: World; ci: number; onBot: (id
           <Row k="Bank accounts" v={pct(real.accountPct)} num />
           <Row k="Richest 10% hold" v={`${pct(real.top10Share)} of income`} num />
           <p className="note" style={{ marginTop: 4 }}>
-            World Bank Open Data.{real.filled.length ? ` Filled from the regional median: ${real.filled.join(", ")}.` : ""}
+            These numbers belong to a real country (World Bank Open Data). Which one stays sealed until the end.
           </p>
         </div>
 

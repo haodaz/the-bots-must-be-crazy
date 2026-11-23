@@ -82,7 +82,7 @@ export function measure(w: World): Metrics {
     lands: w.lands.map((l, i) => {
       const bots = w.bots.filter((b) => b.birth.land === i);
       return {
-        short: l.short,
+        short: l.realShort,
         bots: bots.length,
         starvingTicks: bots.reduce((a, b) => a + b.life.ticksStarving, 0),
         wallets: bots.map((b) => b.wallet),

@@ -23,8 +23,12 @@ export type WakeReason = "need" | "plenty";
 
 /** What a bot drew at birth. Every field comes from real-world numbers for its country. */
 export type Birth = {
+  /** ISO code of the real country behind its nation. */
   country: string;
+  /** The nation's name in this world. */
   countryName: string;
+  /** The real country whose numbers it was born with: revealed only at the end of its life. */
+  realCountry: string;
   /** Index into EARTH.countries and world.countries. */
   countryIdx: number;
   /** Region (one of the seven), index into world.lands. */
@@ -79,7 +83,10 @@ export type Bot = {
 };
 
 export type WorldCountry = {
+  /** Its name in this world. */
   name: string;
+  /** The real country it stands for: revealed only at the end. */
+  realName: string;
   iso3: string;
   land: number;
   foodPrice: number;
@@ -94,7 +101,8 @@ export type WorldCountry = {
   reach: number[][];
 };
 
-export type Region = { name: string; short: string };
+/** One of the seven lands: a made-up name in the world, a real region behind it. */
+export type Region = { name: string; short: string; realName: string; realShort: string };
 
 /** Counters per region, for the impact report. */
 export type LandStats = {
@@ -202,7 +210,7 @@ export function createWorld(seed: number, levers: Levers = {}, opts: { planet?: 
     height: geo.height,
     money: new Array(geo.width * geo.height).fill(0),
     countries: [],
-    lands: earth.lands.map((l) => ({ name: l.name, short: l.short })),
+    lands: earth.lands.map((l, i) => ({ name: geo.landNames[i], short: geo.landNames[i], realName: l.name, realShort: l.short })),
     bots: [],
     events: [],
     sky: LAWS.SUPPLY,
@@ -239,7 +247,8 @@ export function createWorld(seed: number, levers: Levers = {}, opts: { planet?: 
         .map(([t]) => t),
     );
     w.countries.push({
-      name: c.name,
+      name: geo.nationNames[i],
+      realName: c.name,
       iso3: c.iso3,
       land: earth.lands.findIndex((l) => l.name === c.region),
       foodPrice: Math.max(1, Math.round((LAWS.FOOD_PRICE * rel * worldProductivity) / productivity(c, levers))),
@@ -299,7 +308,8 @@ export function createWorld(seed: number, levers: Levers = {}, opts: { planet?: 
       hunger,
       birth: {
         country: country.iso3,
-        countryName: country.name,
+        countryName: home.name,
+        realCountry: country.name,
         countryIdx: ci,
         land: home.land,
         familyRank,

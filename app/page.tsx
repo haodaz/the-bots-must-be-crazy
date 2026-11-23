@@ -1,5 +1,5 @@
-import WorldView from "@/ui/WorldView";
+import ClientWorld from "@/ui/ClientWorld";
 
 export default function Home() {
-  return <WorldView />;
+  return <ClientWorld />;
 }

@@ -3,6 +3,7 @@
 // each given land in proportion to its real area, so the birth lottery underneath stays real.
 
 import { EARTH, type Earth } from "./earth.ts";
+import { landNames, nationNames } from "./names.ts";
 import { nextFloat, nextInt, type HasRng } from "./rng.ts";
 
 export const TERRAIN = { SEA: 0, ICE: 1, TUNDRA: 2, FOREST: 3, GRASS: 4, DESERT: 5, MOUNTAIN: 6 } as const;
@@ -27,6 +28,9 @@ export type Geography = {
   /** Capital tile per country index, or −1 if the country has no land here. */
   capitals: number[];
   palette: Palette;
+  /** What the nations and lands are called in this world (made up on a planet). */
+  nationNames: string[];
+  landNames: string[];
 };
 
 export const WIDTH = 160;
@@ -243,7 +247,12 @@ export function generatePlanet(seed: number, earth: Earth = EARTH): Geography {
 
   // Seven regions, as big as the real ones are (by land area).
   const regionTargets = earth.lands.map((l) => Math.max(10, Math.round(landTiles.length * l.landShare)));
-  const order = earth.lands.map((_, i) => i).sort(() => nextFloat(s) - 0.5);
+  // Shuffle which land grows from which seed (Fisher–Yates: the same on every JavaScript engine).
+  const order = earth.lands.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = nextInt(s, 0, i);
+    [order[i], order[j]] = [order[j], order[i]];
+  }
   const regionSeeds = spreadSeeds(landTiles, order.length, s);
   const regionOwner = grow(
     landTiles,
@@ -318,6 +327,8 @@ export function generatePlanet(seed: number, earth: Earth = EARTH): Geography {
   return {
     kind: "planet",
     name: planetName(s),
+    nationNames: nationNames(s, earth.countries.length),
+    landNames: landNames(s, earth.lands.length),
     width: WIDTH,
     height: HEIGHT,
     cells,
@@ -339,6 +350,8 @@ export function earthGeography(earth: Earth = EARTH): Geography {
   return {
     kind: "earth",
     name: "Earth",
+    nationNames: earth.countries.map((c) => c.name),
+    landNames: earth.lands.map((l) => l.short),
     width: m.width,
     height: m.height,
     cells: [...m.cells],
