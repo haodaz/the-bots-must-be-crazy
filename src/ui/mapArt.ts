@@ -85,8 +85,21 @@ function seaDistance(land: Uint8Array, w: number, h: number) {
   return d;
 }
 
-/** The painted planet, plus a tile of the same bare paper so the sea can run on past the map's edges. */
-export type MapArt = { canvas: HTMLCanvasElement; paper: HTMLCanvasElement; landMask: Uint8Array; maskW: number; maskH: number };
+/**
+ * The painted planet; the same planet without its ink lines (for close up, where the ink is drawn live and sharp);
+ * a tile of the bare paper so the sea runs on past the map's edges; and the fields the coastline is traced from.
+ */
+export type MapArt = {
+  canvas: HTMLCanvasElement;
+  plain: HTMLCanvasElement;
+  paper: HTMLCanvasElement;
+  landMask: Uint8Array;
+  maskW: number;
+  maskH: number;
+  soft: Float32Array;
+  dist: Float32Array;
+  sharp?: Sharp;
+};
 
 /** Words painted on the map (in the reader's language). */
 export type ArtCaption = { title: string; sub: string };
@@ -112,6 +125,8 @@ export function buildArt(w: World, caption?: ArtCaption): MapArt {
   const sctx = small.getContext("2d")!;
   const img = sctx.createImageData(mw, mh);
   const px = img.data;
+  const plainImg = sctx.createImageData(mw, mh);
+  const pp = plainImg.data;
   const terrainSoft = new Map<number, Float32Array>();
   for (const t of [1, 2, 3, 4, 5, 6]) {
     const f = new Float32Array(mw * mh);
@@ -123,6 +138,7 @@ export function buildArt(w: World, caption?: ArtCaption): MapArt {
       const i = y * mw + x;
       const n = (hash(i) - 0.5) * 10 + (hash((x >> 3) * 977 + (y >> 3) * 131) - 0.5) * 8;
       let c: number[];
+      let plain: number[];
       if (land[i]) {
         // Land: parchment tan, tinted by the terrain around it.
         let r = LAND[0];
@@ -136,12 +152,14 @@ export function buildArt(w: World, caption?: ArtCaption): MapArt {
           b = b * (1 - k) + TINT[t][2] * k;
         }
         c = [r, g, b];
+        plain = c;
         const coast =
           (x > 0 && !land[i - 1]) || (x < mw - 1 && !land[i + 1]) || (y > 0 && !land[i - mw]) || (y < mh - 1 && !land[i + mw]);
         if (coast) c = INK;
       } else {
         // Sea: the bare paper, with ink ripples following the coast.
         c = PAPER.slice();
+        plain = c;
         const d = dist[i];
         const ripple = (at: number, a: number) => (Math.abs(d - at) < 0.6 ? a : 0);
         const k = Math.max(ripple(3.5, 0.42), ripple(8, 0.26), ripple(14, 0.14));
@@ -151,9 +169,17 @@ export function buildArt(w: World, caption?: ArtCaption): MapArt {
       px[i * 4 + 1] = Math.max(0, Math.min(255, c[1] + n));
       px[i * 4 + 2] = Math.max(0, Math.min(255, c[2] + n * 0.8));
       px[i * 4 + 3] = 255;
+      pp[i * 4] = Math.max(0, Math.min(255, plain[0] + n));
+      pp[i * 4 + 1] = Math.max(0, Math.min(255, plain[1] + n));
+      pp[i * 4 + 2] = Math.max(0, Math.min(255, plain[2] + n * 0.8));
+      pp[i * 4 + 3] = 255;
     }
   }
   sctx.putImageData(img, 0, 0);
+  const smallPlain = document.createElement("canvas");
+  smallPlain.width = mw;
+  smallPlain.height = mh;
+  smallPlain.getContext("2d")!.putImageData(plainImg, 0, 0);
 
   // 3. Scale up softly to full art resolution, then draw ink on top.
   const canvas = document.createElement("canvas");
@@ -164,67 +190,95 @@ export function buildArt(w: World, caption?: ArtCaption): MapArt {
   ctx.drawImage(small, 0, 0, canvas.width, canvas.height);
   const onLand = (ax: number, ay: number) => land[Math.floor(ay / (ART / M)) * mw + Math.floor(ax / (ART / M))] === 1;
 
+  // 3–4. Terrain glyphs and dotted borders (the same code draws them live, sharp, when the camera is close).
+  inkTerrain(ctx, w, ART, 1, onLand, 0, 0, w.width, w.height);
+  inkBorders(ctx, w, ART, 1, 0, 0, w.width, w.height);
+
+  // 5. A compass rose in the emptiest stretch of sea, and a cartouche with the planet's name.
+  const spot = emptiestSea(w, land, mw, mh);
+  compass(ctx, spot.x * (ART / M), spot.y * (ART / M), ART * 3.2);
+  cartouche(ctx, w, land, mw, mh, caption);
+
+  // The same planet without ink, for close up: washes, compass and cartouche only.
+  const plainCanvas = document.createElement("canvas");
+  plainCanvas.width = canvas.width;
+  plainCanvas.height = canvas.height;
+  const pctx = plainCanvas.getContext("2d")!;
+  pctx.imageSmoothingEnabled = true;
+  pctx.drawImage(smallPlain, 0, 0, canvas.width, canvas.height);
+  compass(pctx, spot.x * (ART / M), spot.y * (ART / M), ART * 3.2);
+  cartouche(pctx, w, land, mw, mh, caption);
+
+  // The edges are aged on the screen, not on the map, so the planet sits in one sea that fills the window.
+  return { canvas, plain: plainCanvas, paper: paperTile(), landMask: land, maskW: mw, maskH: mh, soft, dist };
+}
+
+/**
+ * The terrain glyphs (mountains, trees, dunes, stipple, ice, grass) for tiles x0..x1, y0..y1, with A pixels per
+ * tile and line widths times L. Used once at art scale, and live, sharp, when the camera is close.
+ */
+export function inkTerrain(ctx: CanvasRenderingContext2D, w: World, A: number, L: number, onLand: (ax: number, ay: number) => boolean, x0: number, y0: number, x1: number, y1: number) {
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  for (let ty = 0; ty < w.height; ty++) {
-    for (let tx = 0; tx < w.width; tx++) {
+  for (let ty = Math.max(0, y0); ty < Math.min(w.height, y1); ty++) {
+    for (let tx = Math.max(0, x0); tx < Math.min(w.width, x1); tx++) {
       const i = ty * w.width + tx;
-      const t = geo.terrain[i];
+      const t = w.geo.terrain[i];
       if (!t) continue;
-      const X = tx * ART;
-      const Y = ty * ART;
+      const X = tx * A;
+      const Y = ty * A;
       const r = hash(i * 7 + 3);
       ctx.strokeStyle = `rgba(${INK.join(",")}, 0.75)`;
       ctx.fillStyle = `rgba(${INK.join(",")}, 0.22)`;
-      ctx.lineWidth = 1.4;
+      ctx.lineWidth = 1.4 * L;
       if (t === 6 && r < 0.8) {
         // A little inked mountain, shaded on one side.
-        const cx = X + ART * (0.3 + hash(i) * 0.4);
-        const base = Y + ART * 0.8;
-        const hgt = ART * (0.55 + hash(i + 9) * 0.3);
+        const cx = X + A * (0.3 + hash(i) * 0.4);
+        const base = Y + A * 0.8;
+        const hgt = A * (0.55 + hash(i + 9) * 0.3);
         if (!onLand(cx, base)) continue;
         ctx.beginPath();
-        ctx.moveTo(cx - ART * 0.42, base);
+        ctx.moveTo(cx - A * 0.42, base);
         ctx.lineTo(cx, base - hgt);
-        ctx.lineTo(cx + ART * 0.42, base);
+        ctx.lineTo(cx + A * 0.42, base);
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(cx, base - hgt);
-        ctx.lineTo(cx + ART * 0.42, base);
-        ctx.lineTo(cx + ART * 0.08, base);
+        ctx.lineTo(cx + A * 0.42, base);
+        ctx.lineTo(cx + A * 0.08, base);
         ctx.closePath();
         ctx.fill();
       } else if (t === 3 && r < 0.75) {
         // Two or three small trees.
         for (let k = 0; k < 2 + Math.floor(hash(i + 5) * 2); k++) {
-          const cx = X + ART * (0.2 + hash(i * 3 + k) * 0.6);
-          const cy = Y + ART * (0.35 + hash(i * 5 + k) * 0.45);
-          if (!onLand(cx, cy + 4)) continue;
+          const cx = X + A * (0.2 + hash(i * 3 + k) * 0.6);
+          const cy = Y + A * (0.35 + hash(i * 5 + k) * 0.45);
+          if (!onLand(cx, cy + A * 0.2)) continue;
           ctx.beginPath();
-          ctx.arc(cx, cy, ART * 0.16, 0, Math.PI * 2);
+          ctx.arc(cx, cy, A * 0.16, 0, Math.PI * 2);
           ctx.fillStyle = "rgba(96, 112, 64, 0.55)";
           ctx.fill();
           ctx.stroke();
           ctx.beginPath();
-          ctx.moveTo(cx, cy + ART * 0.16);
-          ctx.lineTo(cx, cy + ART * 0.3);
+          ctx.moveTo(cx, cy + A * 0.16);
+          ctx.lineTo(cx, cy + A * 0.3);
           ctx.stroke();
         }
       } else if (t === 5) {
         // Desert stipple.
         ctx.fillStyle = `rgba(${INK.join(",")}, 0.35)`;
         for (let k = 0; k < 6; k++) {
-          const dx = X + hash(i * 11 + k) * ART;
-          const dy = Y + hash(i * 13 + k) * ART;
-          if (onLand(dx, dy)) ctx.fillRect(dx, dy, 1.6, 1.6);
+          const dx = X + hash(i * 11 + k) * A;
+          const dy = Y + hash(i * 13 + k) * A;
+          if (onLand(dx, dy)) ctx.fillRect(dx, dy, 1.6 * L, 1.6 * L);
         }
         if (r < 0.25) {
           // A dune line.
-          const cx = X + ART * 0.5;
-          const cy = Y + ART * 0.6;
+          const cx = X + A * 0.5;
+          const cy = Y + A * 0.6;
           if (onLand(cx, cy)) {
             ctx.beginPath();
-            ctx.arc(cx, cy + ART * 0.3, ART * 0.38, Math.PI * 1.15, Math.PI * 1.85);
+            ctx.arc(cx, cy + A * 0.3, A * 0.38, Math.PI * 1.15, Math.PI * 1.85);
             ctx.stroke();
           }
         }
@@ -232,59 +286,150 @@ export function buildArt(w: World, caption?: ArtCaption): MapArt {
         // Ice hatching.
         ctx.strokeStyle = `rgba(${INK.join(",")}, 0.3)`;
         for (let k = 0; k < 2; k++) {
-          const sx = X + hash(i * 17 + k) * ART * 0.6;
-          const sy = Y + ART * (0.3 + k * 0.35);
+          const sx = X + hash(i * 17 + k) * A * 0.6;
+          const sy = Y + A * (0.3 + k * 0.35);
           if (!onLand(sx, sy)) continue;
           ctx.beginPath();
           ctx.moveTo(sx, sy);
-          ctx.lineTo(sx + ART * 0.4, sy);
+          ctx.lineTo(sx + A * 0.4, sy);
           ctx.stroke();
         }
       } else if (t === 4 && r < 0.2) {
         // A tuft of grass.
-        const cx = X + ART * 0.5;
-        const cy = Y + ART * 0.65;
+        const cx = X + A * 0.5;
+        const cy = Y + A * 0.65;
         if (!onLand(cx, cy)) continue;
         ctx.strokeStyle = `rgba(${INK.join(",")}, 0.45)`;
         ctx.beginPath();
-        ctx.moveTo(cx - 3, cy - 4);
+        ctx.moveTo(cx - A * 0.15, cy - A * 0.2);
         ctx.lineTo(cx, cy);
-        ctx.lineTo(cx + 3, cy - 4);
+        ctx.lineTo(cx + A * 0.15, cy - A * 0.2);
         ctx.stroke();
       }
     }
   }
 
-  // 4. Dotted borders between nations.
+}
+
+/** Dotted borders between nations for tiles x0..x1, y0..y1, with A pixels per tile and line widths times L. */
+export function inkBorders(ctx: CanvasRenderingContext2D, w: World, A: number, L: number, x0: number, y0: number, x1: number, y1: number) {
   ctx.strokeStyle = `rgba(${INK.join(",")}, 0.5)`;
-  ctx.lineWidth = 1.6;
-  ctx.setLineDash([2, 4]);
+  ctx.lineWidth = 1.6 * L;
+  ctx.setLineDash([2 * L, 4 * L]);
   ctx.beginPath();
-  for (let ty = 0; ty < w.height; ty++) {
-    for (let tx = 0; tx < w.width; tx++) {
+  for (let ty = Math.max(0, y0); ty < Math.min(w.height, y1); ty++) {
+    for (let tx = Math.max(0, x0); tx < Math.min(w.width, x1); tx++) {
       const i = ty * w.width + tx;
-      const c = geo.cells[i];
+      const c = w.geo.cells[i];
       if (c < 0) continue;
-      if (tx + 1 < w.width && geo.cells[i + 1] >= 0 && geo.cells[i + 1] !== c) {
-        ctx.moveTo((tx + 1) * ART, ty * ART);
-        ctx.lineTo((tx + 1) * ART, (ty + 1) * ART);
+      if (tx + 1 < w.width && w.geo.cells[i + 1] >= 0 && w.geo.cells[i + 1] !== c) {
+        ctx.moveTo((tx + 1) * A, ty * A);
+        ctx.lineTo((tx + 1) * A, (ty + 1) * A);
       }
-      if (ty + 1 < w.height && geo.cells[i + w.width] >= 0 && geo.cells[i + w.width] !== c) {
-        ctx.moveTo(tx * ART, (ty + 1) * ART);
-        ctx.lineTo((tx + 1) * ART, (ty + 1) * ART);
+      if (ty + 1 < w.height && w.geo.cells[i + w.width] >= 0 && w.geo.cells[i + w.width] !== c) {
+        ctx.moveTo(tx * A, (ty + 1) * A);
+        ctx.lineTo((tx + 1) * A, (ty + 1) * A);
       }
     }
   }
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // 5. A compass rose in the emptiest stretch of sea, and a cartouche with the planet's name.
-  const spot = emptiestSea(w, land, mw, mh);
-  compass(ctx, spot.x * (ART / M), spot.y * (ART / M), ART * 3.2);
-  cartouche(ctx, w, land, mw, mh, caption);
+}
 
-  // The edges are aged on the screen, not on the map, so the planet sits in one sea that fills the window.
-  return { canvas, paper: paperTile(), landMask: land, maskW: mw, maskH: mh };
+// ---- Close up: the ink drawn live, so lines stay sharp however close the camera goes. ----
+
+/** Mask pixels per chunk: contour paths are kept in chunks so only the visible ones are stroked. */
+const CHUNK = 40;
+type Contours = Map<number, Path2D>;
+type Sharp = { coast: Contours; ripples: [Contours, number][] };
+
+/** Marching squares: the line where a field crosses a level, as short segments in mask pixels, chunked. */
+function contours(field: Float32Array, mw: number, mh: number, level: number): Contours {
+  const out: Contours = new Map();
+  const nx = Math.ceil(mw / CHUNK);
+  const at = (x: number, y: number) => field[y * mw + x];
+  // Segments by case (corners a=8 top-left, b=4 top-right, c=2 bottom-right, d=1 bottom-left);
+  // edges 0 top, 1 right, 2 bottom, 3 left.
+  const TABLE: number[][] = [[], [3, 2], [2, 1], [3, 1], [0, 1], [3, 0, 2, 1], [0, 2], [3, 0], [3, 0], [0, 2], [0, 1, 3, 2], [0, 1], [3, 1], [2, 1], [3, 2], []];
+  for (let y = 0; y < mh - 1; y++)
+    for (let x = 0; x < mw - 1; x++) {
+      const a = at(x, y);
+      const b = at(x + 1, y);
+      const c = at(x + 1, y + 1);
+      const d = at(x, y + 1);
+      const k = (a >= level ? 8 : 0) | (b >= level ? 4 : 0) | (c >= level ? 2 : 0) | (d >= level ? 1 : 0);
+      const segs = TABLE[k];
+      if (!segs.length) continue;
+      const f = (u: number, v: number) => (v === u ? 0.5 : (level - u) / (v - u));
+      const edge = (e: number): [number, number] =>
+        e === 0 ? [x + 0.5 + f(a, b), y + 0.5] : e === 1 ? [x + 1.5, y + 0.5 + f(b, c)] : e === 2 ? [x + 0.5 + f(d, c), y + 1.5] : [x + 0.5, y + 0.5 + f(a, d)];
+      const key = Math.floor(y / CHUNK) * nx + Math.floor(x / CHUNK);
+      let path = out.get(key);
+      if (!path) out.set(key, (path = new Path2D()));
+      for (let j = 0; j < segs.length; j += 2) {
+        const [x0, y0] = edge(segs[j]);
+        const [x1, y1] = edge(segs[j + 1]);
+        path.moveTo(x0, y0);
+        path.lineTo(x1, y1);
+      }
+    }
+  return out;
+}
+
+/**
+ * Draw the map's ink live over the plain planet: coastline and ripples traced from the land's smooth shape, then
+ * terrain glyphs and borders for the visible tiles. ox, oy, s are the camera's offset and pixels per tile.
+ */
+export function drawSharpInk(ctx: CanvasRenderingContext2D, w: World, art: MapArt, ox: number, oy: number, s: number, tx0: number, ty0: number, tx1: number, ty1: number) {
+  const { maskW: mw, maskH: mh } = art;
+  if (!art.sharp)
+    art.sharp = {
+      coast: contours(art.soft, mw, mh, 0.5),
+      ripples: [
+        [contours(art.dist, mw, mh, 3.5), 0.42],
+        [contours(art.dist, mw, mh, 8), 0.26],
+        [contours(art.dist, mw, mh, 14), 0.14],
+      ],
+    };
+  const L = Math.min(4, Math.sqrt(s / ART));
+  const k = s / M; // screen pixels per mask pixel
+  const nx = Math.ceil(mw / CHUNK);
+  const cx0 = Math.max(0, Math.floor((tx0 * M) / CHUNK));
+  const cy0 = Math.max(0, Math.floor((ty0 * M) / CHUNK));
+  const cx1 = Math.min(nx - 1, Math.floor((tx1 * M) / CHUNK));
+  const cy1 = Math.min(Math.ceil(mh / CHUNK) - 1, Math.floor((ty1 * M) / CHUNK));
+  const stroke = (set: Contours) => {
+    for (let cy = cy0; cy <= cy1; cy++)
+      for (let cx = cx0; cx <= cx1; cx++) {
+        const path = set.get(cy * nx + cx);
+        if (path) ctx.stroke(path);
+      }
+  };
+  ctx.save();
+  ctx.setTransform(k, 0, 0, k, ox, oy);
+  ctx.lineCap = "round";
+  for (const [set, alpha] of art.sharp.ripples) {
+    ctx.strokeStyle = `rgba(${INK.join(",")}, ${alpha})`;
+    ctx.lineWidth = (1.1 * L) / k;
+    stroke(set);
+  }
+  ctx.strokeStyle = `rgb(${INK.join(",")})`;
+  ctx.lineWidth = (2.2 * L) / k;
+  stroke(art.sharp.coast);
+  ctx.restore();
+
+  const land = art.landMask;
+  const onLand = (ax: number, ay: number) => {
+    const mx = Math.floor(ax / (s / M));
+    const my = Math.floor(ay / (s / M));
+    return mx >= 0 && my >= 0 && mx < mw && my < mh && land[my * mw + mx] === 1;
+  };
+  ctx.save();
+  ctx.translate(ox, oy);
+  inkTerrain(ctx, w, s, L, onLand, tx0, ty0, tx1, ty1);
+  inkBorders(ctx, w, s, L, tx0, ty0, tx1, ty1);
+  ctx.restore();
 }
 
 /** A tile of bare sea paper with the same grain as the map, at the map's resolution. */

@@ -4,7 +4,7 @@
 
 import { isNight } from "@/engine/laws.ts";
 import type { World } from "@/engine/world.ts";
-import { ART, buildArt, type ArtCaption, type MapArt } from "./mapArt.ts";
+import { ART, buildArt, drawSharpInk, type ArtCaption, type MapArt } from "./mapArt.ts";
 import { decorFor, drawDecor, type Piece } from "./mapDecor.ts";
 import { H as AH, W as AW, avatarCanvas, walkFrame } from "./avatar.ts";
 
@@ -135,14 +135,17 @@ export class MapRenderer {
     // The painted planet.
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
+    // Close up, the painted ink would blur, so the plain planet is drawn and its ink is drawn again, live and sharp.
+    const close = s > ART * 2 && o.landReveal == null;
     ctx.globalAlpha = o.landReveal ?? 1;
-    ctx.drawImage(art.canvas, tl.x * ART, tl.y * ART, (br.x - tl.x) * ART, (br.y - tl.y) * ART, 0, 0, W, H);
+    ctx.drawImage(close ? art.plain : art.canvas, tl.x * ART, tl.y * ART, (br.x - tl.x) * ART, (br.y - tl.y) * ART, 0, 0, W, H);
     ctx.globalAlpha = 1;
 
     const x0 = Math.max(0, Math.floor(tl.x));
     const y0 = Math.max(0, Math.floor(tl.y));
     const x1 = Math.min(w.width, Math.ceil(br.x));
     const y1 = Math.min(w.height, Math.ceil(br.y));
+    if (close) drawSharpInk(ctx, w, art, ox, oy, s, x0 - 1, y0 - 1, x1 + 1, y1 + 1);
 
     if (o.highlightCountry != null) {
       ctx.fillStyle = "rgba(196, 70, 47, 0.18)";
