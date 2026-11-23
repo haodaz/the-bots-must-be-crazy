@@ -5,6 +5,7 @@
 import { isNight } from "@/engine/laws.ts";
 import type { World } from "@/engine/world.ts";
 import { ART, buildArt, type ArtCaption, type MapArt } from "./mapArt.ts";
+import { decorFor, drawDecor, type Piece } from "./mapDecor.ts";
 import { H as AH, W as AW, avatarCanvas } from "./avatar.ts";
 
 export const COL = {
@@ -77,6 +78,7 @@ export function toScreen(c: Camera, x: number, y: number) {
 
 export class MapRenderer {
   private art: MapArt | null = null;
+  private decor: Piece[] = [];
   private artWorld: World | null = null;
   private glow: HTMLCanvasElement | null = null;
   private dots = new Map<string, HTMLCanvasElement>();
@@ -91,6 +93,7 @@ export class MapRenderer {
     this.artWorld = w;
     this.captionKey = key;
     this.art = buildArt(w, this.caption);
+    this.decor = decorFor(w);
   }
 
   draw(ctx: CanvasRenderingContext2D, w: World, cam: Camera, o: DrawOptions = {}) {
@@ -114,6 +117,10 @@ export class MapRenderer {
       ctx.fillStyle = pattern;
     } else ctx.fillStyle = COL.paper;
     ctx.fillRect(0, 0, W, H);
+    // The chart's margins: other worlds in the sky above, ships and sea creatures below.
+    ctx.globalAlpha = o.landReveal ?? 1;
+    drawDecor(ctx, this.decor, ox, oy, s);
+    ctx.globalAlpha = 1;
 
     // The painted planet.
     ctx.imageSmoothingEnabled = true;
