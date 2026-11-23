@@ -743,7 +743,8 @@ body {
 .board-screen {
   position: fixed;
   inset: 0;
-  overflow: hidden;
+  /* clip, not hidden: a hidden box can still be scrolled sideways when something off-screen gets focus */
+  overflow: clip;
   background: #ece1c8;
 }
 
@@ -1329,4 +1330,162 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* ---------- The archive ---------- */
+
+.archive {
+  width: min(1180px, 94vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.archive-body {
+  overflow-y: auto;
+}
+
+.folders {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.folder {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  padding: 10px 10px 8px;
+  margin-top: 10px;
+  cursor: pointer;
+  background: linear-gradient(180deg, #f3e3b8, #ead39c);
+  border: 2px solid var(--ink);
+  border-radius: 0 6px 6px 6px;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-size: 13px;
+}
+
+.folder::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: -12px;
+  width: 42%;
+  height: 12px;
+  background: #ead39c;
+  border: 2px solid var(--ink);
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+}
+
+.folder:hover {
+  background: linear-gradient(180deg, #fbf0cf, #f0dcaa);
+}
+
+.folder.fate-need {
+  background: linear-gradient(180deg, #dbe6f1, #c6d6ea);
+}
+.folder.fate-need::before {
+  background: #c6d6ea;
+}
+.folder.fate-plenty {
+  background: linear-gradient(180deg, #f9e6a8, #efcf6e);
+}
+.folder.fate-plenty::before {
+  background: #efcf6e;
+}
+.folder.fate-hungry {
+  background: linear-gradient(180deg, #eadcd2, #dcc6b6);
+}
+.folder.fate-hungry::before {
+  background: #dcc6b6;
+}
+
+.folder-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.folder-text .c {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.lifefile {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 22px;
+}
+
+@media (max-width: 760px) {
+  .lifefile {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lifefile-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.lifefile-left .cert {
+  width: 100%;
+}
+
+.lifefile-title {
+  font-family: var(--pixel);
+  font-size: 24px;
+  margin: 0 0 8px;
+}
+
+.story p {
+  font-size: 15px;
+  line-height: 1.65;
+  margin: 0 0 8px;
+}
+
+.moments {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.moments li {
+  font-size: 13px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.moments .t {
+  font-family: var(--num);
+  font-size: 16px;
+  color: var(--ink-3);
+  margin-right: 8px;
+}
+
+.twin-name {
+  font-family: var(--pixel);
+  font-size: 26px;
+  font-weight: 700;
+  margin: 2px 0 8px;
+}
+
+.twin.sealed {
+  background: repeating-linear-gradient(45deg, #f3e6c4 0 8px, #efdfb6 8px 16px);
+}
+
+.veil {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.veil > .archive {
+  justify-self: center;
 }

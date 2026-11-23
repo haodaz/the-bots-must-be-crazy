@@ -8,6 +8,7 @@ import { AreaCard, BotCard, CountryCard, Portrait, fmt, stateLabel } from "./car
 import { DEFS, HAND_MAX, HAND_START, PLAYS_PER_DAY, REACH, dealDeck, playCard, type Card, type Role } from "@/engine/cards.ts";
 import { GameCard, RoleCard } from "./GameCard.tsx";
 import { LangSwitch, useLang } from "@/i18n.tsx";
+import { Archive } from "./Archive.tsx";
 import { BUFFER, COL, MapRenderer, clampCamera, fitCamera, toScreen, toWorld, type Camera, type Rect } from "./map.ts";
 
 const SPEEDS = [
@@ -89,6 +90,8 @@ export default function WorldView() {
   const [director, setDirector] = useState(false);
   const [cutin, setCutin] = useState<Cutin | null>(null);
   const [drawer, setDrawer] = useState(false);
+  const [archive, setArchive] = useState(false);
+  const endedRef = useRef(false);
 
   // The side panel opens when something is picked, and otherwise stays out of the map's way.
   useEffect(() => {
@@ -122,6 +125,8 @@ export default function WorldView() {
       particlesRef.current = makeParticles(w);
       introStartRef.current = null;
       playerRef.current = newPlayer();
+      endedRef.current = false;
+      setArchive(false);
       setIntro(0);
       setSelection(null);
       follow(null);
@@ -225,7 +230,11 @@ export default function WorldView() {
           if (t >= INTRO.end) setIntro(-1);
         } else {
           const p = playerRef.current;
-          if (playing && p.role !== null && !p.reveal && !p.waiting) {
+          if (!endedRef.current && w.tick >= LAWS.LIFE_DAYS * LAWS.DAY_TICKS) {
+            endedRef.current = true;
+            setArchive(true);
+          }
+          if (playing && p.role !== null && !p.reveal && !p.waiting && !endedRef.current) {
             for (let i = 0; i < SPEEDS[speed].ticks; i++) {
               step(w);
               // Card players: stop at the dawn of each new day, for their turn.
@@ -485,7 +494,7 @@ export default function WorldView() {
   const l = ledger(w);
   const c = census(w);
   const cam = camRef.current;
-  const day = Math.floor(w.tick / LAWS.DAY_TICKS) + 1;
+  const day = Math.min(LAWS.LIFE_DAYS, Math.floor(w.tick / LAWS.DAY_TICKS) + 1);
   const dayFrac = (w.tick % LAWS.DAY_TICKS) / LAWS.DAY_TICKS;
   const night = isNight(w.tick);
   const nextRainIn = ERA_TICKS - (w.tick % ERA_TICKS);
@@ -555,6 +564,9 @@ export default function WorldView() {
           ))}
           <button className="pbtn" onClick={() => startWorld("new")}>
             {t("New planet")}
+          </button>
+          <button className="pbtn" onClick={() => setArchive(true)}>
+            {t("Archive")}
           </button>
           <Link className="pbtn gold" href="/report" style={{ textDecoration: "none" }}>
             {t("Impact report")}
@@ -792,6 +804,8 @@ export default function WorldView() {
           </div>
         </div>
       )}
+
+      {!introOn && archive && <Archive w={w} ended={endedRef.current} onClose={() => setArchive(false)} />}
 
       {!introOn && player.reveal && player.meId != null && <BirthReveal w={w} id={player.meId} onBegin={() => ((player.reveal = false), setFrame((f) => f + 1))} />}
 

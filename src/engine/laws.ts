@@ -18,6 +18,8 @@ export const LAWS = {
 
   /** One day in the world. Real compute will arrive once per day, like sunlight. */
   DAY_TICKS: 600,
+  /** A round is one life: after this many days the world stops and every life is filed in the archive. */
+  LIFE_DAYS: 30,
 
   /**
    * Food costs metashi (at world-average prices). What is paid goes back into the local economy.

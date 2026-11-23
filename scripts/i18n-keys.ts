@@ -38,6 +38,10 @@ export function i18nKeys(): string[] {
     "Rule one nation: schools, electricity, accounts, taxes, trade routes, aid and sanctions.",
     "Draw a birth certificate, once, with no redraw. Then live it, with a few choices at the crossroads.",
     "richer than {p}% of families there", "poorer than {p}% of families there",
+    "Everyone", "Went hungry",
+    "It had electricity and was online.", "It had electricity, but was never online.",
+    "It was online, but had no electricity: its nights were dark.", "It had no electricity and was never online: its nights were dark.",
+    "Born in {nation}.", "First wage: {amount} metashi.",
     "A toy model built to make the birth lottery felt, not a forecast. Effects are differences between paired worlds with the same seeds, inside this model only.",
   ];
   dynamic.forEach((k) => keys.add(k));

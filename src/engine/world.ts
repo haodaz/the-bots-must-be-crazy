@@ -61,6 +61,8 @@ export type Life = {
   ticksAsleep: number;
   ticksStarving: number;
   firstWageTick: number | null;
+  /** The moments worth telling, as message templates (birth, first wage, hunger, switches, cards). */
+  moments: { tick: number; key: string; params: Params }[];
 };
 
 export type Bot = {
@@ -371,6 +373,7 @@ export function createWorld(seed: number, levers: Levers = {}, opts: { planet?: 
         ticksAsleep: 0,
         ticksStarving: 0,
         firstWageTick: null,
+        moments: [{ tick: 0, key: "Born in {nation}.", params: { nation: home.name } }],
       },
       strategy: { eatAt, straightness, avoidCrowds },
       state: "roaming",
@@ -544,7 +547,10 @@ function act(w: World, b: Bot, occupied: Uint8Array, taken: Uint8Array, night: b
     b.life.earned += got;
     b.life.taxPaid += tax;
     b.life.ticksWorking++;
-    if (b.life.firstWageTick === null) b.life.firstWageTick = w.tick;
+    if (b.life.firstWageTick === null) {
+      b.life.firstWageTick = w.tick;
+      moment(b, w.tick, "First wage: {amount} metashi.", { amount: got });
+    }
     if (b.wallet > b.life.peakWallet) b.life.peakWallet = b.wallet;
     w.totals.earned += got;
     stats.earned += got;
@@ -656,7 +662,16 @@ export function returnToEconomy(w: World, ci: number, amount: number) {
   w.money[reach[nextInt(w, 0, Math.min(reach.length, 13) - 1)]] += amount;
 }
 
+/** A moment in one bot's life story. Keeps the first one (birth) and the most recent ones. */
+function moment(b: Bot, tick: number, key: string, params: Params) {
+  // A life's moments are its turning points, not a log: the same kind of moment shows at most once every 5 days.
+  if (b.life.moments.some((m) => m.key === key && tick - m.tick < 5 * LAWS.DAY_TICKS)) return;
+  b.life.moments.push({ tick, key, params });
+  if (b.life.moments.length > 24) b.life.moments.splice(1, 1);
+}
+
 export function log(w: World, kind: EventKind, key: string, params: Params = {}, botId?: number) {
+  if (botId != null && w.bots[botId]) moment(w.bots[botId], w.tick, key, params);
   w.events.push({ tick: w.tick, kind, botId, key, params, text: fill(key, params) });
   if (w.events.length > LAWS.EVENT_MEMORY) w.events.shift();
 }
