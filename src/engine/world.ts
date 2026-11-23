@@ -426,12 +426,22 @@ const manhattan = (w: World, a: number, b: number) =>
 export function step(w: World): void {
   const t = w.tick;
   if (t % LAWS.DAY_TICKS === 0 && w.mods.length) w.mods = w.mods.filter((m) => m.until > t);
+  // Once a year, every country spends part of its treasury back into its economy: public works, public jobs.
+  if (t > 0 && t % LAWS.DAY_TICKS === 0) {
+    w.countries.forEach((c, ci) => {
+      const spend = Math.floor(c.treasury * LAWS.PUBLIC_SPENDING_SHARE);
+      if (spend <= 0) return;
+      c.treasury -= spend;
+      for (const part of splitInteger(spend, [1, 1, 1, 1, 1, 1, 1, 1])) if (part > 0) returnToEconomy(w, ci, part);
+    });
+  }
   if (t > 0 && t % ERA_TICKS === 0) {
     const amount = Math.min(w.sky, rainOf(w.rains));
     if (amount > 0) {
       w.sky -= amount;
       rainInto(w, amount);
-      log(w, "rain", "Halving rain: {amount} metashi fell, half the last. {sky} left in the sky.", { amount: fmtN(amount), sky: fmtN(w.sky) });
+      if (w.sky > 0) log(w, "rain", "Halving rain: {amount} metashi fell, half the last. {sky} left in the sky.", { amount: fmtN(amount), sky: fmtN(w.sky) });
+      else log(w, "rain", "The last rain: {amount} metashi fell. The sky is empty now, and no new money will ever come.", { amount: fmtN(amount) });
     }
     w.rains++;
   }

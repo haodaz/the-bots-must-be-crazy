@@ -40,6 +40,19 @@ describe("the law of supply", () => {
     expect(rainOf(1)).toBe(rainOf(0) / 2);
   });
 
+  it("rains seven times in whole metashi, and the last rain empties the sky in year 60", () => {
+    const rains = Array.from({ length: LAWS.RAINS + 1 }, (_, i) => rainOf(i));
+    expect(rains).toEqual([10_500_000, 5_250_000, 2_625_000, 1_312_500, 656_250, 328_125, 328_125, 0]);
+    expect(rains.reduce((a, b) => a + b, 0)).toBe(LAWS.SUPPLY);
+    const w = createWorld(3);
+    const lastRain = (LAWS.RAINS - 1) * ERA_TICKS;
+    while (w.tick < lastRain) step(w);
+    expect(w.sky).toBe(rainOf(LAWS.RAINS - 1));
+    step(w);
+    expect(w.sky).toBe(0);
+    expect(lastRain / LAWS.DAY_TICKS).toBe(60);
+  });
+
   it("puts everything in the economy when no one inherits", () => {
     expect(ledger(createWorld(1, { noInheritance: true })).pockets).toBe(0);
   });

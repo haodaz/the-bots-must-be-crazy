@@ -1,5 +1,5 @@
 // Run the impact experiments: for each lever, the same seeds with and without it.
-// Usage: node scripts/impact.ts [seeds=50] [days=30]   → reports/impact.json
+// Usage: node scripts/impact.ts [seeds=50] [days=LAWS.LIFE_DAYS]   → reports/impact.json
 // Plain code, no model calls: costs $0.
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -8,7 +8,7 @@ import { EXPERIMENTS, effect, landStarvingDays, runWorld, type Metrics } from ".
 import { LAWS } from "../src/engine/laws.ts";
 
 const seeds = Number(process.argv[2] ?? 50);
-const days = Number(process.argv[3] ?? 30);
+const days = Number(process.argv[3] ?? LAWS.LIFE_DAYS);
 const seedList = Array.from({ length: seeds }, (_, i) => i + 1);
 
 const started = Date.now();

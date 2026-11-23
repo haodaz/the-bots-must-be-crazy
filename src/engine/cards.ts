@@ -1,5 +1,5 @@
-// Cards: the only way a player touches the world. A small hand, a few rounds of draws, one card a day.
-// Each kind of card is a fixed rule change; each copy draws its own strength (a percentage), reach (an area) and length (days).
+// Cards: the only way a player touches the world. A small hand, a few rounds of draws, one card a turn (every 5 years).
+// Each kind of card is a fixed rule change; each copy draws its own strength (a percentage), reach (an area) and length (years; one engine day is a year).
 // Every card keeps the law of supply: it can move metashi, never make or destroy it.
 
 import { EARTH } from "./earth.ts";
@@ -51,7 +51,7 @@ type Def = {
 };
 
 const P = (x: number) => `${Math.round(x * 100)}%`;
-const D = (d: number) => `${d} day${d === 1 ? "" : "s"}`;
+const D = (d: number) => `${d} year${d === 1 ? "" : "s"}`;
 
 /** The numbers that fill a card's text (in English; the page translates reach and days). */
 export function cardParams(c: Card): Params {
@@ -65,7 +65,7 @@ export const DEFS: Record<Kind, Def> = {
     title: "Bountiful Harvest",
     target: "area",
     pct: [0.2, 0.5],
-    days: [2, 4],
+    days: [3, 8],
     flavor: "The fields remember the rain.",
     text: "Food costs {pct} less in a {reach} area for {days}.",
     weight: 3,
@@ -75,7 +75,7 @@ export const DEFS: Record<Kind, Def> = {
     title: "Drought",
     target: "area",
     pct: [0.3, 0.8],
-    days: [2, 4],
+    days: [3, 8],
     flavor: "The sky forgets.",
     text: "Food costs {pct} more in a {reach} area for {days}.",
     weight: 2,
@@ -94,7 +94,7 @@ export const DEFS: Record<Kind, Def> = {
     title: "Flood",
     target: "area",
     pct: [1, 1],
-    days: [1, 3],
+    days: [2, 5],
     flavor: "Water first, then mud, then waiting.",
     text: "No one can work in a {reach} area for {days}.",
     weight: 1,
@@ -104,7 +104,7 @@ export const DEFS: Record<Kind, Def> = {
     title: "Season of Plenty",
     target: "world",
     pct: [0.15, 0.35],
-    days: [1, 3],
+    days: [2, 5],
     flavor: "Everything grows at once.",
     text: "Food costs {pct} less everywhere for {days}.",
     weight: 1,
@@ -161,7 +161,7 @@ export const DEFS: Record<Kind, Def> = {
     title: "Trade Route",
     target: "nation",
     pct: [0.1, 0.3],
-    days: [3, 6],
+    days: [5, 10],
     flavor: "Grain one way, cloth the other.",
     text: "Choose a nation: food costs {pct} less in both of yours for {days}.",
     weight: 2,
@@ -180,7 +180,7 @@ export const DEFS: Record<Kind, Def> = {
     title: "Sanctions",
     target: "nation",
     pct: [0.2, 0.5],
-    days: [3, 6],
+    days: [5, 10],
     flavor: "The gates close; the market empties.",
     text: "Choose a nation: food there costs {pct} more for {days}.",
     weight: 1,
@@ -228,7 +228,7 @@ export const DEFS: Record<Kind, Def> = {
     title: "Work Harder",
     target: "self",
     pct: [0.2, 0.5],
-    days: [2, 4],
+    days: [3, 8],
     flavor: "Up before the sun.",
     text: "You earn {pct} more an hour for {days}.",
     weight: 2,
@@ -248,6 +248,8 @@ export const DECK_SIZE = 12;
 export const HAND_START = 4;
 export const HAND_MAX = 5;
 export const PLAYS_PER_DAY = 1;
+/** Card players take a turn every this many years (engine days): draw one, play one, then the world runs on. */
+export const TURN_DAYS = 5;
 
 /** What goes into each family's deck of twelve: a fixed mix of kinds, shuffled. */
 const MIX: Record<Family, Partial<Record<Kind, number>>> = {

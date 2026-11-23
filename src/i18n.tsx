@@ -20,7 +20,7 @@ export function translate(lang: Lang, key: string, params?: Params): string {
   if (lang === "en") return fill(key, params);
   const p: Params = { ...(params ?? {}) };
   for (const k of WORD_PARAMS) if (p[k] != null) p[k] = ZH[String(p[k])] ?? p[k];
-  if (p.dayCount != null) p.days = `${p.dayCount} 天`;
+  if (p.dayCount != null) p.days = `${p.dayCount} 年`;
   return fill(ZH[key] ?? key, p);
 }
 

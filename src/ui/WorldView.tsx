@@ -5,7 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ERA_TICKS, LAWS, isNight, rainOf } from "@/engine/laws.ts";
 import { census, createWorld, ledger, step, type Bot, type World, type WorldEvent } from "@/engine/world.ts";
 import { AreaCard, BotCard, CountryCard, Portrait, fmt, stateLabel } from "./cards.tsx";
-import { DEFS, HAND_MAX, HAND_START, PLAYS_PER_DAY, REACH, dealDeck, playCard, type Card, type Role } from "@/engine/cards.ts";
+import { DEFS, HAND_MAX, HAND_START, PLAYS_PER_DAY, REACH, TURN_DAYS, dealDeck, playCard, type Card, type Role } from "@/engine/cards.ts";
+
+const TURN_TICKS = TURN_DAYS * LAWS.DAY_TICKS;
 import { GameCard, RoleCard } from "./GameCard.tsx";
 import { LangSwitch, useLang } from "@/i18n.tsx";
 import { Archive } from "./Archive.tsx";
@@ -239,8 +241,8 @@ export default function WorldView() {
           if (playing && p.role !== null && !p.reveal && !p.waiting && !endedRef.current) {
             for (let i = 0; i < SPEEDS[speed].ticks; i++) {
               step(w);
-              // Card players: stop at the dawn of each new day, for their turn.
-              if (p.role !== "watch" && w.tick % LAWS.DAY_TICKS === 0) break;
+              // Card players: stop at the start of each turn (every few years), for their play.
+              if (p.role !== "watch" && w.tick % TURN_TICKS === 0) break;
             }
           }
           newDay();
@@ -293,12 +295,13 @@ export default function WorldView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, speed, intro >= 0]);
 
-  /** A new day: draw a card (if the hand has room and the deck has cards) and get back the day's play. */
+  /** A new turn (every few years): draw a card (if the hand has room and the deck has cards) and get back the turn's play. */
   function newDay() {
     const p = playerRef.current;
-    const day = Math.floor(worldRef.current.tick / LAWS.DAY_TICKS);
-    if (day === p.day) return;
-    p.day = day;
+    const turn = Math.floor(worldRef.current.tick / TURN_TICKS);
+    if (turn === p.day) return;
+    p.day = turn;
+    const year = Math.floor(worldRef.current.tick / LAWS.DAY_TICKS);
     if (!p.role || p.role === "watch") return;
     p.plays = PLAYS_PER_DAY;
     p.waiting = true;
@@ -307,7 +310,7 @@ export default function WorldView() {
     setCutin({
       key: performance.now(),
       kind: "gold",
-      text: t(drew ? "Day {n}. You drew a card. Play, then press on." : p.deck.length ? "Day {n}. Your hand is full. Play, then press on." : "Day {n}. Your deck is empty. Play, then press on.", { n: day + 1 }),
+      text: t(drew ? "Year {n}. You drew a card. Play, then press on." : p.deck.length ? "Year {n}. Your hand is full. Play, then press on." : "Year {n}. Your deck is empty. Play, then press on.", { n: year + 1 }),
     });
   }
 
@@ -315,7 +318,7 @@ export default function WorldView() {
     const w = worldRef.current;
     const p = playerRef.current;
     p.role = role;
-    p.day = Math.floor(w.tick / LAWS.DAY_TICKS);
+    p.day = Math.floor(w.tick / TURN_TICKS);
     if (role !== "watch") {
       p.deck = dealDeck({ rng: w.seed * 31 + role.length * 7919 }, role);
       p.hand = p.deck.splice(0, HAND_START);
@@ -353,7 +356,7 @@ export default function WorldView() {
 
   function onCard(card: Card) {
     const p = playerRef.current;
-    if (p.plays <= 0) return announce(t("You have played today's card. Wait for the next day."), "need");
+    if (p.plays <= 0) return announce(t("You have played this turn's card. Wait for the next turn."), "need");
     const target = DEFS[card.kind].target;
     if (p.chosen === card.uid) {
       if (target === "world" || target === "kingdom" || target === "self") play(card, {});
@@ -362,7 +365,7 @@ export default function WorldView() {
     setFrame((f) => f + 1);
   }
 
-  /** The turn button: let the day run, or skip ahead to the next dawn if it is already running. */
+  /** The turn button: let the years run, or skip ahead to the next turn if they are already running. */
   function nextDay() {
     const w = worldRef.current;
     const p = playerRef.current;
@@ -370,7 +373,7 @@ export default function WorldView() {
       p.waiting = false;
       p.chosen = null;
     } else {
-      const target = (Math.floor(w.tick / LAWS.DAY_TICKS) + 1) * LAWS.DAY_TICKS;
+      const target = (Math.floor(w.tick / TURN_TICKS) + 1) * TURN_TICKS;
       while (w.tick < target) step(w);
       newDay();
     }
@@ -514,6 +517,7 @@ export default function WorldView() {
   const night = isNight(w.tick);
   const nextRainIn = ERA_TICKS - (w.tick % ERA_TICKS);
   const nextRain = Math.min(w.sky, rainOf(w.rains));
+  const nextTurnYear = (Math.floor(w.tick / TURN_TICKS) + 1) * TURN_DAYS + 1;
   const followed = followId != null ? w.bots[followId] : null;
   const lastAbout = followed ? [...w.events].reverse().find((e) => e.botId === followed.id) : null;
   const chans = channels(w);
@@ -556,12 +560,12 @@ export default function WorldView() {
       <header className="hud-top">
         <div className="panel plaque logo">
           {t("The Bots Must Be Crazy")}
-          <small>{t("Born by the real birth lottery. One grain of compute a day. No minds yet.")}</small>
+          <small>{t("Born by the real birth lottery. One grain of compute a year. No minds yet.")}</small>
         </div>
         <div className="panel plaque clock">
           <SunMoon night={night} />
           <div>
-            <div className="num">{t("Day {n}", { n: day })}</div>
+            <div className="num">{t("Year {n}", { n: day })}</div>
             <div style={{ width: 90, height: 6, border: "1.5px solid var(--ink)", marginTop: 3 }}>
               <div style={{ width: `${dayFrac * 100}%`, height: "100%", background: night ? COL.need : COL.gold }} />
             </div>
@@ -737,7 +741,7 @@ export default function WorldView() {
                 <div className="kv">
                   <span className="k">{t("Next halving rain")}</span>
                   <span className="v">
-                    {t("{amount} in {days} d", { amount: fmt(nextRain), days: (nextRainIn / LAWS.DAY_TICKS).toFixed(1) })}
+                    {nextRain > 0 ? t("{amount} in {years} yrs", { amount: fmt(nextRain), years: (nextRainIn / LAWS.DAY_TICKS).toFixed(1) }) : t("The sky is empty.")}
                   </span>
                 </div>
                 <div className="kv">
@@ -753,7 +757,7 @@ export default function WorldView() {
                 <ul className="events">
                   {[...w.events].reverse().map((e, i) => (
                     <li key={`${e.tick}-${i}`}>
-                      <span className="t">d{Math.floor(e.tick / LAWS.DAY_TICKS) + 1}</span>
+                      <span className="t">{t("Y{n}", { n: Math.floor(e.tick / LAWS.DAY_TICKS) + 1 })}</span>
                       {t(e.key, e.params)}
                     </li>
                   ))}
@@ -792,7 +796,7 @@ export default function WorldView() {
             })}
           </div>
           <button className={`next-day ${player.waiting ? "ready" : ""}`} onClick={nextDay}>
-            {player.waiting ? t("Begin day {n}", { n: day }) : t("Skip to dawn")}
+            {player.waiting ? t("Begin year {n}", { n: day }) : t("Skip to year {n}", { n: nextTurnYear })}
             <small>{player.plays > 0 ? t("1 play left") : t("played")}</small>
           </button>
         </div>
@@ -1015,7 +1019,7 @@ function GenesisCaption({ t: time, w, onSkip }: { t: number; w: World; onSkip: (
   } else {
     const born = Math.floor(clamp01((time - INTRO.borders) / (INTRO.born - INTRO.borders)) * LAWS.POPULATION);
     big = t("{n} born", { n: born });
-    line = t("Each one born the way a real baby is born this year.");
+    line = t("Each one born the way a real baby is born this year. Here a day is a year: a round is one life, {n} years.", { n: LAWS.LIFE_DAYS });
   }
   return (
     <>

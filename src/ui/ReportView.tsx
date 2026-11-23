@@ -80,8 +80,8 @@ export default function ReportView() {
           <h1>{t("Impact report")}</h1>
           <p className="lede" style={{ margin: "6px 0 0" }}>
             {t(
-              "{seeds} pairs of worlds, {days} days each. In every pair the same {n} bots are born the same way and get the same luck. Only one thing is changed. Whatever differs is the worth of that one thing.",
-              { seeds: R.seeds, days: R.days, n: R.population },
+              "{seeds} pairs of worlds, {years} years each. In every pair the same {n} bots are born the same way and get the same luck. Only one thing is changed. Whatever differs is the worth of that one thing.",
+              { seeds: R.seeds, years: R.days, n: R.population },
             )}
           </p>
         </div>
@@ -105,7 +105,7 @@ export default function ReportView() {
         <div className="panel-b" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20 }}>
           <div>
             <div className="kv">
-              <span className="k">{t("Days each bot spent starving")}</span>
+              <span className="k">{t("Years each bot spent starving")}</span>
               <span className="v">{base.starvingDays.toFixed(2)}</span>
             </div>
             <div className="kv">
@@ -117,14 +117,14 @@ export default function ReportView() {
               <span className="v">{pct(base.poorestHalfShare)}</span>
             </div>
             <p className="note">
-              {t("Hunger is not spread evenly. A bot born in {land} spends {days} days starving on average.", {
+              {t("Hunger is not spread evenly. A bot born in {land} spends {years} years starving on average.", {
                 land: t(R.lands[hardest]),
-                days: base.landStarvingDays[hardest].toFixed(2),
+                years: base.landStarvingDays[hardest].toFixed(2),
               })}
             </p>
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Days starving, by land of birth</div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{t("Years starving, by land of birth")}</div>
             {R.lands.map((name, i) => (
               <div key={name} className="bar-row">
                 <span style={{ color: "var(--ink-2)" }}>{t(name)}</span>
@@ -149,7 +149,7 @@ export default function ReportView() {
             <div className="panel-b">
               <div style={{ fontFamily: "var(--pixel)", fontSize: 15, color: "var(--ink-2)" }}>{t(r.question)}</div>
               <Bars
-                label="Days starving per bot"
+                label="Years starving per bot"
                 base={r.effects.starvingDays.base}
                 changed={r.effects.starvingDays.changed}
                 fmt={(v) => v.toFixed(2)}
@@ -170,7 +170,7 @@ export default function ReportView() {
                 better="higher"
               />
               <p className="note">
-                {t("In {land}, days starving go from {a} to {b}. 95% range for the change in days starving per bot: {low} to {high}.", {
+                {t("In {land}, years starving go from {a} to {b}. 95% range for the change in years starving per bot: {low} to {high}.", {
                   land: t(R.lands[hardest]),
                   a: base.landStarvingDays[hardest].toFixed(2),
                   b: r.world.landStarvingDays[hardest].toFixed(2),

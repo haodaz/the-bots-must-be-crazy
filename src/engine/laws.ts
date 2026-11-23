@@ -8,18 +8,20 @@ export const LAWS = {
   POPULATION: 100,
 
   /**
-   * New money arrives as gold rain, like Bitcoin's block rewards: the first rain brings half the supply,
-   * and every era after that the sky gives half as much as the time before. It never quite reaches 21M.
+   * New money arrives as gold rain, like Bitcoin's block rewards: the first rain brings half the supply, and every
+   * era after that the sky gives half as much as the time before. 21M halves into whole metashi six times, so there
+   * are seven rains: six halvings, and a last rain that brings everything left (328,125). Then the sky is empty.
    */
-  ERA_DAYS: 5,
+  ERA_DAYS: 10,
+  RAINS: 7,
 
   /** What an hour of work earns, for a bot with the reference schooling and no tools. */
   WAGE: 40,
 
-  /** One day in the world. Real compute will arrive once per day, like sunlight. */
+  /** One day in the engine is one year of a life on the screen. Real compute will arrive once a year, like a harvest. */
   DAY_TICKS: 600,
-  /** A round is one life: after this many days the world stops and every life is filed in the archive. */
-  LIFE_DAYS: 30,
+  /** A round is one life of a hundred years: then the world stops and every life is filed in the archive. */
+  LIFE_DAYS: 100,
 
   /**
    * Food costs metashi (at world-average prices). What is paid goes back into the local economy.
@@ -44,6 +46,12 @@ export const LAWS = {
 
   /** At genesis this share of the first rain lands in pockets as family money; the rest in the economy. */
   INHERITANCE_SHARE: 0.4,
+  /**
+   * Public spending: once a year each country spends this share of its treasury back into its own economy, as the
+   * wages of public works and public jobs; the rest stays as a reserve for welfare and policies. Most governments
+   * spend about what they collect in a year (IMF, Fiscal Monitor), so taxes do not pile up unused.
+   */
+  PUBLIC_SPENDING_SHARE: 0.5,
   /** Night starts at this point of the day. Bots without electricity sleep through it. */
   NIGHT_FROM: 0.7,
   /**
@@ -65,9 +73,10 @@ export const LAWS = {
 
 export const ERA_TICKS = LAWS.ERA_DAYS * LAWS.DAY_TICKS;
 
-/** How much gold falls in a given era's rain (era 0 is genesis). Halves every era. */
+/** How much gold falls in a given era's rain (era 0 is genesis). Halves every era; the last rain empties the sky. */
 export function rainOf(era: number): number {
-  return Math.floor(LAWS.SUPPLY / Math.pow(2, era + 1));
+  if (era < 0 || era >= LAWS.RAINS) return 0;
+  return LAWS.SUPPLY / Math.pow(2, Math.min(era + 1, LAWS.RAINS - 1));
 }
 
 export const isNight = (tick: number) => tick % LAWS.DAY_TICKS >= LAWS.DAY_TICKS * LAWS.NIGHT_FROM;

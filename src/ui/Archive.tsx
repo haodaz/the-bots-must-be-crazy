@@ -78,7 +78,7 @@ export function Archive({ w, ended, onClose }: { w: World; ended: boolean; onClo
       <div className="panel archive">
         <div className="panel-h">
           <span>
-            {t("The archive")} · {t("Planet {name}", { name: w.geo.name })} · {t("Day {n}", { n: day })}
+            {t("The archive")} · {t("Planet {name}", { name: w.geo.name })} · {t("Year {n}", { n: day })}
           </span>
           <button className="pbtn" onClick={focus == null ? onClose : () => setFocus(null)}>
             {focus == null ? t("Close") : t("Back to the cabinet")}
@@ -90,7 +90,7 @@ export function Archive({ w, ended, onClose }: { w: World; ended: boolean; onClo
               <p className="note" style={{ marginTop: 0, fontSize: 14 }}>
                 {ended
                   ? t("The round is over. Every life is filed here, and each real-world twin is now unsealed.")
-                  : t("The round is still going. Real-world twins stay sealed until it ends on day {n}.", { n: LAWS.LIFE_DAYS })}
+                  : t("The round is still going. Real-world twins stay sealed until it ends in year {n}.", { n: LAWS.LIFE_DAYS })}
               </p>
               <div className="btn-row" style={{ flexWrap: "wrap", marginTop: 10 }}>
                 {(["all", "never", "hungry", "need", "plenty"] as Fate[]).map((f) => (
@@ -187,7 +187,7 @@ function LifeFile({ w, b, unsealed }: { w: World; b: Bot; unsealed: boolean }) {
           <ul className="moments">
             {b.life.moments.map((m, i) => (
               <li key={i}>
-                <span className="t">{t("Day {n}", { n: Math.floor(m.tick / LAWS.DAY_TICKS) + 1 })}</span>
+                <span className="t">{t("Year {n}", { n: Math.floor(m.tick / LAWS.DAY_TICKS) + 1 })}</span>
                 {t(m.key, m.params)}
               </li>
             ))}
@@ -226,7 +226,7 @@ function LifeFile({ w, b, unsealed }: { w: World; b: Bot; unsealed: boolean }) {
               <p className="note">{t("World Bank Open Data. A life like this one stands for about {n} real babies born this year.", { n: fmt(EARTH.totalBirths / LAWS.POPULATION) })}</p>
             </>
           ) : (
-            <p className="note">{t("Sealed until the round ends on day {n}.", { n: LAWS.LIFE_DAYS })}</p>
+            <p className="note">{t("Sealed until the round ends in year {n}.", { n: LAWS.LIFE_DAYS })}</p>
           )}
         </div>
       </div>

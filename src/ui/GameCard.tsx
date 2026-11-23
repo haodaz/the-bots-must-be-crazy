@@ -243,7 +243,7 @@ export function Emblem({ name }: { name: EmblemKey }) {
   );
 }
 
-const ROMAN = ["", "I", "II", "III", "IV", "V", "VI"];
+const ROMAN = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
 
 /** One playable card from a hand. */
 export function GameCard({
@@ -328,7 +328,7 @@ export function RoleCard({ role, onClick }: { role: Role; onClick: () => void })
       <span className="gcard-art">{ART[`role-${role}`] ? <img src={ART[`role-${role}`]} alt="" /> : <Emblem name={role} />}</span>
       <span className="gcard-type">{tr(t.line)}</span>
       <span className="gcard-text">{tr(t.detail)}</span>
-      <span className="gcard-flavor">{role === "watch" ? tr("No cards") : tr("A hand of 4 · draw 1 a day · play 1 a day")}</span>
+      <span className="gcard-flavor">{role === "watch" ? tr("No cards") : tr("A hand of 4 · draw 1 and play 1 every 5 years")}</span>
     </button>
   );
 }

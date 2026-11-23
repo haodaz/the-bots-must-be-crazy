@@ -5,7 +5,7 @@ import { LAWS } from "../src/engine/laws.ts";
 import { census, createWorld, ledger, step } from "../src/engine/world.ts";
 
 const seed = Number(process.argv[2] ?? 1);
-const days = Number(process.argv[3] ?? 30);
+const days = Number(process.argv[3] ?? LAWS.LIFE_DAYS);
 const planet = (process.argv[4] ?? "earth") as "earth" | "new";
 const w = createWorld(seed, {}, { planet });
 for (let i = 0; i < days * LAWS.DAY_TICKS; i++) step(w);
