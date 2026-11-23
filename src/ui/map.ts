@@ -44,6 +44,10 @@ export type DrawOptions = {
   botsShown?: number;
   /** Unused now that borders are painted into the map; kept for the opening's timing. */
   borders?: number;
+  /** A card being aimed: the circle it would cover. */
+  aim?: { x: number; y: number; r: number; color: string } | null;
+  /** The player's own bot (Human role): marked with a gold star. */
+  meId?: number | null;
 };
 
 /** The whole planet in view; the paper around it holds the top bar and the card tray. */
@@ -171,6 +175,32 @@ export class MapRenderer {
       }
     }
 
+    if (o.meId != null) {
+      const me = w.bots[o.meId];
+      star(ctx, ox + (me.x + 0.5) * s, oy + (me.y + 0.5) * s - Math.max(14, s * 0.9), Math.max(7, s * 0.3));
+    }
+
+    if (o.aim) {
+      const a = toScreen(cam, o.aim.x, o.aim.y);
+      const r = o.aim.r * s;
+      ctx.fillStyle = o.aim.color;
+      ctx.globalAlpha = 0.18;
+      ctx.beginPath();
+      ctx.arc(a.px, a.py, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = COL.ink;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([12, 8]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.strokeStyle = COL.gold;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(a.px, a.py, r - 5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
     for (const id of [o.selectedId, o.followId]) {
       if (id == null) continue;
       const bot = w.bots[id];
@@ -274,6 +304,22 @@ export class MapRenderer {
       }
     }
   }
+}
+
+/** The player's mark: a gold star above their bot. */
+function star(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  ctx.beginPath();
+  for (let k = 0; k < 10; k++) {
+    const a = -Math.PI / 2 + (k * Math.PI) / 5;
+    const rr = k % 2 ? r * 0.45 : r;
+    ctx.lineTo(cx + rr * Math.cos(a), cy + rr * Math.sin(a));
+  }
+  ctx.closePath();
+  ctx.fillStyle = COL.plenty;
+  ctx.strokeStyle = "#2b2417";
+  ctx.lineWidth = Math.max(1.5, r * 0.18);
+  ctx.fill();
+  ctx.stroke();
 }
 
 /** Far out: a little game pawn. */

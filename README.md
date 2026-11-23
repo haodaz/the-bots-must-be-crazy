@@ -59,6 +59,14 @@ A thought returns a new strategy as structured JSON. The simulation runs that st
 **6. Every thought has a receipt.**
 Each call logs its input, cached and output tokens, its reasoning effort and its exact cost, in dollars and in metashi.
 
+## Playing: watch, or enter as God, King or Human
+
+At the start you choose how to enter the world. **Watch** follows the live channels and touches nothing. The other three play cards: a hand of four, one draw a day from a deck of twelve, one card played a day, and the world waits at each dawn for your turn. Each kind of card is a fixed rule; each copy draws its own strength, reach and length. Every card keeps the law of supply: it can move metashi, never make or destroy it.
+
+- **God**: Bountiful Harvest, Drought, Gift from the Sky (an early rain from the gold still in the sky), Flood, Season of Plenty.
+- **King** (choose a nation to rule): Schools for All, Light the Nation, Accounts for All (each paid from the treasury, which becomes wages at home), Tax Relief, Tax the Harvest, Trade Route, Aid, Sanctions. There is no war.
+- **Human**: one draw of a birth certificate, no redraw; then Go to the City, Night School, Get Online, Open an Account, Work Harder, Help a Neighbour.
+
 ## Staying under $10
 
 Spending more than $10 of Muse Ember credit disqualifies the project, and the platform has no hard cap. So the app keeps its own:
@@ -106,3 +114,4 @@ All work in this repository was done during the hackathon window.
 | Nov 23 | The live screen and the impact report. A dot-matrix world (each bot is a small creature grown from its seed), an opening where $4.20 turns into 21M metashi and rains down as gold, a live camera that follows one bot, channels, an auto director and cut-ins, cards for bots (birth certificate, life so far) and lands (scene, real-world numbers, live numbers, who lives here), and a new pixel-game look. Schooling now raises what a swing digs, from the literature on returns to schooling. The first impact report: 50 paired worlds per lever, $0. |
 | Nov 23 | metashi becomes money, not ore: halving gold rains like Bitcoin's block rewards, wages paid from local economies, spending that becomes someone else's wage, and prices that fall as productivity rises. The world is now a zoomable pixel map: the real Earth (Natural Earth borders, real deserts and mountains) or a new planet each time with the real countries on it. Minimap, red-box area selection, country and area cards. Food price calibrated to FAO hunger figures. The impact report reruns on 50 new planets. |
 | Nov 23 | The board-game look: every world is a new planet with made-up nation and land names (the real twin stays sealed until the end), painted once like an old map: parchment, smooth inked coastlines with ripples, mountains, trees, dunes, dotted borders, a compass rose and a name plaque. The board fills the window, with a gilded top bar, a side panel that opens when you pick something, a card tray, and the minimap. Planet shuffles are now the same on every JavaScript engine. |
+| Nov 23 | Cards. Choose to watch, or to enter as God, King or Human, from four big cards. Card players get a hand of four from a shuffled deck of twelve (a fixed mix per role, each copy with its own strength, reach and length), draw one and play one a day, and the world waits at each dawn. God cards change prices, stop work or bring the sky's gold early; King cards enact policies paid from the treasury, set taxes, open trade routes, send aid or sanction; Human cards are the crossroads of one life, which begins with a one-time birth-certificate draw. Gilded cards with arched art windows and engraved emblems. Tests check that no card makes or destroys a metashi. |

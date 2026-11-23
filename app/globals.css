@@ -905,3 +905,422 @@ body {
 .board-screen .genesis-caption {
   bottom: 22%;
 }
+
+/* ---------- Cards ---------- */
+
+.gcard {
+  --w: 150px;
+  --band: #efe2bf;
+  --band-ink: #2b2417;
+  --sky-a: #fbf3dc;
+  --sky-b: #d8c39a;
+  position: relative;
+  width: var(--w);
+  aspect-ratio: 5 / 7;
+  padding: 9px 9px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  text-align: center;
+  cursor: pointer;
+  border: 2px solid #2b2417;
+  border-radius: 11px;
+  background:
+    linear-gradient(#fbf3dc, #f1e3bf) padding-box,
+    linear-gradient(145deg, #f6dc8e, #b8862b 35%, #f3d27a 55%, #8f6418 80%, #e9c463) border-box;
+  box-shadow:
+    inset 0 0 0 4px #e3c065,
+    inset 0 0 0 5px #8f6418,
+    inset 0 0 0 7px #fbf3dc,
+    0 4px 0 #2b2417,
+    0 10px 22px rgba(43, 36, 23, 0.28);
+  transition: transform 140ms ease, box-shadow 140ms ease, filter 140ms;
+  font: inherit;
+  color: var(--ink);
+}
+
+.gcard:hover {
+  transform: translateY(-12px) scale(1.03);
+  z-index: 3;
+}
+
+.gcard.selected {
+  transform: translateY(-20px) scale(1.06);
+  z-index: 4;
+  box-shadow:
+    inset 0 0 0 4px #e3c065,
+    inset 0 0 0 5px #8f6418,
+    inset 0 0 0 7px #fbf3dc,
+    0 0 0 3px #f3d27a,
+    0 0 26px 6px rgba(243, 210, 122, 0.85),
+    0 10px 22px rgba(43, 36, 23, 0.3);
+}
+
+.gcard.disabled {
+  filter: grayscale(0.45) brightness(0.92);
+  cursor: not-allowed;
+}
+
+.gcard.disabled:hover {
+  transform: none;
+}
+
+.gcard-corner {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(135deg, #f6dc8e, #b8862b);
+  border: 1.5px solid #2b2417;
+  transform: rotate(45deg);
+  z-index: 2;
+}
+
+.gcard-corner.tl {
+  top: -5px;
+  left: -5px;
+}
+.gcard-corner.tr {
+  top: -5px;
+  right: -5px;
+}
+.gcard-corner.bl {
+  bottom: -5px;
+  left: -5px;
+}
+.gcard-corner.br {
+  bottom: -5px;
+  right: -5px;
+}
+
+.gcard-gem {
+  position: absolute;
+  top: -9px;
+  right: 10px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-family: var(--num);
+  font-size: 18px;
+  color: #fff8e6;
+  background: radial-gradient(circle at 35% 30%, #8fb0d4, #2f5a88 70%);
+  border: 2px solid #2b2417;
+  z-index: 3;
+}
+
+.gcard-title {
+  font-family: var(--pixel);
+  font-weight: 700;
+  font-size: calc(var(--w) * 0.088);
+  line-height: 1.05;
+  color: var(--band-ink);
+  background: var(--band);
+  border: 1.5px solid #2b2417;
+  padding: 4px 10px 3px;
+  margin: 2px -3px 0;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 7px) 50%, 100% 100%, 0 100%, 7px 50%);
+  min-height: 2.2em;
+  display: grid;
+  place-items: center;
+}
+
+.gcard-art {
+  flex: 1;
+  min-height: 0;
+  margin: 2px 4px;
+  border: 2px solid #2b2417;
+  border-radius: 50% 50% 6px 6px / 34% 34% 6px 6px;
+  background:
+    radial-gradient(circle at 50% 35%, var(--sky-a), var(--sky-b) 85%);
+  box-shadow: inset 0 0 0 3px rgba(255, 245, 220, 0.7), inset 0 -10px 18px rgba(43, 36, 23, 0.12);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.gcard-art svg {
+  width: 74%;
+  height: 74%;
+}
+
+.gcard-type {
+  font-size: calc(var(--w) * 0.066);
+  font-style: italic;
+  color: var(--ink-2);
+  border-bottom: 1px solid rgba(143, 100, 24, 0.6);
+  padding-bottom: 2px;
+}
+
+.gcard-text {
+  font-size: calc(var(--w) * 0.075);
+  line-height: 1.28;
+  min-height: 3.9em;
+}
+
+.gcard-flavor {
+  font-size: calc(var(--w) * 0.062);
+  font-style: italic;
+  color: var(--ink-3);
+  line-height: 1.2;
+}
+
+.gcard.fam-god {
+  --band: linear-gradient(180deg, #f9f1d8, #e3d6ad);
+  --sky-a: #fdf7e4;
+  --sky-b: #a9c8de;
+}
+
+.gcard.fam-king {
+  --band: linear-gradient(180deg, #b8463a, #7e2a22);
+  --band-ink: #fff3da;
+  --sky-a: #fbeedb;
+  --sky-b: #c9776a;
+}
+
+.gcard.fam-human {
+  --band: linear-gradient(180deg, #8aa363, #5b7140);
+  --band-ink: #fff8e6;
+  --sky-a: #f8f1da;
+  --sky-b: #a9bb86;
+}
+
+.gcard.fam-watch {
+  --band: linear-gradient(180deg, #e8d7ae, #c6ad79);
+  --sky-a: #fbf3dc;
+  --sky-b: #cdb88c;
+}
+
+.gcard.big {
+  --w: 210px;
+}
+
+/* The role picker and the birth reveal: a veil over the board, cards in the middle. */
+
+.veil {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at center, rgba(43, 36, 23, 0.35), rgba(43, 36, 23, 0.6));
+  z-index: 20;
+}
+
+.veil-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  padding: 20px;
+}
+
+.veil-title {
+  font-family: var(--pixel);
+  font-weight: 700;
+  font-size: 30px;
+  color: #fff3da;
+  text-shadow: 0 2px 0 #2b2417, 0 0 18px rgba(0, 0, 0, 0.4);
+  text-align: center;
+}
+
+.veil-title small {
+  display: block;
+  font-family: var(--body);
+  font-weight: 500;
+  font-size: 15px;
+  margin-top: 6px;
+}
+
+.role-row {
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* The hand: a fan of cards along the bottom, with the deck and the day's seal. */
+
+.hand-tray {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 0 16px 12px;
+  pointer-events: none;
+}
+
+.hand-tray > * {
+  pointer-events: auto;
+}
+
+.hand {
+  display: flex;
+  align-items: flex-end;
+  padding-top: 30px;
+}
+
+.hand .gcard {
+  margin: 0 -10px;
+}
+
+.deck-pile {
+  width: 70px;
+  aspect-ratio: 5 / 7;
+  border: 2px solid #2b2417;
+  border-radius: 9px;
+  background: repeating-linear-gradient(45deg, #7e2a22 0 6px, #8f3328 6px 12px);
+  box-shadow:
+    inset 0 0 0 3px #e3c065,
+    inset 0 0 0 4px #2b2417,
+    3px 3px 0 #2b2417,
+    6px 6px 0 #6b2520,
+    7px 7px 0 #2b2417;
+  display: grid;
+  place-items: center;
+  color: #fff3da;
+  font-family: var(--num);
+  font-size: 26px;
+  text-shadow: 0 2px 0 #2b2417;
+}
+
+.next-day {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  border: 3px solid #2b2417;
+  background:
+    radial-gradient(circle at 50% 40%, #fff1c2, #e9c463 45%, #b8862b 75%, #8f6418);
+  box-shadow:
+    inset 0 0 0 6px rgba(255, 241, 194, 0.6),
+    inset 0 0 0 8px #8f6418,
+    4px 4px 0 #2b2417,
+    0 0 18px rgba(212, 161, 42, 0.5);
+  font-family: var(--pixel);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.05;
+  color: #2b2417;
+  cursor: pointer;
+}
+
+.next-day:active {
+  transform: translate(3px, 3px);
+  box-shadow:
+    inset 0 0 0 6px rgba(255, 241, 194, 0.6),
+    inset 0 0 0 8px #8f6418;
+}
+
+.next-day small {
+  display: block;
+  font-family: var(--num);
+  font-weight: 400;
+  font-size: 16px;
+  margin-top: 4px;
+}
+
+.aim-banner {
+  position: absolute;
+  top: 92px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px 6px;
+  font-family: var(--pixel);
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(180deg, #fbf3dd, #efe0b9);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  z-index: 6;
+}
+
+.birth-sheet {
+  width: min(440px, 92vw);
+  padding: 18px 22px;
+  background: #fbf3dc;
+  border: 2px solid #2b2417;
+  border-radius: 6px;
+  box-shadow:
+    inset 0 0 0 4px #fbf3dc,
+    inset 0 0 0 6px #d4a12a,
+    6px 6px 0 #2b2417;
+  text-align: left;
+}
+
+.birth-sheet h3 {
+  margin: 0 0 10px;
+  font-family: var(--pixel);
+  font-size: 22px;
+  text-align: center;
+}
+
+.birth-sheet .kv {
+  opacity: 0;
+  animation: reveal 0.45s steps(6) forwards;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.drawer.with-hand {
+  bottom: 270px;
+}
+
+.board-screen .lower-third.with-hand {
+  bottom: 270px;
+}
+
+.gcard {
+  aspect-ratio: 5 / 7.4;
+}
+
+.gcard-art {
+  flex: 1 1 auto;
+  min-height: 38%;
+}
+
+.gcard-text {
+  min-height: 0;
+}
+
+.hand .gcard {
+  --w: 132px;
+}
+
+.hand-tray {
+  bottom: 14px;
+}
+
+.next-day.ready {
+  animation: breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 6px rgba(255, 241, 194, 0.6),
+      inset 0 0 0 8px #8f6418,
+      4px 4px 0 #2b2417,
+      0 0 14px rgba(212, 161, 42, 0.45);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 6px rgba(255, 241, 194, 0.6),
+      inset 0 0 0 8px #8f6418,
+      4px 4px 0 #2b2417,
+      0 0 30px 6px rgba(243, 210, 122, 0.95);
+  }
+}

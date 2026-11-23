@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ERA_TICKS, LAWS, isNight, rainOf } from "@/engine/laws.ts";
 import { census, createWorld, ledger, step, type Bot, type World, type WorldEvent } from "@/engine/world.ts";
 import { AreaCard, BotCard, CountryCard, Portrait, fmt, stateLabel } from "./cards.tsx";
+import { DEFS, HAND_MAX, HAND_START, PLAYS_PER_DAY, REACH, dealDeck, playCard, type Card, type Role } from "@/engine/cards.ts";
+import { GameCard, RoleCard } from "./GameCard.tsx";
 import { BUFFER, COL, MapRenderer, clampCamera, fitCamera, toScreen, toWorld, type Camera, type Rect } from "./map.ts";
 
 const SPEEDS = [
@@ -24,6 +26,36 @@ type Selection =
   | null;
 type Cutin = { key: number; text: string; kind: "need" | "gold" };
 type Particle = { tx: number; ty: number; delay: number; lift: number };
+/** The player's seat at the table: a role, a deck, a hand, a day's plays. */
+type Player = {
+  role: Role | null;
+  deck: Card[];
+  hand: Card[];
+  plays: number;
+  kingdom: number | null;
+  meId: number | null;
+  chosen: number | null;
+  pickKingdom: boolean;
+  reveal: boolean;
+  day: number;
+  /** Card players take turns: the world waits at the start of each day until they press on. */
+  waiting: boolean;
+};
+const newPlayer = (): Player => ({
+  role: null,
+  deck: [],
+  hand: [],
+  plays: 0,
+  kingdom: null,
+  meId: null,
+  chosen: null,
+  pickKingdom: false,
+  reveal: false,
+  day: 0,
+  waiting: false,
+});
+const FAMILY_COLOR = { god: "#7fa7c9", king: "#b8463a", human: "#7e9b4f" } as const;
+
 type Drag = { mode: "maybe" | "box" | "pan"; px: number; py: number; cam: Camera; rect: Rect | null };
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
@@ -42,6 +74,8 @@ export default function WorldView() {
   const lastCutRef = useRef(0);
   const rotateRef = useRef(0);
   const dragRef = useRef<Drag | null>(null);
+  const playerRef = useRef<Player>(newPlayer());
+  const aimRef = useRef<{ x: number; y: number } | null>(null);
 
   const [, setFrame] = useState(0);
   const [intro, setIntro] = useState(0);
@@ -84,6 +118,7 @@ export default function WorldView() {
       lastEventRef.current = w.events[w.events.length - 1] ?? null;
       particlesRef.current = makeParticles(w);
       introStartRef.current = null;
+      playerRef.current = newPlayer();
       setIntro(0);
       setSelection(null);
       follow(null);
@@ -185,7 +220,15 @@ export default function WorldView() {
           drawGenesis(ctx, r, w, t, particlesRef.current);
           if (t >= INTRO.end) setIntro(-1);
         } else {
-          if (playing) for (let i = 0; i < SPEEDS[speed].ticks; i++) step(w);
+          const p = playerRef.current;
+          if (playing && p.role !== null && !p.reveal && !p.waiting) {
+            for (let i = 0; i < SPEEDS[speed].ticks; i++) {
+              step(w);
+              // Card players: stop at the dawn of each new day, for their turn.
+              if (p.role !== "watch" && w.tick % LAWS.DAY_TICKS === 0) break;
+            }
+          }
+          newDay();
           watchEvents(now);
           let cam = camRef.current;
           if (zoomTargetRef.current != null) cam = { ...cam, s: cam.s + (zoomTargetRef.current - cam.s) * 0.12 };
@@ -195,12 +238,23 @@ export default function WorldView() {
           }
           camRef.current = cam = clampCamera(w, cam);
           const sel = selectionRef.current;
+          const card = p.hand.find((c) => c.uid === p.chosen);
+          const def = card ? DEFS[card.kind] : null;
+          const aim = aimRef.current;
+          const hoverNation = aim ? w.geo.cells[Math.floor(aim.y) * w.width + Math.floor(aim.x)] ?? -1 : -1;
           r.draw(ctx, w, cam, {
             selectedId: sel?.kind === "bot" ? sel.id : null,
             followId: followRef.current,
             area: sel?.kind === "area" ? sel.rect : null,
             dragging: dragRef.current?.mode === "box" ? dragRef.current.rect : null,
-            highlightCountry: sel?.kind === "country" ? sel.ci : null,
+            highlightCountry:
+              (def?.target === "nation" || p.pickKingdom) && hoverNation >= 0
+                ? hoverNation
+                : sel?.kind === "country"
+                  ? sel.ci
+                  : p.kingdom,
+            aim: def?.target === "area" && aim && card ? { x: aim.x, y: aim.y, r: REACH[card.reach], color: FAMILY_COLOR[def.family] } : null,
+            meId: p.meId,
           });
           const mini = miniRef.current;
           if (mini) {
@@ -223,6 +277,86 @@ export default function WorldView() {
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, speed, intro >= 0]);
+
+  /** A new day: draw a card (if the hand has room and the deck has cards) and get back the day's play. */
+  function newDay() {
+    const p = playerRef.current;
+    const day = Math.floor(worldRef.current.tick / LAWS.DAY_TICKS);
+    if (day === p.day) return;
+    p.day = day;
+    if (!p.role || p.role === "watch") return;
+    p.plays = PLAYS_PER_DAY;
+    p.waiting = true;
+    const drew = p.deck.length > 0 && p.hand.length < HAND_MAX;
+    if (drew) p.hand.push(p.deck.shift()!);
+    setCutin({ key: performance.now(), kind: "gold", text: `Day ${day + 1}. ${drew ? "You drew a card." : p.deck.length ? "Your hand is full." : "Your deck is empty."} Play, then press on.` });
+  }
+
+  function chooseRole(role: Role) {
+    const w = worldRef.current;
+    const p = playerRef.current;
+    p.role = role;
+    p.day = Math.floor(w.tick / LAWS.DAY_TICKS);
+    if (role !== "watch") {
+      p.deck = dealDeck({ rng: w.seed * 31 + role.length * 7919 }, role);
+      p.hand = p.deck.splice(0, HAND_START);
+      p.plays = PLAYS_PER_DAY;
+      p.waiting = true;
+    }
+    if (role === "king") p.pickKingdom = true;
+    if (role === "human") {
+      // One draw, no redraw: the bots were born by the real lottery, so any of them is a fair draw.
+      p.meId = Math.floor(Math.random() * w.bots.length);
+      p.reveal = true;
+      follow(p.meId);
+      setSelection({ kind: "bot", id: p.meId });
+    }
+    setFrame((f) => f + 1);
+  }
+
+  function announce(text: string, kind: "need" | "gold" = "gold") {
+    setCutin({ key: performance.now(), kind, text });
+  }
+
+  function play(card: Card, ctx: { at?: { x: number; y: number }; ci?: number }) {
+    const p = playerRef.current;
+    const r = playCard(worldRef.current, card, { ...ctx, kingdom: p.kingdom ?? undefined, botId: p.meId ?? undefined });
+    if (!r.ok) {
+      announce(r.reason, "need");
+      return;
+    }
+    p.hand = p.hand.filter((c) => c.uid !== card.uid);
+    p.plays--;
+    p.chosen = null;
+    announce(r.text);
+    setFrame((f) => f + 1);
+  }
+
+  function onCard(card: Card) {
+    const p = playerRef.current;
+    if (p.plays <= 0) return announce("You have played today's card. Wait for the next day.", "need");
+    const t = DEFS[card.kind].target;
+    if (p.chosen === card.uid) {
+      if (t === "world" || t === "kingdom" || t === "self") play(card, {});
+      else p.chosen = null;
+    } else p.chosen = card.uid;
+    setFrame((f) => f + 1);
+  }
+
+  /** The turn button: let the day run, or skip ahead to the next dawn if it is already running. */
+  function nextDay() {
+    const w = worldRef.current;
+    const p = playerRef.current;
+    if (p.waiting) {
+      p.waiting = false;
+      p.chosen = null;
+    } else {
+      const target = (Math.floor(w.tick / LAWS.DAY_TICKS) + 1) * LAWS.DAY_TICKS;
+      while (w.tick < target) step(w);
+      newDay();
+    }
+    setFrame((f) => f + 1);
+  }
 
   /** New events: cut-ins for big moments; the director (if on) cuts to whoever they happened to. */
   function watchEvents(now: number) {
@@ -260,8 +394,9 @@ export default function WorldView() {
   };
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const d = dragRef.current;
-    if (!d) return;
     const { px, py } = bufferPoint(e.currentTarget, e.clientX, e.clientY);
+    aimRef.current = toWorld(camRef.current, px, py);
+    if (!d) return;
     if (d.mode === "pan") {
       camRef.current = clampCamera(worldRef.current, { ...d.cam, cx: d.cam.cx - (px - d.px) / d.cam.s, cy: d.cam.cy - (py - d.py) / d.cam.s });
       return;
@@ -284,6 +419,26 @@ export default function WorldView() {
     if (d.mode !== "maybe") return;
     const w = worldRef.current;
     const pt = toWorld(camRef.current, d.px, d.py);
+    // Cards and the king's choice take the click first.
+    const p = playerRef.current;
+    const nationAt = w.geo.cells[Math.floor(pt.y) * w.width + Math.floor(pt.x)] ?? -1;
+    if (p.pickKingdom) {
+      if (nationAt < 0) return announce("Choose land: click a nation to rule.", "need");
+      p.kingdom = nationAt;
+      p.pickKingdom = false;
+      setSelection({ kind: "country", ci: nationAt });
+      announce(`You rule ${w.countries[nationAt].name}.`);
+      return;
+    }
+    const card = p.hand.find((c) => c.uid === p.chosen);
+    if (card) {
+      const t = DEFS[card.kind].target;
+      if (t === "area") return play(card, { at: pt });
+      if (t === "nation") {
+        if (nationAt < 0) return announce("Choose a nation, not the sea.", "need");
+        return play(card, { ci: nationAt });
+      }
+    }
     let best: Bot | null = null;
     let bestD = Math.max(0.9, 14 / camRef.current.s);
     for (const b of w.bots) {
@@ -327,6 +482,9 @@ export default function WorldView() {
   const lastAbout = followed ? [...w.events].reverse().find((e) => e.botId === followed.id) : null;
   const chans = channels(w);
   const introOn = intro >= 0;
+  const player = playerRef.current;
+  const playing_ = player.role != null && player.role !== "watch";
+  const chosenCard = player.hand.find((c) => c.uid === player.chosen);
   const zoomedOut = cam.s < fitCamera(w).s * 2.2;
 
   return (
@@ -395,6 +553,11 @@ export default function WorldView() {
             <span className="chip">{`Planet ${w.geo.name}`}</span>
             <span className="chip">{followed ? `Following Bot #${followed.id}` : zoomedOut ? "Whole world" : "Exploring"}</span>
             {night && <span className="chip">Night</span>}
+            {player.role && player.role !== "watch" && (
+              <span className="chip gold">
+                {player.role === "god" ? "You are God" : player.role === "king" ? (player.kingdom != null ? `King of ${w.countries[player.kingdom].name}` : "King, choosing") : `You are Bot #${player.meId}`}
+              </span>
+            )}
           </div>
           <div className="btn-row">
             <button className="pbtn" onClick={() => zoomBy(1.5)} aria-label="Zoom in">
@@ -419,7 +582,7 @@ export default function WorldView() {
 
 
       {followed && !introOn && (
-        <div className="lower-third">
+        <div className={`lower-third ${playing_ ? "with-hand" : ""}`}>
           <Portrait seed={w.seed} bot={followed} size={44} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="who">
@@ -435,7 +598,7 @@ export default function WorldView() {
       )}
 
       {!introOn && (
-        <aside className={`drawer ${drawer ? "" : "closed"}`}>
+        <aside className={`drawer ${drawer ? "" : "closed"} ${playing_ ? "with-hand" : ""}`}>
           <button className="pbtn drawer-tab" onClick={() => setDrawer((d) => !d)} aria-label={drawer ? "Hide panel" : "Show panel"}>
             {drawer ? "›" : "‹"}
           </button>
@@ -546,7 +709,68 @@ export default function WorldView() {
         </aside>
       )}
 
-      {!introOn && (
+      {!introOn && playing_ && (
+        <div className="hand-tray">
+          <div className="deck-pile" title="Cards left in your deck">
+            {player.deck.length}
+          </div>
+          <div className="hand">
+            {player.hand.map((card, i) => {
+              const mid = (player.hand.length - 1) / 2;
+              return (
+                <div key={card.uid} style={{ transform: `rotate(${(i - mid) * 4}deg) translateY(${Math.abs(i - mid) * 7}px)` }}>
+                  <GameCard
+                    card={card}
+                    selected={player.chosen === card.uid}
+                    disabled={player.plays <= 0}
+                    hint={
+                      player.chosen === card.uid
+                        ? ["world", "kingdom", "self"].includes(DEFS[card.kind].target)
+                          ? "Click again to play"
+                          : "Now choose on the map"
+                        : undefined
+                    }
+                    onClick={() => onCard(card)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <button className={`next-day ${player.waiting ? "ready" : ""}`} onClick={nextDay}>
+            {player.waiting ? `Begin day ${day}` : "Skip to dawn"}
+            <small>{player.plays > 0 ? "1 play left" : "played"}</small>
+          </button>
+        </div>
+      )}
+
+      {!introOn && chosenCard && ["area", "nation"].includes(DEFS[chosenCard.kind].target) && (
+        <div className="aim-banner">
+          {DEFS[chosenCard.kind].target === "area" ? `${DEFS[chosenCard.kind].title}: click a place on the map` : `${DEFS[chosenCard.kind].title}: click a nation`}
+        </div>
+      )}
+      {!introOn && player.pickKingdom && <div className="aim-banner">Click a nation to rule</div>}
+
+      {!introOn && player.role === null && (
+        <div className="veil">
+          <div className="veil-inner">
+            <div className="veil-title">
+              How will you enter this world?
+              <small>
+                Planet {w.geo.name}: {w.bots.length} souls, born by the real birth lottery.
+              </small>
+            </div>
+            <div className="role-row">
+              {(["watch", "god", "king", "human"] as Role[]).map((r) => (
+                <RoleCard key={r} role={r} onClick={() => chooseRole(r)} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!introOn && player.reveal && player.meId != null && <BirthReveal w={w} id={player.meId} onBegin={() => ((player.reveal = false), setFrame((f) => f + 1))} />}
+
+      {!introOn && !playing_ && player.role === "watch" && (
         <div className="tray">
           <button className={`channel ${followId == null ? "on" : ""}`} onClick={() => (follow(null), (camRef.current = fitCamera(w)))}>
             <WideIcon />
@@ -785,5 +1009,48 @@ function Jar() {
       color="#2b2417"
       rows={["..xxxxx..", "..x...x..", ".xx...xx.", "x.......x", "x.......x", "x.......x", "x.......x", "x.......x", "x.......x", "x.......x", ".xxxxxxx."]}
     />
+  );
+}
+
+/** The human's one draw: the birth certificate, line by line. */
+function BirthReveal({ w, id, onBegin }: { w: World; id: number; onBegin: () => void }) {
+  const b = w.bots[id];
+  const home = w.countries[b.birth.countryIdx];
+  const rank = Math.round(b.birth.familyRank * 100);
+  const rows: Array<[string, string]> = [
+    ["Born in", `${b.birth.countryName}, in ${w.lands[b.birth.land].name}`],
+    ["Family", rank >= 50 ? `richer than ${rank}% of families there` : `poorer than ${100 - rank}% of families there`],
+    ["Family money", `${fmt(b.birth.inheritance)} metashi`],
+    ["School", `${b.birth.schoolYears} years`],
+    ["Online, has tools", b.birth.tools ? "yes" : "no"],
+    ["Electricity", b.birth.electricity ? "yes" : "no: you will sleep through the nights"],
+    ["Bank account", b.birth.account ? "yes" : "no: help can't reach you"],
+    ["A meal costs", `${home.foodPrice} metashi`],
+    ["Real-world twin", "sealed until your life ends"],
+  ];
+  return (
+    <div className="veil">
+      <div className="veil-inner">
+        <div className="veil-title">
+          You were born.
+          <small>One draw. No redraw.</small>
+        </div>
+        <div className="birth-sheet">
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
+            <Portrait seed={w.seed} bot={b} size={88} />
+          </div>
+          <h3>Birth certificate · Bot #{b.id}</h3>
+          {rows.map(([k, v], i) => (
+            <div key={k} className="kv" style={{ animationDelay: `${0.4 + i * 0.45}s` }}>
+              <span className="k">{k}</span>
+              <span style={{ textAlign: "right" }}>{v}</span>
+            </div>
+          ))}
+        </div>
+        <button className="pbtn gold" style={{ fontSize: 18, padding: "8px 22px" }} onClick={onBegin}>
+          Begin this life
+        </button>
+      </div>
+    </div>
   );
 }

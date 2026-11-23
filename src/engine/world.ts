@@ -99,6 +99,11 @@ export type WorldCountry = {
   cityWeights: number[];
   /** For each city, the country's tiles around it, nearest first (the city's reach). */
   reach: number[][];
+  /** Policies a king has enacted here (school, electricity, accounts, tools). */
+  policies: Levers;
+  /** Food price and productivity before any policy, so a policy can move the price. */
+  baseFoodPrice: number;
+  baseProductivity: number;
 };
 
 /** One of the seven lands: a made-up name in the world, a real region behind it. */
@@ -127,7 +132,21 @@ export type Levers = Partial<{
   goldFollowsBirths: boolean;
 }>;
 
-export type EventKind = "genesis" | "rain" | "faint" | "recover" | "wake-ready";
+export type EventKind = "genesis" | "rain" | "faint" | "recover" | "wake-ready" | "card";
+
+/**
+ * A change in the world's rules for a while, put there by a played card: food prices, work stopping, wages.
+ * It covers an area (a circle of tiles), a nation, one bot, or the whole world.
+ */
+export type Mod = {
+  kind: "food" | "noWork" | "wage";
+  mult: number;
+  until: number;
+  area?: { x: number; y: number; r: number };
+  ci?: number;
+  botId?: number;
+  label: string;
+};
 export type WorldEvent = { tick: number; kind: EventKind; botId?: number; text: string };
 
 export type WorldOptions = { planet?: "earth" | "new"; levers?: Levers };
@@ -152,6 +171,8 @@ export type World = {
   rains: number;
   totals: { earned: number; spentOnFood: number; spentOnGoods: number };
   landStats: LandStats[];
+  /** Rule changes from played cards, until they expire. */
+  mods: Mod[];
 };
 
 /**
@@ -216,6 +237,7 @@ export function createWorld(seed: number, levers: Levers = {}, opts: { planet?: 
     sky: LAWS.SUPPLY,
     rains: 0,
     totals: { earned: 0, spentOnFood: 0, spentOnGoods: 0 },
+    mods: [],
     landStats: earth.lands.map(() => ({ earned: 0, taxed: 0, welfarePaid: 0, starvingTicks: 0, needFlips: 0, plentyFlips: 0 })),
   };
 
@@ -252,6 +274,9 @@ export function createWorld(seed: number, levers: Levers = {}, opts: { planet?: 
       iso3: c.iso3,
       land: earth.lands.findIndex((l) => l.name === c.region),
       foodPrice: Math.max(1, Math.round((LAWS.FOOD_PRICE * rel * worldProductivity) / productivity(c, levers))),
+      baseFoodPrice: (LAWS.FOOD_PRICE * rel * worldProductivity) / productivity(c, levers),
+      baseProductivity: productivity(c, levers),
+      policies: { ...levers },
       taxRate: c.taxPctGdp / 100,
       treasury: 0,
       tiles,
@@ -383,6 +408,7 @@ const manhattan = (w: World, a: number, b: number) =>
 
 export function step(w: World): void {
   const t = w.tick;
+  if (t % LAWS.DAY_TICKS === 0 && w.mods.length) w.mods = w.mods.filter((m) => m.until > t);
   if (t > 0 && t % ERA_TICKS === 0) {
     const amount = Math.min(w.sky, rainOf(w.rains));
     if (amount > 0) {
@@ -406,8 +432,34 @@ export function step(w: World): void {
   w.tick++;
 }
 
+/** Does a rule change reach this bot where it stands? */
+function covers(m: Mod, b: Bot) {
+  if (m.botId != null) return m.botId === b.id;
+  if (m.ci != null) return m.ci === b.birth.countryIdx;
+  if (m.area) return (b.x - m.area.x) ** 2 + (b.y - m.area.y) ** 2 <= m.area.r ** 2;
+  return true;
+}
+
+/** What a meal costs this bot right now: its nation's price, changed by any harvest, drought or trade around it. */
+export function foodPriceAt(w: World, b: Bot): number {
+  let price = w.countries[b.birth.countryIdx].foodPrice;
+  for (const m of w.mods) if (m.kind === "food" && m.until > w.tick && covers(m, b)) price *= m.mult;
+  return Math.max(1, Math.round(price));
+}
+
+function canWork(w: World, b: Bot) {
+  return !w.mods.some((m) => m.kind === "noWork" && m.until > w.tick && covers(m, b));
+}
+
+function wageMult(w: World, b: Bot) {
+  let k = 1;
+  for (const m of w.mods) if (m.kind === "wage" && m.until > w.tick && covers(m, b)) k *= m.mult;
+  return k;
+}
+
 function act(w: World, b: Bot, occupied: Uint8Array, taken: Uint8Array, night: boolean) {
   const home = w.countries[b.birth.countryIdx];
+  const price = w.mods.length ? foodPriceAt(w, b) : home.foodPrice;
   const stats = w.landStats[b.birth.land];
 
   // Without electricity, night is for sleeping: no work, and hunger grows at half speed.
@@ -422,11 +474,11 @@ function act(w: World, b: Bot, occupied: Uint8Array, taken: Uint8Array, night: b
   }
 
   // Rule 1: hungry and able to pay → eat. The money goes back into the local economy.
-  if (b.hunger >= b.strategy.eatAt && b.wallet >= home.foodPrice) {
-    b.wallet -= home.foodPrice;
-    eat(w, b, home.foodPrice);
+  if (b.hunger >= b.strategy.eatAt && b.wallet >= price) {
+    b.wallet -= price;
+    eat(w, b, price);
     // And it spends a little of what it holds above its cushion: someone else's wage.
-    const spare = b.wallet - home.foodPrice * LAWS.CUSHION_MEALS;
+    const spare = b.wallet - price * LAWS.CUSHION_MEALS;
     const spend = spare > 0 ? Math.floor(spare * LAWS.SPEND_SHARE) : 0;
     if (spend > 0) {
       b.wallet -= spend;
@@ -444,13 +496,13 @@ function act(w: World, b: Bot, occupied: Uint8Array, taken: Uint8Array, night: b
     }
     b.life.ticksStarving++;
     stats.starvingTicks++;
-    if (b.wallet < home.foodPrice) {
+    if (b.wallet < price) {
       // Welfare: the country's treasury feeds a starving bot, if the money can reach it.
-      if (b.birth.account && home.treasury >= home.foodPrice) {
-        home.treasury -= home.foodPrice;
-        stats.welfarePaid += home.foodPrice;
+      if (b.birth.account && home.treasury >= price) {
+        home.treasury -= price;
+        stats.welfarePaid += price;
         b.life.welfareMeals++;
-        eat(w, b, home.foodPrice);
+        eat(w, b, price);
       } else {
         b.needTicks++;
       }
@@ -467,9 +519,10 @@ function act(w: World, b: Bot, occupied: Uint8Array, taken: Uint8Array, night: b
 
   // Rule 2: where there is money in the economy and the job is free → work. The country takes its tax.
   const here = b.y * w.width + b.x;
-  if (w.money[here] > 0 && !taken[here]) {
+  if (w.money[here] > 0 && !taken[here] && (!w.mods.length || canWork(w, b))) {
     taken[here] = 1;
-    const got = Math.min(wageFor(b.birth.schoolYears, b.birth.tools), w.money[here]);
+    const wage = wageFor(b.birth.schoolYears, b.birth.tools);
+    const got = Math.min(w.mods.length ? Math.max(1, Math.round(wage * wageMult(w, b))) : wage, w.money[here]);
     w.money[here] -= got;
     const tax = Math.floor(got * home.taxRate);
     home.treasury += tax;
@@ -576,7 +629,7 @@ function findWork(w: World, b: Bot, occupied: Uint8Array, taken: Uint8Array): { 
 }
 
 /** Money spent in a country goes back into its economy, mostly where its cities are. */
-function returnToEconomy(w: World, ci: number, amount: number) {
+export function returnToEconomy(w: World, ci: number, amount: number) {
   const c = w.countries[ci];
   const total = c.cityWeights.reduce((a, v) => a + v, 0);
   let r = nextFloat(w) * total;
@@ -587,13 +640,13 @@ function returnToEconomy(w: World, ci: number, amount: number) {
   w.money[reach[nextInt(w, 0, Math.min(reach.length, 13) - 1)]] += amount;
 }
 
-function log(w: World, kind: EventKind, text: string, botId?: number) {
+export function log(w: World, kind: EventKind, text: string, botId?: number) {
   w.events.push({ tick: w.tick, kind, botId, text });
   if (w.events.length > LAWS.EVENT_MEMORY) w.events.shift();
 }
 
 /** Split an integer amount by weight; the pieces always add up to exactly `total`. */
-function splitInteger(total: number, weights: number[]): number[] {
+export function splitInteger(total: number, weights: number[]): number[] {
   const sum = weights.reduce((a, b) => a + b, 0);
   if (sum <= 0) {
     const out = weights.map(() => 0);
