@@ -101,13 +101,19 @@ export class MapRenderer {
     const H = BUFFER.height;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = COL.paper;
-    ctx.fillRect(0, 0, W, H);
 
     const tl = toWorld(cam, 0, 0);
     const br = toWorld(cam, W, H);
     const ox = W / 2 - cam.cx * s;
     const oy = H / 2 - cam.cy * s;
+
+    // One sea for the whole window: the same paper runs on past the map's edges, fixed to the world as it moves.
+    const pattern = ctx.createPattern(art.paper, "repeat");
+    if (pattern) {
+      pattern.setTransform(new DOMMatrix().translate(ox, oy).scale(s / ART));
+      ctx.fillStyle = pattern;
+    } else ctx.fillStyle = COL.paper;
+    ctx.fillRect(0, 0, W, H);
 
     // The painted planet.
     ctx.imageSmoothingEnabled = true;
@@ -210,6 +216,13 @@ export class MapRenderer {
       const r = Math.max(14, s * 0.8);
       brackets(ctx, ox + (bot.x + 0.5) * s - r, oy + (bot.y + 0.5) * s - r, r * 2, r * 2, COL.select, Math.max(3, s / 10));
     }
+
+    // Aged edges belong to the window, like an old sheet of paper, not to the map.
+    const g = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.hypot(W, H) * 0.56);
+    g.addColorStop(0, "rgba(120, 90, 50, 0)");
+    g.addColorStop(1, "rgba(120, 90, 50, 0.22)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
 
     for (const rect of [o.area, o.dragging]) {
       if (!rect) continue;

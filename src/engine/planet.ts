@@ -230,7 +230,8 @@ export function generatePlanet(seed: number, earth: Earth = EARTH): Geography {
     const x = i % WIDTH;
     const y = Math.floor(i / WIDTH);
     const edge = Math.min(x, WIDTH - 1 - x, y, HEIGHT - 1 - y);
-    return elev(x, y) - (edge < 3 ? (3 - edge) * 0.12 : 0);
+    // The sea runs on past the map's edges, so no coast may be cut by them: land fades out near the edges.
+    return elev(x, y) - (edge < 2 ? 10 : edge < 6 ? (6 - edge) * 0.22 : 0);
   });
   // Earth's share of land in the same latitude band is about 31%.
   const sorted = [...values].sort((a, b) => b - a);

@@ -85,7 +85,8 @@ function seaDistance(land: Uint8Array, w: number, h: number) {
   return d;
 }
 
-export type MapArt = { canvas: HTMLCanvasElement; landMask: Uint8Array; maskW: number; maskH: number };
+/** The painted planet, plus a tile of the same bare paper so the sea can run on past the map's edges. */
+export type MapArt = { canvas: HTMLCanvasElement; paper: HTMLCanvasElement; landMask: Uint8Array; maskW: number; maskH: number };
 
 /** Words painted on the map (in the reader's language). */
 export type ArtCaption = { title: string; sub: string };
@@ -282,14 +283,33 @@ export function buildArt(w: World, caption?: ArtCaption): MapArt {
   compass(ctx, spot.x * (ART / M), spot.y * (ART / M), ART * 3.2);
   cartouche(ctx, w, land, mw, mh, caption);
 
-  // 6. Age the edges.
-  const g = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, canvas.height * 0.35, canvas.width / 2, canvas.height / 2, canvas.width * 0.62);
-  g.addColorStop(0, "rgba(120, 90, 50, 0)");
-  g.addColorStop(1, "rgba(120, 90, 50, 0.28)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // The edges are aged on the screen, not on the map, so the planet sits in one sea that fills the window.
+  return { canvas, paper: paperTile(), landMask: land, maskW: mw, maskH: mh };
+}
 
-  return { canvas, landMask: land, maskW: mw, maskH: mh };
+/** A tile of bare sea paper with the same grain as the map, at the map's resolution. */
+function paperTile() {
+  const T = 64;
+  const small = document.createElement("canvas");
+  small.width = small.height = T;
+  const sctx = small.getContext("2d")!;
+  const img = sctx.createImageData(T, T);
+  for (let y = 0; y < T; y++)
+    for (let x = 0; x < T; x++) {
+      const i = y * T + x;
+      const n = (hash(i + 99991) - 0.5) * 10 + (hash((x >> 3) * 977 + (y >> 3) * 131 + 7777) - 0.5) * 8;
+      img.data[i * 4] = Math.max(0, Math.min(255, PAPER[0] + n));
+      img.data[i * 4 + 1] = Math.max(0, Math.min(255, PAPER[1] + n));
+      img.data[i * 4 + 2] = Math.max(0, Math.min(255, PAPER[2] + n * 0.8));
+      img.data[i * 4 + 3] = 255;
+    }
+  sctx.putImageData(img, 0, 0);
+  const tile = document.createElement("canvas");
+  tile.width = tile.height = T * (ART / M);
+  const ctx = tile.getContext("2d")!;
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(small, 0, 0, tile.width, tile.height);
+  return tile;
 }
 
 function emptiestSea(w: World, land: Uint8Array, mw: number, mh: number) {
