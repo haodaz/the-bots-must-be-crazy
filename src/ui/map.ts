@@ -6,7 +6,12 @@ import { isNight } from "@/engine/laws.ts";
 import type { World } from "@/engine/world.ts";
 import { ART, buildArt, type ArtCaption, type MapArt } from "./mapArt.ts";
 import { decorFor, drawDecor, type Piece } from "./mapDecor.ts";
-import { H as AH, W as AW, avatarCanvas } from "./avatar.ts";
+import { H as AH, W as AW, avatarCanvas, walkFrame } from "./avatar.ts";
+
+type Bot = World["bots"][number];
+/** How a bot is drawn this frame: where it really stands (eased), which way it faces, and what it is doing. */
+type Motion = { x: number; y: number; face: 1 | -1; stride: number; meals: number; eatUntil: number };
+type Pose = { face: 1 | -1; stride: number; moving: boolean; t: number; eating: boolean };
 
 export const COL = {
   gold: "#d4a12a",
@@ -56,9 +61,12 @@ export function fitCamera(w: World): Camera {
   return { cx: w.width / 2, cy: w.height / 2, s: Math.min(BUFFER.width / w.width, BUFFER.height / w.height) * 0.96 };
 }
 
+/** How far in the camera can go, as a multiple of the whole-planet view: close enough to see faces. */
+export const MAX_ZOOM = 16;
+
 export function clampCamera(w: World, c: Camera): Camera {
   const minS = Math.min(BUFFER.width / w.width, BUFFER.height / w.height) * 0.96;
-  const s = Math.max(minS, Math.min(minS * 8, c.s));
+  const s = Math.max(minS, Math.min(minS * MAX_ZOOM, c.s));
   const vw = BUFFER.width / s;
   const vh = BUFFER.height / s;
   return {
@@ -79,6 +87,8 @@ export function toScreen(c: Camera, x: number, y: number) {
 export class MapRenderer {
   private art: MapArt | null = null;
   private decor: Piece[] = [];
+  private motion = new Map<number, Motion>();
+  private motionWorld: World | null = null;
   private artWorld: World | null = null;
   private glow: HTMLCanvasElement | null = null;
   private dots = new Map<string, HTMLCanvasElement>();
@@ -167,14 +177,32 @@ export class MapRenderer {
       ctx.fillRect(0, 0, W, H);
     }
 
-    // The pieces.
+    // The pieces. The engine moves bots a whole tile at a time; on screen they walk there.
+    if (this.motionWorld !== w) {
+      this.motion.clear();
+      this.motionWorld = w;
+    }
+    const now = performance.now();
+    const t = now / 1000;
     const area = o.area ? norm(o.area) : null;
     const tokens = s >= DOT_ZOOM;
     for (const bot of w.bots) {
       if (bot.id >= shown) continue;
-      if (bot.x < x0 - 1 || bot.x > x1 || bot.y < y0 - 1 || bot.y > y1) continue;
-      const cx = ox + (bot.x + 0.5) * s;
-      const cy = oy + (bot.y + 0.5) * s;
+      const m = this.move(bot, now);
+      if (m.x < x0 - 2 || m.x > x1 + 1 || m.y < y0 - 2 || m.y > y1 + 1) continue;
+      // At work, a bot paces about its spot; idle, it sways and now and then turns round.
+      let pace = 0;
+      let face = m.face;
+      let moving = Math.hypot(bot.x - m.x, bot.y - m.y) > 0.04;
+      if (!moving && bot.state === "working") {
+        const k = t * 0.9 + bot.id * 1.7;
+        pace = Math.sin(k) * 0.22;
+        face = Math.cos(k) >= 0 ? 1 : -1;
+        moving = Math.abs(Math.cos(k)) > 0.35;
+        if (moving) m.stride += 0.05;
+      } else if (!moving && bot.state === "roaming" && Math.floor(t / 3.5 + bot.id * 0.37) % 2 === 1) face = m.face === 1 ? -1 : 1;
+      const cx = ox + (m.x + 0.5 + pace) * s;
+      const cy = oy + (m.y + 0.5) * s;
       const body =
         bot.state === "faint" ? COL.faint : bot.state === "asleep" ? COL.asleep : bot.state === "working" ? COL.working : COL.body;
       if (night && bot.birth.electricity) {
@@ -183,7 +211,7 @@ export class MapRenderer {
         ctx.arc(cx, cy, Math.max(s * 0.9, 9), 0, Math.PI * 2);
         ctx.fill();
       }
-      if (tokens) standee(ctx, w.seed, bot, cx, oy + (bot.y + 1) * s, s * 1.7);
+      if (tokens) standee(ctx, w.seed, bot, cx, oy + (m.y + 1) * s, s * 1.7, { face, stride: m.stride, moving, t: t + bot.id * 0.31, eating: now < m.eatUntil });
       else pawn(ctx, cx, cy, Math.max(7, s * 0.55), body, bot.wake);
       if (area && bot.x >= area.x0 - 0.5 && bot.x <= area.x1 && bot.y >= area.y0 - 0.5 && bot.y <= area.y1) {
         const r = Math.max(9, s * 0.62);
@@ -192,8 +220,8 @@ export class MapRenderer {
     }
 
     if (o.meId != null) {
-      const me = w.bots[o.meId];
-      star(ctx, ox + (me.x + 0.5) * s, oy + (me.y + 0.5) * s - Math.max(14, s * 0.9), Math.max(7, s * 0.3));
+      const me = this.motion.get(o.meId) ?? w.bots[o.meId];
+      star(ctx, ox + (me.x + 0.5) * s, oy + (me.y + 0.5) * s - Math.max(14, s * 1.9), Math.max(7, s * 0.3));
     }
 
     if (o.aim) {
@@ -221,7 +249,8 @@ export class MapRenderer {
       if (id == null) continue;
       const bot = w.bots[id];
       const r = Math.max(14, s * 0.8);
-      brackets(ctx, ox + (bot.x + 0.5) * s - r, oy + (bot.y + 0.5) * s - r, r * 2, r * 2, COL.select, Math.max(3, s / 10));
+      const m = this.motion.get(bot.id) ?? bot;
+      brackets(ctx, ox + (m.x + 0.5) * s - r, oy + (m.y + 0.5) * s - r, r * 2, r * 2, COL.select, Math.max(3, s / 10));
     }
 
     // Aged edges belong to the window, like an old sheet of paper, not to the map.
@@ -245,6 +274,31 @@ export class MapRenderer {
       ctx.setLineDash([]);
       brackets(ctx, a.px - 7, a.py - 7, z.px - a.px + 14, z.py - a.py + 14, COL.select, 5);
     }
+  }
+
+  /** Ease a bot's drawn position toward its tile; far jumps (fast speeds) snap. Notes meals for the eating pose. */
+  private move(bot: Bot, now: number): Motion {
+    let m = this.motion.get(bot.id);
+    if (!m) {
+      m = { x: bot.x, y: bot.y, face: bot.id % 2 ? 1 : -1, stride: 0, meals: bot.life.meals, eatUntil: 0 };
+      this.motion.set(bot.id, m);
+    }
+    const dx = bot.x - m.x;
+    const dy = bot.y - m.y;
+    const d = Math.hypot(dx, dy);
+    if (d > 6) {
+      m.x = bot.x;
+      m.y = bot.y;
+    } else if (d > 0.001) {
+      const k = bot.state === "faint" ? 0.08 : 0.2;
+      m.x += dx * k;
+      m.y += dy * k;
+      m.stride += d * k * 2.2;
+      if (Math.abs(dx) > 0.05) m.face = dx > 0 ? 1 : -1;
+    }
+    if (bot.life.meals > m.meals) m.eatUntil = now + 1200;
+    m.meals = bot.life.meals;
+    return m;
   }
 
   /** The whole board, small, with the camera's view marked. */
@@ -302,12 +356,18 @@ export class MapRenderer {
 
 }
 
-/** Close up: the bot's pixel figure standing on the board, with a shadow at its feet. */
-function standee(ctx: CanvasRenderingContext2D, seed: number, bot: World["bots"][number], cx: number, feet: number, h: number) {
+/**
+ * Close up: the bot's pixel figure on the board, with a shadow at its feet, acting out what it is doing:
+ * walking (feet in turn, a bob), working (a swinging hammer, now and then a glint of gold), eating (a bowl),
+ * asleep (lying down, z z z), faint (slumped, a drop of sweat), idle (a slight sway). Faces the way it walks.
+ */
+function standee(ctx: CanvasRenderingContext2D, seed: number, bot: Bot, cx: number, feet: number, h: number, pose: Pose) {
   const w = (h * AW) / AH;
+  const px = h / AH; // one figure pixel
+  const { t } = pose;
   ctx.fillStyle = "rgba(43, 36, 23, 0.28)";
   ctx.beginPath();
-  ctx.ellipse(cx, feet - h * 0.06, w * 0.42, h * 0.07, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, feet - h * 0.06, w * (bot.state === "asleep" ? 0.75 : 0.42), h * 0.07, 0, 0, Math.PI * 2);
   ctx.fill();
   if (bot.wake) {
     ctx.strokeStyle = bot.wake === "need" ? COL.need : COL.plenty;
@@ -317,11 +377,92 @@ function standee(ctx: CanvasRenderingContext2D, seed: number, bot: World["bots"]
     ctx.stroke();
   }
   const look = bot.state === "faint" ? "faint" : bot.state === "asleep" ? "asleep" : "normal";
-  const fig = avatarCanvas(seed, bot.id, bot.birth.familyRank, look, bot.wake);
+  let fig = avatarCanvas(seed, bot.id, bot.birth.familyRank, look, bot.wake);
+  const walking = pose.moving && bot.state !== "asleep";
+  const step = Math.sin(pose.stride * Math.PI);
+  if (walking && Math.abs(step) > 0.3) fig = walkFrame(fig, step > 0 ? 0 : 1);
+  const working = bot.state === "working";
+  const swing = working ? Math.max(0, Math.sin(t * 7)) : 0;
+
   const smooth = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(fig, cx - w / 2, feet - h * 0.98, w, h);
+  ctx.save();
+  ctx.translate(cx, feet);
+  if (bot.state === "asleep") {
+    // Lying on the ground, head to one side.
+    ctx.rotate(-Math.PI / 2);
+    ctx.drawImage(fig, -h * 0.02 - w / 2 + px * 2, -w * 0.5 - h * 0.45, w, h);
+  } else {
+    ctx.scale(pose.face, 1);
+    let lift = 0;
+    let lean = 0;
+    let squash = 1;
+    if (walking) lift = Math.abs(step) * px;
+    else if (working) squash = 1 - swing * 0.05;
+    else if (bot.state === "faint") lean = -0.22;
+    else lean = Math.sin(t * 1.6) * 0.03;
+    ctx.rotate(lean);
+    ctx.scale(1, squash);
+    ctx.drawImage(fig, -w / 2, -h * 0.98 - lift, w, h);
+    if (working) hammer(ctx, px, swing);
+    if (pose.eating) bowl(ctx, px, t);
+  }
+  ctx.restore();
   ctx.imageSmoothingEnabled = smooth;
+
+  // Above the head: sleep, sweat, a glint of earned gold.
+  const top = feet - h * 1.02;
+  if (bot.state === "asleep") {
+    ctx.fillStyle = "rgba(60, 55, 90, 0.85)";
+    ctx.font = `bold ${Math.max(8, px * 5)}px ui-monospace, monospace`;
+    for (let k = 0; k < 3; k++) {
+      const f = (t * 0.6 + k / 3) % 1;
+      ctx.globalAlpha = 1 - f;
+      ctx.fillText("z", cx + w * 0.3 + f * w * 0.5, feet - h * 0.35 - f * h * 0.45);
+    }
+    ctx.globalAlpha = 1;
+  } else if (bot.state === "faint") {
+    const f = (t * 0.8) % 1;
+    ctx.fillStyle = "rgba(90, 150, 210, 0.9)";
+    ctx.beginPath();
+    ctx.ellipse(cx + pose.face * w * 0.42, top + h * 0.18 + f * h * 0.12, px * 1.1, px * 1.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (working && (t * 1.3 + bot.id * 0.17) % 2.2 < 0.5) {
+    const f = ((t * 1.3 + bot.id * 0.17) % 2.2) / 0.5;
+    ctx.globalAlpha = 1 - f;
+    ctx.fillStyle = COL.plenty;
+    ctx.fillRect(cx + pose.face * w * 0.55 - px, top + h * 0.3 - f * h * 0.25, px * 2, px * 2);
+    ctx.globalAlpha = 1;
+  }
+}
+
+/** A small hammer in the bot's front hand, raised and brought down. Drawn in figure space (feet at 0, facing +x). */
+function hammer(ctx: CanvasRenderingContext2D, px: number, swing: number) {
+  ctx.save();
+  ctx.translate(px * 6, -px * 13);
+  ctx.rotate(-1.2 + swing * 1.5);
+  ctx.fillStyle = "#6b4a2a";
+  ctx.fillRect(-px * 0.5, -px * 7, px, px * 7);
+  ctx.fillStyle = "#5d5f66";
+  ctx.fillRect(-px * 2, -px * 8.5, px * 4, px * 2);
+  ctx.restore();
+}
+
+/** A bowl held in front, with a curl of steam. */
+function bowl(ctx: CanvasRenderingContext2D, px: number, t: number) {
+  ctx.fillStyle = "#b8643a";
+  ctx.beginPath();
+  ctx.ellipse(px * 6, -px * 13, px * 3, px * 1.6, 0, 0, Math.PI);
+  ctx.fill();
+  ctx.fillStyle = "#f0e2c0";
+  ctx.fillRect(px * 3, -px * 13.6, px * 6, px * 0.8);
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+  ctx.lineWidth = px * 0.7;
+  ctx.beginPath();
+  const y0 = -px * 15;
+  ctx.moveTo(px * 6, y0);
+  ctx.quadraticCurveTo(px * (6 + Math.sin(t * 5) * 2), y0 - px * 3, px * 6, y0 - px * 6);
+  ctx.stroke();
 }
 
 /** The player's mark: a gold star above their bot. */

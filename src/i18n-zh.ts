@@ -97,8 +97,8 @@ export const ZH: Record<string, string> = {
 
   // ---- 侧栏 ----
   "How to watch": "怎么看",
-  "Gold is money: it glows where an economy is, like lamplight. Bots work there to earn it and spend it back on food. Scroll to zoom, drag to move. Press Select area (or hold Shift) and drag a box to see everyone in an area. Click a bot for its birth certificate, or a nation for its story.":
-    "金色就是钱：哪里有经济，哪里就像灯火一样亮着。小家伙们在那里干活挣钱，再花回到吃饭上。滚轮缩放，拖动移动地图。按「框选」（或按住 Shift）再拖一个框，看这一片的所有人。点一个小家伙看它的出生证明，点一个国家看它的故事。",
+  "Gold is money: it glows where an economy is, like lamplight. Bots work there to earn it and spend it back on food. Scroll or pinch to zoom, double-click to look closer, drag to move. Press Select area (or hold Shift) and drag a box to see everyone in an area. Click a bot for its birth certificate, or a nation for its story.":
+    "金色就是钱：哪里有经济，哪里就像灯火一样亮着。小家伙们在那里干活挣钱，再花回到吃饭上。滚轮或双指捏合缩放，双击凑近看，拖动移动地图。按「框选」（或按住 Shift）再拖一个框，看这一片的所有人。点一个小家伙看它的出生证明，点一个国家看它的故事。",
   Minds: "心智",
   "$0.00 today": "今天 $0.00",
   "No grain of real compute yet. When it arrives, you choose who wakes.": "还没有一粒真实的算力。等它到了，由你决定谁醒来。",

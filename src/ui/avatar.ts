@@ -318,6 +318,28 @@ function grey(hex: string) {
 const cache = new Map<string, HTMLCanvasElement>();
 
 /** The figure as a 20×32 canvas: asleep closes the eyes, faint drains the colour, a flipped switch lights the eyes. */
+const steps = new WeakMap<HTMLCanvasElement, HTMLCanvasElement[]>();
+
+/** A walking frame of a figure: one foot lifted a pixel (0 = left foot, 1 = right foot). */
+export function walkFrame(fig: HTMLCanvasElement, foot: 0 | 1): HTMLCanvasElement {
+  let pair = steps.get(fig);
+  if (!pair) {
+    pair = ([0, 1] as const).map((f) => {
+      const c = document.createElement("canvas");
+      c.width = W;
+      c.height = H;
+      const x = c.getContext("2d")!;
+      x.drawImage(fig, 0, 0);
+      const x0 = f === 0 ? 5 : 10;
+      x.clearRect(x0, 23, 5, 6);
+      x.drawImage(fig, x0, 24, 5, 5, x0, 23, 5, 5);
+      return c;
+    });
+    steps.set(fig, pair);
+  }
+  return pair[foot];
+}
+
 export function avatarCanvas(seed: number, id: number, familyRank: number, look: Look, wake: "need" | "plenty" | null): HTMLCanvasElement {
   const key = `${seed}:${id}:${look}:${wake ?? ""}`;
   const hit = cache.get(key);

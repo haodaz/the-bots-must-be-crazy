@@ -11,7 +11,7 @@ const TURN_TICKS = TURN_DAYS * LAWS.DAY_TICKS;
 import { GameCard, RoleCard } from "./GameCard.tsx";
 import { LangSwitch, useLang } from "@/i18n.tsx";
 import { Archive } from "./Archive.tsx";
-import { BUFFER, COL, MapRenderer, clampCamera, fitCamera, toScreen, toWorld, type Camera, type Rect } from "./map.ts";
+import { BUFFER, COL, MAX_ZOOM, MapRenderer, clampCamera, fitCamera, toScreen, toWorld, type Camera, type Rect } from "./map.ts";
 
 const SPEEDS = [
   { label: "1×", ticks: 1 },
@@ -73,6 +73,8 @@ export default function WorldView() {
   const rendererRef = useRef<MapRenderer | null>(null);
   const camRef = useRef<Camera>(fitCamera(worldRef.current));
   const zoomTargetRef = useRef<number | null>(null);
+  /** While a zoom eases in, this world point stays under this screen point (buffer px). */
+  const zoomAnchorRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const particlesRef = useRef<Particle[]>([]);
   const introStartRef = useRef<number | null>(null);
   const lastEventRef = useRef<WorldEvent | null>(null);
@@ -170,7 +172,8 @@ export default function WorldView() {
     lastEventRef.current = worldRef.current.events[worldRef.current.events.length - 1] ?? null;
   }, []);
 
-  // Wheel zooms around the cursor (a non-passive listener, so the page doesn't scroll).
+  // Wheel and trackpad pinch zoom the map around the cursor (non-passive listeners, so the page neither scrolls
+  // nor zooms). A pinch arrives as a wheel event with ctrlKey and small steps, so it gets a stronger factor.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -180,14 +183,37 @@ export default function WorldView() {
       const { px, py } = bufferPoint(canvas, e.clientX, e.clientY);
       const cam = camRef.current;
       const at = toWorld(cam, px, py);
-      const s = cam.s * Math.exp(-e.deltaY * 0.0016);
+      const s = cam.s * Math.exp(-e.deltaY * (e.ctrlKey ? 0.012 : 0.0016));
       zoomTargetRef.current = null;
+      zoomAnchorRef.current = null;
       const next = followRef.current != null ? { ...cam, s } : { s, cx: at.x - (px - BUFFER.width / 2) / s, cy: at.y - (py - BUFFER.height / 2) / s };
       camRef.current = clampCamera(w, next);
     };
+    // A pinch anywhere else on the board (over a panel, the cards) must not zoom the whole page either.
+    const noPageZoom = (e: WheelEvent) => {
+      if (e.ctrlKey) e.preventDefault();
+    };
+    const noGesture = (e: Event) => e.preventDefault();
     canvas.addEventListener("wheel", onWheel, { passive: false });
-    return () => canvas.removeEventListener("wheel", onWheel);
+    window.addEventListener("wheel", noPageZoom, { passive: false });
+    window.addEventListener("gesturestart", noGesture);
+    window.addEventListener("gesturechange", noGesture);
+    return () => {
+      canvas.removeEventListener("wheel", onWheel);
+      window.removeEventListener("wheel", noPageZoom);
+      window.removeEventListener("gesturestart", noGesture);
+      window.removeEventListener("gesturechange", noGesture);
+    };
   }, []);
+
+  /** Double-click: ease in twice as close, keeping the spot under the cursor. */
+  const onDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (intro >= 0) return;
+    const { px, py } = bufferPoint(e.currentTarget, e.clientX, e.clientY);
+    const at = toWorld(camRef.current, px, py);
+    zoomAnchorRef.current = followRef.current != null ? null : { x: at.x, y: at.y, px, py };
+    zoomTargetRef.current = camRef.current.s * 2;
+  };
 
   // Keyboard: arrows or WASD to pan, + and − to zoom, Esc to clear.
   useEffect(() => {
@@ -248,7 +274,15 @@ export default function WorldView() {
           newDay();
           watchEvents(now);
           let cam = camRef.current;
-          if (zoomTargetRef.current != null) cam = { ...cam, s: cam.s + (zoomTargetRef.current - cam.s) * 0.12 };
+          if (zoomTargetRef.current != null) {
+            cam = { ...cam, s: cam.s + (zoomTargetRef.current - cam.s) * 0.12 };
+            const a = zoomAnchorRef.current;
+            if (a) cam = { ...cam, cx: a.x - (a.px - BUFFER.width / 2) / cam.s, cy: a.y - (a.py - BUFFER.height / 2) / cam.s };
+            if (Math.abs(zoomTargetRef.current - cam.s) < cam.s * 0.004 || cam.s >= fitCamera(w).s * MAX_ZOOM) {
+              zoomTargetRef.current = null;
+              zoomAnchorRef.current = null;
+            }
+          }
           if (followRef.current != null) {
             const b = w.bots[followRef.current];
             cam = { ...cam, cx: cam.cx + (b.x + 0.5 - cam.cx) * 0.12, cy: cam.cy + (b.y + 0.5 - cam.cy) * 0.12 };
@@ -539,6 +573,7 @@ export default function WorldView() {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onDoubleClick={onDoubleClick}
         onContextMenu={(e) => e.preventDefault()}
       />
 
@@ -679,7 +714,7 @@ export default function WorldView() {
                 <div className="panel-h">{t("How to watch")}</div>
                 <div className="panel-b" style={{ fontSize: 13.5, lineHeight: 1.55 }}>
                   {t(
-                    "Gold is money: it glows where an economy is, like lamplight. Bots work there to earn it and spend it back on food. Scroll to zoom, drag to move. Press Select area (or hold Shift) and drag a box to see everyone in an area. Click a bot for its birth certificate, or a nation for its story.",
+                    "Gold is money: it glows where an economy is, like lamplight. Bots work there to earn it and spend it back on food. Scroll or pinch to zoom, double-click to look closer, drag to move. Press Select area (or hold Shift) and drag a box to see everyone in an area. Click a bot for its birth certificate, or a nation for its story.",
                   )}
                 </div>
               </div>
