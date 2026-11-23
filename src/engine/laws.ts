@@ -5,25 +5,33 @@ export const LAWS = {
   /** There will only ever be this many metashi. The same cap as Bitcoin. */
   SUPPLY: 21_000_000,
 
-  WIDTH: 48,
-  HEIGHT: 30,
   POPULATION: 100,
 
-  /** At genesis the fallen gold lands in this many patches. */
-  PATCHES: 30,
+  /**
+   * New money arrives as gold rain, like Bitcoin's block rewards: the first rain brings half the supply,
+   * and every era after that the sky gives half as much as the time before. It never quite reaches 21M.
+   */
+  ERA_DAYS: 5,
 
-  /** Metashi a creature digs out per swing, before any halving. */
-  BASE_YIELD: 64,
-  /** Every this many ticks the yield per swing halves. */
-  HALVING_TICKS: 3000,
-  /** After this many halvings the yield stops shrinking, so the world never runs dry. */
-  MAX_HALVINGS: 2,
+  /** What an hour of work earns, for a bot with the reference schooling and no tools. */
+  WAGE: 40,
 
   /** One day in the world. Real compute will arrive once per day, like sunlight. */
   DAY_TICKS: 600,
 
-  /** Food costs metashi (at world-average prices). What is paid goes back into the ground, to be mined again. */
-  FOOD_PRICE: 1_000,
+  /**
+   * Food costs metashi (at world-average prices). What is paid goes back into the local economy.
+   * Calibrated so that the share of bots who run out of food and money roughly matches the real prevalence of
+   * undernourishment (FAO, The State of Food Security and Nutrition in the World 2024: about 9% worldwide,
+   * about 20% in Africa, under 2.5% in Europe and North America).
+   */
+  FOOD_PRICE: 200,
+  /**
+   * Spending beyond food: at every meal a bot also spends this share of whatever it holds above a small cushion
+   * (CUSHION_MEALS meals' worth). That money goes back into the local economy and becomes someone else's wage.
+   */
+  SPEND_SHARE: 0.01,
+  CUSHION_MEALS: 8,
   /** Hunger at which a creature is starving and too weak to walk every tick. */
   STARVING: 150,
 
@@ -32,39 +40,38 @@ export const LAWS = {
   /** The plenty switch: savings at or above this. */
   PLENTY_WAKE: 500_000,
 
-  /** At genesis this share of the fallen money lands in pockets as family money; the rest in the ground. */
-  INHERITANCE_SHARE: 0.2,
-  /** Each land's strip is at least this many columns wide. */
-  MIN_LAND_COLS: 4,
+  /** At genesis this share of the first rain lands in pockets as family money; the rest in the economy. */
+  INHERITANCE_SHARE: 0.4,
   /** Night starts at this point of the day. Bots without electricity sleep through it. */
   NIGHT_FROM: 0.7,
   /**
-   * Returns to schooling: each year of school above the reference raises what a swing yields by this share.
+   * Returns to schooling: each year of school above the reference raises what an hour of work earns by this share.
    * About 9% a year is the global average return to a year of schooling
    * (Psacharopoulos & Patrinos, "Returns to Investment in Education: A Decennial Review of the Global Literature", World Bank, 2018).
    */
   RETURN_PER_SCHOOL_YEAR: 0.09,
-  /** Years of school at which a swing yields exactly the base amount. */
+  /** Years of school at which an hour of work earns exactly the base wage. */
   REFERENCE_SCHOOL_YEARS: 10,
-  /** Bots with tools (they grew up online) dig this many times faster. */
+  /** Bots with tools (they grew up online) earn this many times more per hour. */
   TOOLS_MULTIPLIER: 2,
-  /** A land's food price follows its real cost of living, kept within this range of the world average. */
+  /** A country's food price follows its real cost of living, kept within this range of the world average. */
   PRICE_RANGE: [0.4, 1.6] as const,
 
   /** How many recent events the world remembers for the page. */
   EVENT_MEMORY: 40,
 } as const;
 
-/** Metashi per swing at a given tick: halves every HALVING_TICKS, then holds. */
-export function yieldAt(tick: number): number {
-  const halvings = Math.min(Math.floor(tick / LAWS.HALVING_TICKS), LAWS.MAX_HALVINGS);
-  return LAWS.BASE_YIELD >> halvings;
+export const ERA_TICKS = LAWS.ERA_DAYS * LAWS.DAY_TICKS;
+
+/** How much gold falls in a given era's rain (era 0 is genesis). Halves every era. */
+export function rainOf(era: number): number {
+  return Math.floor(LAWS.SUPPLY / Math.pow(2, era + 1));
 }
 
 export const isNight = (tick: number) => tick % LAWS.DAY_TICKS >= LAWS.DAY_TICKS * LAWS.NIGHT_FROM;
 
-/** What one swing digs for a bot with this much school and these tools, at this tick. */
-export function swingFor(tick: number, schoolYears: number, tools: boolean): number {
+/** What an hour of work earns for a bot with this much school and these tools. */
+export function wageFor(schoolYears: number, tools: boolean): number {
   const school = Math.pow(1 + LAWS.RETURN_PER_SCHOOL_YEAR, schoolYears - LAWS.REFERENCE_SCHOOL_YEARS);
-  return Math.max(1, Math.round(yieldAt(tick) * school * (tools ? LAWS.TOOLS_MULTIPLIER : 1)));
+  return Math.max(1, Math.round(LAWS.WAGE * school * (tools ? LAWS.TOOLS_MULTIPLIER : 1)));
 }

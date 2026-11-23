@@ -14,8 +14,8 @@ export type Metrics = {
   /** Share of all pocket money held by the poorest half of bots. */
   poorestHalfShare: number;
   medianWallet: number;
-  /** All metashi dug out of the ground: how much work turned into wealth. */
-  mined: number;
+  /** All metashi earned by work: how much of the economy turned into wages. */
+  earned: number;
   welfarePaid: number;
   lands: LandMetrics[];
 };
@@ -61,8 +61,8 @@ export const EXPERIMENTS: Experiment[] = [
   },
   {
     key: "resources",
-    label: "Gold lands where the babies are",
-    question: "What if resources were where the people are?",
+    label: "New money lands where the babies are",
+    question: "What if the economy were where the people are?",
     levers: { goldFollowsBirths: true },
   },
 ];
@@ -77,7 +77,7 @@ export function measure(w: World): Metrics {
     needShare: w.bots.filter((b) => b.wake === "need").length / n,
     poorestHalfShare: total > 0 ? poorHalf / total : 0,
     medianWallet: wallets[Math.floor(n / 2)],
-    mined: w.totals.mined,
+    earned: w.totals.earned,
     welfarePaid: w.landStats.reduce((a, s) => a + s.welfarePaid, 0),
     lands: w.lands.map((l, i) => {
       const bots = w.bots.filter((b) => b.birth.land === i);
@@ -91,8 +91,9 @@ export function measure(w: World): Metrics {
   };
 }
 
-export function runWorld(seed: number, days: number, levers: Levers = {}): Metrics {
-  const w = createWorld(seed, levers);
+/** Each seed gets its own new planet, so no result rests on one map. */
+export function runWorld(seed: number, days: number, levers: Levers = {}, planet: "earth" | "new" = "new"): Metrics {
+  const w = createWorld(seed, levers, { planet });
   for (let i = 0; i < days * LAWS.DAY_TICKS; i++) step(w);
   return measure(w);
 }

@@ -21,7 +21,7 @@ const summary = (ms: Metrics[]) => ({
   needShare: avg(pick(ms, (m) => m.needShare)),
   poorestHalfShare: avg(pick(ms, (m) => m.poorestHalfShare)),
   medianWallet: avg(pick(ms, (m) => m.medianWallet)),
-  mined: avg(pick(ms, (m) => m.mined)),
+  earned: avg(pick(ms, (m) => m.earned)),
   welfarePaid: avg(pick(ms, (m) => m.welfarePaid)),
   landStarvingDays: landNames.map((_, i) => landStarvingDays(ms, i)),
   landMedianWallet: landNames.map((_, i) => median(ms.flatMap((m) => m.lands[i].wallets))),
@@ -39,7 +39,7 @@ const results = EXPERIMENTS.map((ex) => {
       needShare: e((m) => m.needShare),
       poorestHalfShare: e((m) => m.poorestHalfShare),
       medianWallet: e((m) => m.medianWallet),
-      mined: e((m) => m.mined),
+      earned: e((m) => m.earned),
     },
     world: summary(alt),
   };
@@ -54,6 +54,7 @@ const report = {
   lands: landNames,
   baseline: summary(base),
   results,
+  planets: "Each seed runs on its own newly generated planet with the real countries on it.",
   caveat:
     "A toy model built to make the birth lottery felt, not a forecast. Effects are differences between paired worlds with the same seeds, inside this model only.",
 };
@@ -63,7 +64,7 @@ writeFileSync("reports/impact.json", JSON.stringify(report, null, 1));
 console.log(`\n${seeds} seeds × ${EXPERIMENTS.length + 1} worlds × ${days} days in ${((Date.now() - started) / 1000).toFixed(0)}s → reports/impact.json\n`);
 
 const pct = (x: number | null) => (x == null ? "—" : `${x > 0 ? "+" : ""}${Math.round(x * 100)}%`);
-console.log("lever".padEnd(42), "starving days", "need", "poorest half", "mined");
+console.log("lever".padEnd(42), "starving days", "need", "poorest half", "earned");
 console.log(
   "baseline".padEnd(42),
   report.baseline.starvingDays.toFixed(2).padStart(13),
@@ -77,7 +78,7 @@ for (const r of results) {
     pct(f.starvingDays.relative).padStart(13),
     pct(f.needShare.relative).padStart(5),
     pct(f.poorestHalfShare.relative).padStart(12),
-    pct(f.mined.relative).padStart(6),
+    pct(f.earned.relative).padStart(6),
   );
 }
 

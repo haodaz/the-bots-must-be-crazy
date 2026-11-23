@@ -1,35 +1,46 @@
 import { describe, expect, it } from "vitest";
 import { EARTH } from "./earth.ts";
-import { LAWS, isNight, yieldAt } from "./laws.ts";
+import { ERA_TICKS, LAWS, isNight, rainOf } from "./laws.ts";
+import { generatePlanet, WIDTH, HEIGHT } from "./planet.ts";
 import { createWorld, ledger, step, type Levers } from "./world.ts";
 
-const run = (seed: number, ticks: number, levers: Levers = {}) => {
-  const w = createWorld(seed, levers);
+const run = (seed: number, ticks: number, levers: Levers = {}, planet: "earth" | "new" = "earth") => {
+  const w = createWorld(seed, levers, { planet });
   for (let i = 0; i < ticks; i++) step(w);
   return w;
 };
 
 describe("the law of supply", () => {
-  it("lands all 21,000,000 metashi at genesis: family money in pockets, the rest in the ground", () => {
+  it("rains half the supply at genesis: family money in pockets, the rest in the economy", () => {
     const l = ledger(createWorld(1));
     expect(l.total).toBe(LAWS.SUPPLY);
-    expect(l.pockets).toBe(Math.floor(LAWS.SUPPLY * LAWS.INHERITANCE_SHARE));
-    expect(l.treasuries).toBe(0);
+    expect(l.sky).toBe(LAWS.SUPPLY - rainOf(0));
+    expect(l.pockets).toBe(Math.floor(rainOf(0) * LAWS.INHERITANCE_SHARE));
   });
 
-  it("never creates or destroys a metashi, tick after tick, with taxes and welfare", () => {
-    const w = createWorld(7);
-    for (let i = 0; i < 20_000; i++) {
-      step(w);
-      if (i % 500 === 0) expect(ledger(w).total).toBe(LAWS.SUPPLY);
-    }
-    expect(ledger(w).total).toBe(LAWS.SUPPLY);
-    expect(w.bots.every((b) => b.wallet >= 0)).toBe(true);
-    expect(w.gold.every((g) => g >= 0)).toBe(true);
-    expect(w.lands.every((l) => l.treasury >= 0)).toBe(true);
+  for (const planet of ["earth", "new"] as const) {
+    it(`never creates or destroys a metashi, through rains, wages, food, tax and welfare (${planet})`, () => {
+      const w = createWorld(7, {}, { planet });
+      for (let i = 0; i < 20_000; i++) {
+        step(w);
+        if (i % 500 === 0) expect(ledger(w).total).toBe(LAWS.SUPPLY);
+      }
+      expect(ledger(w).total).toBe(LAWS.SUPPLY);
+      expect(w.bots.every((b) => b.wallet >= 0)).toBe(true);
+      expect(w.money.every((m) => m >= 0)).toBe(true);
+      expect(w.countries.every((c) => c.treasury >= 0)).toBe(true);
+    });
+  }
+
+  it("halves each rain, like Bitcoin's block rewards", () => {
+    const w = createWorld(2);
+    const before = w.sky;
+    for (let i = 0; i <= ERA_TICKS; i++) step(w);
+    expect(before - w.sky).toBe(rainOf(1));
+    expect(rainOf(1)).toBe(rainOf(0) / 2);
   });
 
-  it("puts everything in the ground when no one inherits", () => {
+  it("puts everything in the economy when no one inherits", () => {
     expect(ledger(createWorld(1, { noInheritance: true })).pockets).toBe(0);
   });
 });
@@ -58,12 +69,31 @@ describe("the birth lottery", () => {
   });
 });
 
+describe("planets", () => {
+  it("make a new planet with an Earth-like share of land and room for every real country", () => {
+    for (let seed = 1; seed <= 100; seed++) {
+      const g = generatePlanet(seed);
+      const land = g.cells.filter((c) => c >= 0).length / (WIDTH * HEIGHT);
+      expect(land).toBeGreaterThan(0.25);
+      expect(land).toBeLessThan(0.37);
+      expect(new Set(g.cells.filter((c) => c >= 0)).size).toBe(EARTH.countries.length);
+    }
+  });
+
+  it("are different from seed to seed, and the same for the same seed", () => {
+    expect(generatePlanet(4).cells).toEqual(generatePlanet(4).cells);
+    expect(generatePlanet(4).cells).not.toEqual(generatePlanet(5).cells);
+  });
+});
+
 describe("instincts", () => {
-  it("keep every bot inside the land it was born in", () => {
-    const w = createWorld(9);
-    for (let i = 0; i < 6_000; i++) {
-      step(w);
-      if (i % 200 === 0) for (const b of w.bots) expect(w.landOfCol[b.x]).toBe(b.birth.land);
+  it("keep every bot inside the country it was born in", () => {
+    for (const planet of ["earth", "new"] as const) {
+      const w = createWorld(9, {}, { planet });
+      for (let i = 0; i < 6_000; i++) {
+        step(w);
+        if (i % 200 === 0) for (const b of w.bots) expect(w.geo.cells[b.y * w.width + b.x]).toBe(b.birth.countryIdx);
+      }
     }
   });
 
@@ -79,17 +109,10 @@ describe("instincts", () => {
   });
 });
 
-describe("halving", () => {
-  it("halves the yield every HALVING_TICKS and then holds", () => {
-    expect(yieldAt(0)).toBe(LAWS.BASE_YIELD);
-    expect(yieldAt(LAWS.HALVING_TICKS)).toBe(LAWS.BASE_YIELD / 2);
-    expect(yieldAt(LAWS.HALVING_TICKS * 100)).toBe(LAWS.BASE_YIELD >> LAWS.MAX_HALVINGS);
-  });
-});
-
 describe("replay", () => {
   it("replays the same history from the same seed", () => {
     expect(JSON.stringify(run(42, 2_000))).toBe(JSON.stringify(run(42, 2_000)));
+    expect(JSON.stringify(run(42, 2_000, {}, "new"))).toBe(JSON.stringify(run(42, 2_000, {}, "new")));
   });
 
   it("tells a different story from a different seed", () => {

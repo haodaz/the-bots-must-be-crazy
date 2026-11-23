@@ -2,15 +2,18 @@
 // Countries are grouped into the World Bank's seven regions; each region becomes one land in the world.
 
 import raw from "../../data/world/countries.json" with { type: "json" };
+import rawMap from "../../data/world/map.json" with { type: "json" };
 
 export type Country = {
   iso3: string;
   name: string;
   region: string;
+  capital: string | null;
   /** Babies born here in a year (population × crude birth rate). */
   births: number;
   gdpPerCapitaPpp: number;
   gdpPpp: number;
+  landKm2: number;
   /** Expected years of school. */
   schoolYears: number;
   internetPct: number;
@@ -39,7 +42,10 @@ export type Land = {
   taxPctGdp: number;
 };
 
-export type Earth = { source: string; fetched: string; countries: Country[]; lands: Land[]; totalBirths: number };
+/** The pixel world map: one country index per tile (−1 sea, −2 land with no World Bank data). */
+export type EarthMap = { source: string; width: number; height: number; step: number; lat0: number; cells: number[]; capitals: number[] };
+
+export type Earth = { source: string; fetched: string; countries: Country[]; lands: Land[]; totalBirths: number; map: EarthMap };
 
 /** West to east, roughly as on a map. */
 const LANDS: Array<[string, string]> = [
@@ -64,7 +70,7 @@ const FIELDS = [
   "remittancePctGdp",
 ] as const;
 
-type RawCountry = { iso3: string; name: string; region: string; births: number; gdpPpp: number | null; landKm2: number | null } & Record<
+type RawCountry = { iso3: string; name: string; region: string; capital: string | null; births: number; gdpPpp: number | null; landKm2: number | null } & Record<
   (typeof FIELDS)[number],
   number | null
 >;
@@ -92,8 +98,10 @@ function build(): Earth {
       iso3: c.iso3,
       name: c.name,
       region: c.region,
+      capital: c.capital,
       births: c.births,
       gdpPpp: c.gdpPpp ?? 0,
+      landKm2: c.landKm2 ?? 0,
       ...out,
       filled,
     };
@@ -123,7 +131,10 @@ function build(): Earth {
   const unplaced = countries.filter((c) => !LANDS.some(([n]) => n === c.region));
   if (unplaced.length) throw new Error(`Countries with no land: ${unplaced.map((c) => c.name).join(", ")}`);
 
-  return { source: data.source, fetched: data.fetched, countries, lands, totalBirths };
+  const map = rawMap as unknown as EarthMap & { codes: string[] };
+  if (map.codes.some((code, i) => countries[i]?.iso3 !== code)) throw new Error("map.json is out of date: run scripts/build-map.ts");
+
+  return { source: data.source, fetched: data.fetched, countries, lands, totalBirths, map };
 }
 
 export const EARTH: Earth = build();

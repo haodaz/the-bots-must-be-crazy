@@ -172,9 +172,13 @@ export default function ReportView() {
         <div className="panel-b" style={{ fontSize: 13.5, lineHeight: 1.6 }}>
           <p style={{ margin: 0 }}>
             Each lever is tested on the same {R.seeds} seeds as the world as it is, so each pair has the very same people, places
-            and luck. Ranges are 95% intervals of the paired differences. Births, wealth, schooling, internet, electricity, bank
-            accounts, taxes and prices come from {R.data.source} (fetched {R.data.fetched}). Each extra year of school raises what a
-            swing digs by 9%, the global average return to schooling (Psacharopoulos & Patrinos, World Bank, 2018).
+            and luck; every seed runs on its own newly generated planet, so no result rests on one map. Ranges are 95% intervals of
+            the paired differences. Births, wealth, schooling, internet, electricity, bank accounts, taxes and prices come from{" "}
+            {R.data.source} (fetched {R.data.fetched}). metashi is money with a fixed supply: it circulates, so productivity shows up
+            as lower prices. Each extra year of school raises productivity by 9%, the global average return to schooling
+            (Psacharopoulos & Patrinos, World Bank, 2018); tools and the night hours that electricity allows raise it too. The
+            price of food is set so that the share of bots who run out of food and money matches the real prevalence of
+            undernourishment (FAO, about 9% worldwide).
           </p>
           <p className="note">{R.caveat} Generated {R.generated.slice(0, 10)}. Running it costs $0: no model is called.</p>
         </div>

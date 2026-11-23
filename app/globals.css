@@ -234,7 +234,7 @@ a {
   background: #e8dcc2;
 }
 
-.screen canvas {
+.screen > canvas {
   display: block;
   width: 100%;
   height: auto;
@@ -560,4 +560,63 @@ a {
 
 .delta.bad {
   color: var(--live);
+}
+
+/* ---------- Map ---------- */
+
+.screen > canvas {
+  cursor: crosshair;
+}
+
+.map-labels span {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--pixel);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+  background: rgba(251, 246, 234, 0.78);
+  padding: 0 4px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.map-labels span.big {
+  font-size: 13px;
+  color: var(--ink);
+  border: 1.5px solid var(--ink-2);
+  background: rgba(251, 246, 234, 0.88);
+  padding: 1px 6px 0;
+}
+
+.zoom-box {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  display: flex;
+  gap: 6px;
+}
+
+.zoom-box .pbtn {
+  padding: 3px 9px 2px;
+  font-size: 15px;
+}
+
+.minimap {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: clamp(110px, 22%, 220px);
+  height: auto;
+  aspect-ratio: 160 / 60;
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  image-rendering: pixelated;
+  pointer-events: auto;
+  cursor: pointer;
+  background: #f3ecdc;
+}
+
+.lower-third {
+  right: calc(clamp(110px, 22%, 220px) + 22px);
 }

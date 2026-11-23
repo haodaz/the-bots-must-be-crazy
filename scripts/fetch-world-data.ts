@@ -24,7 +24,15 @@ const INDICATORS = {
 } as const;
 type Key = keyof typeof INDICATORS;
 
-type Meta = { id: string; iso2Code: string; name: string; region: { id: string; value: string } };
+type Meta = {
+  id: string;
+  iso2Code: string;
+  name: string;
+  region: { id: string; value: string };
+  capitalCity: string;
+  latitude: string;
+  longitude: string;
+};
 
 async function json<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -56,6 +64,9 @@ async function main() {
         iso3: m.id,
         name: m.name,
         region: m.region.value.trim(),
+        capital: m.capitalCity || null,
+        lat: m.latitude ? Number(m.latitude) : null,
+        lon: m.longitude ? Number(m.longitude) : null,
         births,
         population: v.population?.value ?? null,
         gdpPerCapitaPpp: v.gdpPerCapitaPpp?.value ?? null,
