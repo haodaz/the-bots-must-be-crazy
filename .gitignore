@@ -1,0 +1,19 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# dependencies and builds
+node_modules/
+.next/
+dist/
+out/
+
+# local run data (usage logs are summarized in the README, raw files stay local)
+data/local/
+
+# OS / editor
+.DS_Store
+*.log
+.vscode/
+.idea/
