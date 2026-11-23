@@ -6,6 +6,7 @@
 import type { ReactNode } from "react";
 import { DEFS, cardParams, type Card, type Kind, type Role } from "@/engine/cards.ts";
 import { useLang } from "@/i18n.tsx";
+import { ART } from "@/art/manifest.ts";
 
 const INK = "#2b2417";
 const GOLD = "#d4a12a";
@@ -280,9 +281,7 @@ export function GameCard({
       <span className="gcard-corner br" />
       {card.days > 0 && <span className="gcard-gem">{ROMAN[card.days] ?? card.days}</span>}
       <span className="gcard-title">{t(d.title)}</span>
-      <span className="gcard-art">
-        <Emblem name={card.kind} />
-      </span>
+      <span className="gcard-art">{ART[`card-${card.kind}`] ? <img src={ART[`card-${card.kind}`]} alt="" /> : <Emblem name={card.kind} />}</span>
       <span className="gcard-type">
         {d.family === "god" ? t("God") : d.family === "king" ? t("King") : t("Human")} · {target}
       </span>
@@ -326,9 +325,7 @@ export function RoleCard({ role, onClick }: { role: Role; onClick: () => void })
       <span className="gcard-corner bl" />
       <span className="gcard-corner br" />
       <span className="gcard-title">{tr(t.title)}</span>
-      <span className="gcard-art">
-        <Emblem name={role} />
-      </span>
+      <span className="gcard-art">{ART[`role-${role}`] ? <img src={ART[`role-${role}`]} alt="" /> : <Emblem name={role} />}</span>
       <span className="gcard-type">{tr(t.line)}</span>
       <span className="gcard-text">{tr(t.detail)}</span>
       <span className="gcard-flavor">{role === "watch" ? tr("No cards") : tr("A hand of 4 · draw 1 a day · play 1 a day")}</span>
