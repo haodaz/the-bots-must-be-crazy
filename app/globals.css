@@ -754,8 +754,14 @@ body {
   width: 100%;
   height: 100%;
   display: block;
-  cursor: crosshair;
+  cursor: grab;
   touch-action: none;
+}
+.board.grabbing {
+  cursor: grabbing;
+}
+.board.box-mode {
+  cursor: crosshair;
 }
 
 .board-overlay {

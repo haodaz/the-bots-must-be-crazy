@@ -18,7 +18,7 @@ const SPEEDS = [
 ];
 
 /** The opening, in seconds. */
-const INTRO = { fall: 1.8, burst: 2.6, land: 4.0, settle: 4.4, borders: 5.6, born: 7.4, end: 8.4 };
+const INTRO = { fall: 1.8, burst: 3.4, land: 4.8, settle: 6.2, borders: 7.4, born: 9.2, end: 10.2 };
 const FOLLOW_ZOOM = 6;
 
 type Selection =
@@ -58,7 +58,7 @@ const newPlayer = (): Player => ({
 });
 const FAMILY_COLOR = { god: "#7fa7c9", king: "#b8463a", human: "#7e9b4f" } as const;
 
-type Drag = { mode: "maybe" | "box" | "pan"; px: number; py: number; cam: Camera; rect: Rect | null };
+type Drag = { mode: "maybe" | "box" | "pan"; box: boolean; px: number; py: number; cam: Camera; rect: Rect | null };
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 const ease = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -85,6 +85,8 @@ export default function WorldView() {
   const [intro, setIntro] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
+  const [boxMode, setBoxMode] = useState(false);
+  const [grabbing, setGrabbing] = useState(false);
   const [selection, setSelection] = useState<Selection>(null);
   const [followId, setFollowId] = useState<number | null>(null);
   const [director, setDirector] = useState(false);
@@ -404,14 +406,18 @@ export default function WorldView() {
     }
   }
 
-  // Pointer: left-drag draws a red selection box, a click picks; right-drag (or shift-drag) pans.
+  // Pointer: drag moves the map, a click picks. In box mode (the button, or holding Shift) a drag draws the red
+  // selection box instead. Right-drag always moves.
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (intro >= 0) return;
     const { px, py } = bufferPoint(e.currentTarget, e.clientX, e.clientY);
     e.currentTarget.setPointerCapture(e.pointerId);
-    const pan = e.button === 2 || e.button === 1 || e.shiftKey;
-    dragRef.current = { mode: pan ? "pan" : "maybe", px, py, cam: camRef.current, rect: null };
-    if (pan) follow(null);
+    const box = e.button === 0 && (boxMode || e.shiftKey);
+    dragRef.current = { mode: e.button === 0 ? "maybe" : "pan", box, px, py, cam: camRef.current, rect: null };
+    if (e.button !== 0) {
+      follow(null);
+      setGrabbing(true);
+    }
   };
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const d = dragRef.current;
@@ -422,7 +428,15 @@ export default function WorldView() {
       camRef.current = clampCamera(worldRef.current, { ...d.cam, cx: d.cam.cx - (px - d.px) / d.cam.s, cy: d.cam.cy - (py - d.py) / d.cam.s });
       return;
     }
-    if (d.mode === "maybe" && Math.hypot(px - d.px, py - d.py) > 14) d.mode = "box";
+    if (d.mode === "maybe" && Math.hypot(px - d.px, py - d.py) > (d.box ? 14 : 6)) {
+      d.mode = d.box ? "box" : "pan";
+      if (d.mode === "pan") {
+        follow(null);
+        setGrabbing(true);
+        camRef.current = clampCamera(worldRef.current, { ...d.cam, cx: d.cam.cx - (px - d.px) / d.cam.s, cy: d.cam.cy - (py - d.py) / d.cam.s });
+        return;
+      }
+    }
     if (d.mode === "box") {
       const a = toWorld(camRef.current, d.px, d.py);
       const b = toWorld(camRef.current, px, py);
@@ -432,6 +446,7 @@ export default function WorldView() {
   const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const d = dragRef.current;
     dragRef.current = null;
+    setGrabbing(false);
     if (!d) return;
     if (d.mode === "box" && d.rect) {
       setSelection({ kind: "area", rect: d.rect });
@@ -516,7 +531,7 @@ export default function WorldView() {
     <main className="board-screen">
       <canvas
         ref={canvasRef}
-        className="board"
+        className={`board ${boxMode ? "box-mode" : grabbing ? "grabbing" : ""}`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -612,6 +627,9 @@ export default function WorldView() {
             >
               {t("Fit")}
             </button>
+            <button className={`pbtn ${boxMode ? "on" : ""}`} onClick={() => setBoxMode((v) => !v)} title={t("Drag a box to see everyone in an area. Or hold Shift and drag.")}>
+              {t("Select area")}
+            </button>
           </div>
           <canvas ref={miniRef} className="minimap" onPointerDown={onMini} onPointerMove={onMini} />
         </div>
@@ -657,7 +675,7 @@ export default function WorldView() {
                 <div className="panel-h">{t("How to watch")}</div>
                 <div className="panel-b" style={{ fontSize: 13.5, lineHeight: 1.55 }}>
                   {t(
-                    "Gold is money: it glows where an economy is, like lamplight. Bots work there to earn it and spend it back on food. Scroll to zoom, drag a box to see everyone in an area, right-drag to move. Click a bot for its birth certificate, or a nation for its story.",
+                    "Gold is money: it glows where an economy is, like lamplight. Bots work there to earn it and spend it back on food. Scroll to zoom, drag to move. Press Select area (or hold Shift) and drag a box to see everyone in an area. Click a bot for its birth certificate, or a nation for its story.",
                   )}
                 </div>
               </div>
@@ -981,10 +999,17 @@ function GenesisCaption({ t: time, w, onSkip }: { t: number; w: World; onSkip: (
   if (time < INTRO.fall) {
     big = "$4.20";
     line = t("Somewhere, $4.20 slipped out of a stranger's pocket.");
+  } else if (time < INTRO.burst) {
+    // All the money there will ever be is made at once; only half of it falls now, the rest waits in the sky.
+    const k = ease(clamp01((time - INTRO.fall) / (INTRO.burst - 0.3 - INTRO.fall)));
+    big = t("{amount} metashi", { amount: fmt(k * LAWS.SUPPLY) });
+    line = t("On the way down, it turned to gold: 21,000,000 metashi, all there will ever be.");
   } else if (time < INTRO.settle) {
-    const k = ease(clamp01((time - INTRO.fall) / (INTRO.settle - 0.6 - INTRO.fall)));
-    big = t("{amount} metashi", { amount: fmt(k * rainOf(0)) });
-    line = time < INTRO.burst ? t("On the way down, it turned to gold: the first of 21,000,000.") : t("It landed the way the world's wealth lands today.");
+    big = t("Half falls now: {amount}", { amount: fmt(rainOf(0)) });
+    line =
+      time < INTRO.land
+        ? t("The other half waits in the sky, and falls in smaller and smaller rains.")
+        : t("It lands the way the world's wealth lands today.");
   } else if (time < INTRO.borders) {
     line = t("A new planet, {name}: {n} nations, each one drawn from a real country.", { name: w.geo.name, n: w.countries.length });
   } else {

@@ -22,6 +22,8 @@ export const ZH: Record<string, string> = {
   "King, choosing": "王，选择王国中",
   "You are Bot #{id}": "你是 #{id}",
   Fit: "全图",
+  "Select area": "框选",
+  "Drag a box to see everyone in an area. Or hold Shift and drag.": "拖一个框，看这一片的所有人。也可以按住 Shift 拖。",
   "Zoom in": "放大",
   "Zoom out": "缩小",
   Skip: "跳过",
@@ -35,8 +37,10 @@ export const ZH: Record<string, string> = {
 
   // ---- 开场 ----
   "Somewhere, $4.20 slipped out of a stranger's pocket.": "某处，一位陌生人的口袋里滑落了 4.20 美元。",
-  "On the way down, it turned to gold: the first of 21,000,000.": "落下途中，它化成了金子：2100 万枚中的第一批。",
-  "It landed the way the world's wealth lands today.": "它落下的样子，和今天世界财富的分布一样。",
+  "On the way down, it turned to gold: 21,000,000 metashi, all there will ever be.": "落下途中，它化成了金子：2100 万枚 metashi，世上只会有这么多。",
+  "Half falls now: {amount}": "现在落下一半：{amount}",
+  "The other half waits in the sky, and falls in smaller and smaller rains.": "另一半留在天上，以后一场一场落下，一场比一场少。",
+  "It lands the way the world's wealth lands today.": "它落下的样子，就像今天世界上财富分布的样子。",
   "A new planet, {name}: {n} nations, each one drawn from a real country.": "一颗新星球，{name}：{n} 个国家，每一个都取自一个真实国家。",
   "{n} born": "{n} 个降生",
   "Each one born the way a real baby is born this year.": "每一个，都像今年真实降生的婴儿那样出生。",
@@ -93,8 +97,8 @@ export const ZH: Record<string, string> = {
 
   // ---- 侧栏 ----
   "How to watch": "怎么看",
-  "Gold is money: it glows where an economy is, like lamplight. Bots work there to earn it and spend it back on food. Scroll to zoom, drag a box to see everyone in an area, right-drag to move. Click a bot for its birth certificate, or a nation for its story.":
-    "金色就是钱：哪里有经济，哪里就像灯火一样亮着。小家伙们在那里干活挣钱，再花回到吃饭上。滚轮缩放，拖一个框看这一片的所有人，右键拖动平移。点一个小家伙看它的出生证明，点一个国家看它的故事。",
+  "Gold is money: it glows where an economy is, like lamplight. Bots work there to earn it and spend it back on food. Scroll to zoom, drag to move. Press Select area (or hold Shift) and drag a box to see everyone in an area. Click a bot for its birth certificate, or a nation for its story.":
+    "金色就是钱：哪里有经济，哪里就像灯火一样亮着。小家伙们在那里干活挣钱，再花回到吃饭上。滚轮缩放，拖动移动地图。按「框选」（或按住 Shift）再拖一个框，看这一片的所有人。点一个小家伙看它的出生证明，点一个国家看它的故事。",
   Minds: "心智",
   "$0.00 today": "今天 $0.00",
   "No grain of real compute yet. When it arrives, you choose who wakes.": "还没有一粒真实的算力。等它到了，由你决定谁醒来。",
