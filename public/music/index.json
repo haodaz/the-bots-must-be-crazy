@@ -1,0 +1,23 @@
+[
+ {
+  "id": "music-box",
+  "title": "The Bots Must Be Crazy",
+  "note": "The main motif climbs 0-2-4-5 and falls back through 4-2-1 to the root, returning throughout as a music box over soft plucked bass, tender and childlike like a lullaby.",
+  "costUsd": 0.0040685,
+  "at": "2026-11-24T15:33:43.795Z"
+ },
+ {
+  "id": "chiptune",
+  "title": "The Bots Must Be Crazy",
+  "note": "The main motif is root–supertonic–mediant, rising to the sixth and falling back through the second to the root; it opens story, recurs lightly in calm, darkens in hard, and resolves in end. The score is a warm, gentle chiptune of square lead, triangle-like bass and bells over parchment, gold and ink.",
+  "costUsd": 0.003009084,
+  "at": "2026-11-24T15:33:54.681Z"
+ },
+ {
+  "id": "folk",
+  "title": "The Bots Must Be Crazy",
+  "note": "The main motif is 0-2-4-3-2-0, a small stepwise rise and fall that returns on flute, bells and pluck in folk-dorian and major dress; the score uses a flute lead over plucked strings and a soft pad, warm as a painted village map.",
+  "costUsd": 0.003349484,
+  "at": "2026-11-24T15:34:07.020Z"
+ }
+]

@@ -1,0 +1,240 @@
+{
+ "title": "The Bots Must Be Crazy",
+ "note": "The main motif is 0-2-4-3-2-0, a small stepwise rise and fall that returns on flute, bells and pluck in folk-dorian and major dress; the score uses a flute lead over plucked strings and a soft pad, warm as a painted village map.",
+ "themes": [
+  {
+   "id": "story",
+   "bpm": 72,
+   "root": 60,
+   "scale": "dorian",
+   "bars": 8,
+   "voices": [
+    {
+     "instrument": "flute",
+     "octave": 0,
+     "gain": 0.6,
+     "notes": "0:4 2:4 4:4 3:4 2:4 0:4 r:4 4:4 4:4 3:4 2:4 3:4 4:8 2:8 0:4 2:4 4:4 3:4 2:4 4:4 5:4 4:4 3:4 2:4 1:4 0:4 2:4 r:4 0:8"
+    },
+    {
+     "instrument": "pluck",
+     "octave": -1,
+     "gain": 0.35,
+     "notes": "0:16 0:16 3:16 3:16 0:16 0:16 5:16 0:16"
+    },
+    {
+     "instrument": "pad",
+     "octave": 0,
+     "gain": 0.25,
+     "notes": "0+2+4:32 3+5+7:32 0+2+4:32 5+7+9:32"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "genesis",
+   "bpm": 88,
+   "root": 60,
+   "scale": "major",
+   "bars": 8,
+   "voices": [
+    {
+     "instrument": "bell",
+     "octave": 1,
+     "gain": 0.4,
+     "notes": "0:4 2:4 4:4 5:4 4:4 2:4 0:4 2:4 4:4 5:4 7:4 5:4 4:4 2:4 0:8 0:4 2:4 4:4 5:4 4:4 2:4 0:4 2:4 5:4 4:4 2:4 0:4 2:4 4:4 0:8"
+    },
+    {
+     "instrument": "flute",
+     "octave": 0,
+     "gain": 0.6,
+     "notes": "r:16 4:4 5:4 4:4 2:4 r:32 r:16 4:4 5:4 7:4 5:4 r:16 0:16"
+    },
+    {
+     "instrument": "pluck",
+     "octave": -1,
+     "gain": 0.35,
+     "notes": "0:16 4:16 0:16 4:16 5:16 4:16 0:16 0:16"
+    }
+   ],
+   "drums": "t.......t.......t.......t.......t.......t.......t.......t.......t.......t.......t.......t.......t.......t.......t.......t......."
+  },
+  {
+   "id": "calm",
+   "bpm": 66,
+   "root": 55,
+   "scale": "major",
+   "bars": 16,
+   "voices": [
+    {
+     "instrument": "flute",
+     "octave": 0,
+     "gain": 0.6,
+     "notes": "0:8 2:8 4:8 3:8 2:8 r:8 0:8 r:8 r:16 4:8 3:8 2:8 1:8 r:16 0:8 2:8 4:8 5:4 4:4 3:8 2:8 0:8 r:8 r:16 2:8 1:8 0:8 2:16 r:8"
+    },
+    {
+     "instrument": "pad",
+     "octave": 0,
+     "gain": 0.25,
+     "notes": "0+2+4:32 0+2+4:32 3+5+7:32 2+4+6:32 0+2+4:32 5+7+9:32 3+5+7:32 0+2+4:32"
+    },
+    {
+     "instrument": "pluck",
+     "octave": -1,
+     "gain": 0.3,
+     "notes": "0:16 0:16 3:16 3:16 0:16 0:16 4:16 4:16 0:16 0:16 5:16 5:16 3:16 3:16 0:16 4:16"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "hard",
+   "bpm": 58,
+   "root": 55,
+   "scale": "phrygian",
+   "bars": 8,
+   "voices": [
+    {
+     "instrument": "flute",
+     "octave": 0,
+     "gain": 0.55,
+     "notes": "0:8 1:8 3:8 2:8 r:8 3:8 2:8 1:8 -1:8 0:8 1:8 0:8 3:8 2:8 1:8 0:8"
+    },
+    {
+     "instrument": "pad",
+     "octave": 0,
+     "gain": 0.25,
+     "notes": "0+1+3:32 0+1+3:32 3+4+6:32 0+1+3:32"
+    },
+    {
+     "instrument": "pluck",
+     "octave": -1,
+     "gain": 0.3,
+     "notes": "0:32 r:32 0:32 1:32"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "rain",
+   "bpm": 120,
+   "root": 62,
+   "scale": "major",
+   "bars": 2,
+   "voices": [
+    {
+     "instrument": "bell",
+     "octave": 1,
+     "gain": 0.5,
+     "notes": "0:2 2:2 4:2 5:2 7:2 5:2 4:2 2:2 0:2 1:2 2:2 3:2 4:2 5:2 7:2 9:2"
+    },
+    {
+     "instrument": "pluck",
+     "octave": 0,
+     "gain": 0.3,
+     "notes": "0+4+7:16 0+4+7:16"
+    }
+   ],
+   "drums": "h.h.h.h.h.h.h.h.h.h.h.h.h.h.h."
+  },
+  {
+   "id": "wakeNeed",
+   "bpm": 60,
+   "root": 55,
+   "scale": "minor",
+   "bars": 2,
+   "voices": [
+    {
+     "instrument": "flute",
+     "octave": 0,
+     "gain": 0.5,
+     "notes": "0:4 r:4 1:4 0:4 2:8 r:8"
+    },
+    {
+     "instrument": "pluck",
+     "octave": 0,
+     "gain": 0.35,
+     "notes": "r:16 2:4 1:4 0:8"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "wakePlenty",
+   "bpm": 96,
+   "root": 60,
+   "scale": "major",
+   "bars": 2,
+   "voices": [
+    {
+     "instrument": "flute",
+     "octave": 0,
+     "gain": 0.6,
+     "notes": "0:4 2:4 4:4 5:4 7:4 5:4 4:4 2:4"
+    },
+    {
+     "instrument": "bell",
+     "octave": 1,
+     "gain": 0.35,
+     "notes": "7:8 9:8 7:8 5:8"
+    },
+    {
+     "instrument": "pluck",
+     "octave": 0,
+     "gain": 0.35,
+     "notes": "0+2+4:16 0+2+4:16"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "faint",
+   "bpm": 70,
+   "root": 57,
+   "scale": "minor",
+   "bars": 1,
+   "voices": [
+    {
+     "instrument": "flute",
+     "octave": 0,
+     "gain": 0.4,
+     "notes": "4:4 2:4 1:4 0:8"
+    },
+    {
+     "instrument": "pluck",
+     "octave": 0,
+     "gain": 0.25,
+     "notes": "0+1+3:16"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "end",
+   "bpm": 66,
+   "root": 60,
+   "scale": "major",
+   "bars": 6,
+   "voices": [
+    {
+     "instrument": "flute",
+     "octave": 0,
+     "gain": 0.6,
+     "notes": "0:8 2:8 4:8 3:8 2:8 0:8 4:8 3:8 2:8 1:8 0:16"
+    },
+    {
+     "instrument": "pad",
+     "octave": 0,
+     "gain": 0.25,
+     "notes": "0+2+4:32 3+5+7:32 0+2+4:32"
+    },
+    {
+     "instrument": "pluck",
+     "octave": -1,
+     "gain": 0.3,
+     "notes": "0:16 0:16 3:16 3:16 0:16 0:16"
+    }
+   ],
+   "drums": ""
+  }
+ ]
+}

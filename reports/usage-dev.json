@@ -1,7 +1,7 @@
 {
-  "updated": "2026-11-24T15:19:29.650Z",
-  "calls": 698,
-  "spentUsd": 0.680289,
+  "updated": "2026-11-24T15:37:02.030Z",
+  "calls": 701,
+  "spentUsd": 0.690717,
   "kinds": [
     {
       "what": "muse-ember-1.0 · ping",
@@ -17,6 +17,11 @@
       "what": "muse-ember-1.0 · mind",
       "calls": 638,
       "costUsd": 0.100248
+    },
+    {
+      "what": "muse-ember-1.0 · music",
+      "calls": 3,
+      "costUsd": 0.010427
     }
   ]
 }

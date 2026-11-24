@@ -15,6 +15,9 @@ import { Prologue, RoleTips, markSeen, seen } from "./Story.tsx";
 import { MindsPanel } from "./Minds.tsx";
 import { THINK_EVERY_DAYS, applyPlan, dueMinds, situationOf, waiting, wake, type Plan } from "@/engine/mind.ts";
 import { indexReplay, replayTick, type Replay, type ReplayIndex } from "@/engine/replay.ts";
+import type { Score, ThemeId } from "@/music/score.ts";
+import { band, musicPref } from "./music.ts";
+import { scorePref } from "./scorePref.ts";
 import { BUFFER, COL, MAX_ZOOM, MapRenderer, clampCamera, fitCamera, toScreen, toWorld, type Camera, type Rect } from "./map.ts";
 
 const SPEEDS = [
@@ -104,6 +107,9 @@ export default function WorldView() {
   const grainRef = useRef<Grain>({ spent: 0, grain: 0.04, out: false, live: null, thoughts: 0 });
   const saidRef = useRef(new Map<number, number>());
   const [access, setAccess] = useState<Access | null>(null);
+  // Music: Muse Ember's score, played in the browser. Off until the visitor turns it on (and remembered after that).
+  const [musicOn, setMusicOn] = useState(false);
+  const moodRef = useRef<{ id: ThemeId; since: number }>({ id: "calm", since: 0 });
   /** A recorded round, bound to the world it is being played in. */
   const replayRef = useRef<{ data: Replay; ix: ReplayIndex; world: World } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -277,6 +283,42 @@ export default function WorldView() {
     };
   }, []);
 
+  useEffect(() => {
+    fetch(`/music/${scorePref()}.json`)
+      .then((r) => (r.ok ? (r.json() as Promise<Score>) : fetch("/music/music-box.json").then((x) => x.json() as Promise<Score>)))
+      .then((s) => band.setScore(s))
+      .catch(() => {});
+    if (!musicPref()) return;
+    // Music was on last time: browsers allow sound only after a click or key, so it starts with the first one.
+    const go = () => {
+      band.start();
+      setMusicOn(true);
+      window.removeEventListener("pointerdown", go);
+      window.removeEventListener("keydown", go);
+    };
+    window.addEventListener("pointerdown", go);
+    window.addEventListener("keydown", go);
+    return () => {
+      window.removeEventListener("pointerdown", go);
+      window.removeEventListener("keydown", go);
+      band.want(null);
+    };
+  }, []);
+
+  /** Which loop fits the moment: the story, the opening, or the world in calm or hard times (by how many have fainted). */
+  function moodTheme(now: number): ThemeId | null {
+    if (storyRef.current) return "story";
+    if (intro >= 0) return "genesis";
+    if (endedRef.current) return null;
+    const w = worldRef.current;
+    const faint = w.bots.filter((b) => b.state === "faint").length / Math.max(1, w.bots.length);
+    const m = moodRef.current;
+    // Hysteresis, and at least 20 seconds in a mood, so the music never flickers between the two.
+    const next = m.id === "hard" ? (faint < 0.08 ? "calm" : "hard") : faint >= 0.15 ? "hard" : "calm";
+    if (next !== m.id && now - m.since > 20000) moodRef.current = { id: next, since: now };
+    return moodRef.current.id;
+  }
+
   /** Thoughts played back from the recording: shown the same way as live ones. */
   function replayed(said: { bot: number; thought: { costUsd: number } }[]) {
     const g = grainRef.current;
@@ -380,6 +422,8 @@ export default function WorldView() {
           if (!endedRef.current && w.tick >= LAWS.LIFE_DAYS * LAWS.DAY_TICKS) {
             endedRef.current = true;
             setArchive(true);
+            band.want(null);
+            band.sting("end", 0);
           }
           // The recorded round plays only for the Observer, in the world it was recorded in (cards would change it).
           const rp = replayRef.current;
@@ -441,6 +485,7 @@ export default function WorldView() {
           }
         }
         if (now - lastHud > 110) {
+          band.want(moodTheme(now));
           lastHud = now;
           if (intro >= 0) setIntro((prev) => (prev < 0 ? prev : t)); // never undo a skip or the last click
           setFrame((f) => f + 1);
@@ -574,6 +619,7 @@ export default function WorldView() {
       announce(t(r.key, r.params), "need");
       return;
     }
+    band.sfx("flip");
     p.hand = p.hand.filter((c) => c.uid !== card.uid);
     p.plays--;
     p.chosen = null;
@@ -638,7 +684,11 @@ export default function WorldView() {
         }
       } else if (e.kind === "rain") {
         setCutin({ key: now, kind: "gold", text: t(e.key, e.params).split(/[.。]/)[0] });
+        band.sting("rain");
+      } else if (e.kind === "faint") {
+        band.sting("faint", 8);
       }
+      if (e.kind === "mind" && e.botId != null) band.sting(w.bots[e.botId].mind?.reason === "need" ? "wakeNeed" : "wakePlenty");
     }
     if (directorRef.current && now - lastCutRef.current > 12000) {
       lastCutRef.current = now;
@@ -837,6 +887,18 @@ export default function WorldView() {
           ))}
         </div>
         <div className="spacer" />
+        <button
+          className={`pbtn music-btn ${musicOn ? "on" : ""}`}
+          onClick={() => {
+            if (musicOn) band.stop();
+            else band.start();
+            setMusicOn(!musicOn);
+          }}
+          title={musicOn ? t("Music off") : t("Music on: written by Muse Ember")}
+          aria-pressed={musicOn}
+        >
+          <span aria-hidden>♪</span> {t("Music")}
+        </button>
         <button className="pbtn menu-btn" onClick={() => openMenu()} title={t("Menu (Esc)")}>
           <span aria-hidden>☰</span> {t("Menu")}
         </button>
@@ -1120,6 +1182,9 @@ export default function WorldView() {
             </button>
             <Link className="pbtn" href="/report" style={{ textDecoration: "none" }}>
               {t("Impact report")}
+            </Link>
+            <Link className="pbtn" href="/music" style={{ textDecoration: "none" }}>
+              {t("Music")}
             </Link>
             <Link className="pbtn" href="/receipts" style={{ textDecoration: "none" }}>
               {t("Receipts")}

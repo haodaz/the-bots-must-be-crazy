@@ -1,0 +1,228 @@
+{
+ "title": "The Bots Must Be Crazy",
+ "note": "The main motif climbs 0-2-4-5 and falls back through 4-2-1 to the root, returning throughout as a music box over soft plucked bass, tender and childlike like a lullaby.",
+ "themes": [
+  {
+   "id": "story",
+   "bpm": 72,
+   "root": 60,
+   "scale": "major",
+   "bars": 8,
+   "voices": [
+    {
+     "instrument": "bell",
+     "octave": 1,
+     "gain": 0.6,
+     "notes": "0:4 2:4 4:4 5:4 4:4 3:4 2:4 1:4 0:4 2:4 4:4 3:4 2:8 r:8 0:4 2:4 4:4 5:4 4:4 5:4 4:4 2:4 1:4 2:4 3:4 2:4 0:16"
+    },
+    {
+     "instrument": "bass",
+     "octave": -1,
+     "gain": 0.35,
+     "notes": "0+2+4:16 4+6+1:16 5+0+2:16 3+5+0:16 0+2+4:16 4+6+1:16 5+0+2:16 3+5+0:16"
+    },
+    {
+     "instrument": "pad",
+     "octave": 0,
+     "gain": 0.25,
+     "notes": "0+2+4:32 4+6+1:32 5+0+2:32 3+5+0:32"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "genesis",
+   "bpm": 84,
+   "root": 60,
+   "scale": "major",
+   "bars": 6,
+   "voices": [
+    {
+     "instrument": "bell",
+     "octave": 1,
+     "gain": 0.6,
+     "notes": "4:4 5:4 6:4 7:4 6:4 5:4 4:4 2:4 0:4 2:4 4:4 2:4 1:4 3:4 5:4 4:4 2:4 4:4 5:4 4:4 2:8 0:8"
+    },
+    {
+     "instrument": "bass",
+     "octave": -1,
+     "gain": 0.35,
+     "notes": "0+2+4:16 4+6+1:16 5+0+2:16 3+5+0:16 0+2+4:16 4+6+1:16"
+    },
+    {
+     "instrument": "pluck",
+     "octave": 1,
+     "gain": 0.3,
+     "notes": "0:4 2:4 4:4 5:4 0:4 2:4 4:4 5:4 0:4 2:4 4:4 5:4 0:4 2:4 4:4 5:4 0:4 2:4 4:4 5:4 0:4 2:4 4:4 5:4"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "calm",
+   "bpm": 66,
+   "root": 60,
+   "scale": "major",
+   "bars": 16,
+   "voices": [
+    {
+     "instrument": "bell",
+     "octave": 1,
+     "gain": 0.55,
+     "notes": "0:8 2:8 4:8 r:8 3:4 2:4 1:4 2:4 0:16 0:8 2:8 4:4 5:4 4:4 2:4 3:8 r:8 2:16 0:8 2:8 4:8 5:8 4:4 3:4 2:4 1:4 2:8 r:8 3:4 2:4 1:4 2:4 0:8 r:8 2:4 1:4 0:4 r:4 0:16"
+    },
+    {
+     "instrument": "bass",
+     "octave": -1,
+     "gain": 0.35,
+     "notes": "0+2+4:16 5+0+2:16 3+5+0:16 4+6+1:16 0+2+4:16 5+0+2:16 3+5+0:16 4+6+1:16 0+2+4:16 5+0+2:16 3+5+0:16 4+6+1:16 0+2+4:16 5+0+2:16 3+5+0:16 4+6+1:16"
+    },
+    {
+     "instrument": "pad",
+     "octave": 0,
+     "gain": 0.25,
+     "notes": "0+2+4:32 5+0+2:32 3+5+0:32 4+6+1:32 0+2+4:32 5+0+2:32 3+5+0:32 4+6+1:32"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "hard",
+   "bpm": 56,
+   "root": 57,
+   "scale": "minor",
+   "bars": 12,
+   "voices": [
+    {
+     "instrument": "bell",
+     "octave": 0,
+     "gain": 0.5,
+     "notes": "0:16 2:8 4:8 5:8 4:8 3:8 2:8 1:16 0:8 2:8 4:8 3:8 2:8 1:8 0:16 2:8 4:8 3:16 1:16"
+    },
+    {
+     "instrument": "bass",
+     "octave": -1,
+     "gain": 0.35,
+     "notes": "0+2+4:16 2+4+6:16 5+0+2:16 4+6+1:16 0+2+4:16 2+4+6:16 5+0+2:16 4+6+1:16 0+2+4:16 2+4+6:16 5+0+2:16 4+6+1:16"
+    },
+    {
+     "instrument": "pad",
+     "octave": 0,
+     "gain": 0.25,
+     "notes": "0+2+4:32 2+4+6:32 5+0+2:32 4+6+1:32 0+2+4:32 5+0+2:32"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "rain",
+   "bpm": 120,
+   "root": 60,
+   "scale": "major",
+   "bars": 2,
+   "voices": [
+    {
+     "instrument": "bell",
+     "octave": 1,
+     "gain": 0.6,
+     "notes": "0:2 2:2 4:2 5:2 7:2 5:2 4:2 2:2 0:2 2:2 4:2 5:2 7:2 9:2 7:2 5:2"
+    },
+    {
+     "instrument": "pluck",
+     "octave": 1,
+     "gain": 0.3,
+     "notes": "0:4 4:4 0:4 4:4 0:4 4:4 0:4 4:4"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "wakeNeed",
+   "bpm": 72,
+   "root": 55,
+   "scale": "minor",
+   "bars": 2,
+   "voices": [
+    {
+     "instrument": "bell",
+     "octave": 1,
+     "gain": 0.5,
+     "notes": "2:4 1:4 0:4 r:4 1:4 0:12"
+    },
+    {
+     "instrument": "pluck",
+     "octave": 0,
+     "gain": 0.3,
+     "notes": "0:16 0:16"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "wakePlenty",
+   "bpm": 96,
+   "root": 60,
+   "scale": "major",
+   "bars": 2,
+   "voices": [
+    {
+     "instrument": "bell",
+     "octave": 1,
+     "gain": 0.6,
+     "notes": "0:4 2:4 4:4 5:4 7:4 5:4 4:4 2:4"
+    },
+    {
+     "instrument": "pluck",
+     "octave": 0,
+     "gain": 0.3,
+     "notes": "0:16 4:16"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "faint",
+   "bpm": 60,
+   "root": 57,
+   "scale": "minor",
+   "bars": 1,
+   "voices": [
+    {
+     "instrument": "bell",
+     "octave": 1,
+     "gain": 0.25,
+     "notes": "4:4 2:4 1:4 0:4"
+    }
+   ],
+   "drums": ""
+  },
+  {
+   "id": "end",
+   "bpm": 72,
+   "root": 60,
+   "scale": "major",
+   "bars": 8,
+   "voices": [
+    {
+     "instrument": "bell",
+     "octave": 1,
+     "gain": 0.6,
+     "notes": "0:4 2:4 4:4 5:4 4:4 3:4 2:4 1:4 0:4 2:4 4:4 3:4 2:16 0:4 2:4 4:4 5:4 7:8 5:8 4:4 3:4 2:4 1:4 0:16"
+    },
+    {
+     "instrument": "bass",
+     "octave": -1,
+     "gain": 0.35,
+     "notes": "0+2+4:16 4+6+1:16 5+0+2:16 3+5+0:16 0+2+4:16 5+0+2:16 3+5+0:16 4+6+1:16"
+    },
+    {
+     "instrument": "pad",
+     "octave": 0,
+     "gain": 0.25,
+     "notes": "0+2+4:32 4+6+1:32 5+0+2:32 3+5+0:32"
+    }
+   ],
+   "drums": ""
+  }
+ ]
+}

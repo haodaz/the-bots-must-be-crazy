@@ -1944,3 +1944,34 @@ body {
   font-family: var(--num);
   font-size: 16px;
 }
+
+/* ---- The music room ---- */
+.music-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.music-card.chosen {
+  outline: 3px solid var(--gold, #e3b341);
+}
+
+.music-themes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.score-text {
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.score-text pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 260px;
+  overflow: auto;
+  background: rgba(43, 36, 23, 0.06);
+  padding: 8px;
+}
