@@ -21,3 +21,6 @@ data/local/
 # TypeScript build cache
 *.tsbuildinfo
 next-env.d.ts
+
+# rehearsal rounds (fake thoughts)
+data/rounds/mock-*
