@@ -419,7 +419,7 @@ export const ZH: Record<string, string> = {
   "Back": "上一页",
   "Next": "下一页",
   "Watch it begin": "看它开始",
-  "The world runs by itself. At 10×, a hundred-year life takes about two minutes.": "世界自己运转。按 10× 速度，一百年的一生大约两分钟。",
+  "The world runs by itself, and waits while you read this. At 10×, a hundred-year life takes about two minutes. Pause or change the speed at the top.": "世界自己运转，你读这张卡时它会等你。按 10× 速度，一百年的一生大约两分钟。暂停或调速在顶上。",
   "The cards along the bottom are live channels. Pick one to follow a bot, or turn on the director.": "底部那排卡片是直播频道。点一个就跟拍一个机器人，也可以打开导播。",
   "Click any bot for its birth certificate, or a nation for its story.": "点任意机器人看它的出生证明，点一个国家看它的故事。",
   "You can't touch anyone. Only the land, the weather and the sky's gold.": "你碰不到任何人，只能动土地、天气和天上的金子。",

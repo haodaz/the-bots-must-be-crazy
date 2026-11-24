@@ -140,6 +140,19 @@ export default function WorldView() {
   const storyRef = useRef(story);
   storyRef.current = story;
   const [tips, setTips] = useState<Role | null>(null);
+  // The world waits while a role's tips are open: nobody should miss years while reading how to play.
+  const tipsRef = useRef(tips);
+  tipsRef.current = tips;
+  // The top bar wraps to two lines on narrower windows; what sits under it follows its real height.
+  const hudObs = useRef<ResizeObserver | null>(null);
+  const hudTop = useCallback((el: HTMLElement | null) => {
+    hudObs.current?.disconnect();
+    if (!el) return;
+    const set = () => el.parentElement?.style.setProperty("--hud-h", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    hudObs.current = new ResizeObserver(set);
+    hudObs.current.observe(el);
+    set();
+  }, []);
   // The menu opens in the middle of the screen and holds the world still while it is open.
   const [menu, setMenu] = useState(false);
   const resumeRef = useRef(false);
@@ -428,7 +441,7 @@ export default function WorldView() {
           // The recorded round plays only for the Observer, in the world it was recorded in (cards would change it).
           const rp = replayRef.current;
           const replaying = rp != null && rp.world === w && p.role === "watch";
-          if (playing && p.role !== null && !p.reveal && !p.waiting && !endedRef.current) {
+          if (playing && p.role !== null && !p.reveal && !p.waiting && !endedRef.current && !tipsRef.current) {
             for (let i = 0; i < SPEEDS[speed].ticks; i++) {
               if (replaying) replayed(replayTick(w, rp.ix));
               else step(w);
@@ -860,7 +873,7 @@ export default function WorldView() {
         )}
       </div>
 
-      <header className="hud-top">
+      <header className="hud-top" ref={hudTop}>
         <div className="panel plaque logo">
           {t("The Bots Must Be Crazy")}
           <small>{t("Born by the real birth lottery. A grain of real compute each round, for the few who wake.")}</small>
@@ -876,7 +889,7 @@ export default function WorldView() {
             <div className="planet-sub">{t("{a} nations · {b} lands · {c} souls", { a: w.countries.length, b: w.lands.length, c: w.bots.length })}</div>
           </div>
         </div>
-        <div className="panel time-row">
+        <div className={`panel time-row ${tips === "watch" ? "hint" : ""}`}>
           <button className="pbtn" onClick={() => setPlaying((p) => !p)}>
             {playing ? t("Pause") : t("Play")}
           </button>

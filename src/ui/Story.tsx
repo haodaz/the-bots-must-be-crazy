@@ -125,7 +125,7 @@ export function RoleTips({ role, onClose }: { role: Role; onClose: () => void })
     watch: {
       title: t("You are the Observer"),
       steps: [
-        t("The world runs by itself. At 10×, a hundred-year life takes about two minutes."),
+        t("The world runs by itself, and waits while you read this. At 10×, a hundred-year life takes about two minutes. Pause or change the speed at the top."),
         t("The cards along the bottom are live channels. Pick one to follow a bot, or turn on the director."),
         t("Click any bot for its birth certificate, or a nation for its story."),
       ],
