@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Bots Must Be Crazy</title>
+<!-- The itch.io build. itch hosts only static files, and the game needs its server (the minds call Muse Ember and every
+     call is paid from a shared pool and written to the public receipts), so this page only frames the live game. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #efe6d2; color: #2b2417; font: 15px/1.4 Georgia, "Times New Roman", serif; }
+  iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+  .wait { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; }
+  .wait a { color: #8a5a1f; }
+  .wait small { display: block; margin-top: 8px; opacity: .7; }
+</style>
+</head>
+<body>
+<div class="wait">
+  <div>
+    Opening the world…
+    <small>If nothing appears, <a href="https://the-bots-must-be-crazy.vercel.app/" target="_blank" rel="noopener">play it here</a>.</small>
+  </div>
+</div>
+<iframe src="https://the-bots-must-be-crazy.vercel.app/" title="The Bots Must Be Crazy" allow="fullscreen; clipboard-write" allowfullscreen></iframe>
+</body>
+</html>
