@@ -1,5 +1,5 @@
 // Paints a planet once, like an old map on a game board: parchment, inked coastlines with ripples,
-// terrain drawn as little glyphs, dotted borders, a compass rose and a cartouche with the planet's name.
+// terrain drawn as little glyphs, dotted borders and a compass rose.
 // Everything is drawn in code from the world's tiles; no images, no model.
 
 import type { World } from "@/engine/world.ts";
@@ -105,6 +105,7 @@ export type MapArt = {
 export type ArtCaption = { title: string; sub: string };
 
 export function buildArt(w: World, caption?: ArtCaption): MapArt {
+  void caption;
   const geo = w.geo;
   const mw = w.width * M;
   const mh = w.height * M;
@@ -194,12 +195,11 @@ export function buildArt(w: World, caption?: ArtCaption): MapArt {
   inkTerrain(ctx, w, ART, 1, onLand, 0, 0, w.width, w.height);
   inkBorders(ctx, w, ART, 1, 0, 0, w.width, w.height);
 
-  // 5. A compass rose in the emptiest stretch of sea, and a cartouche with the planet's name.
+  // 5. A compass rose in the emptiest stretch of sea. (The planet's name sits in the top bar, not on the sea.)
   const spot = emptiestSea(w, land, mw, mh);
   compass(ctx, spot.x * (ART / M), spot.y * (ART / M), ART * 3.2);
-  cartouche(ctx, w, land, mw, mh, caption);
 
-  // The same planet without ink, for close up: washes, compass and cartouche only.
+  // The same planet without ink, for close up: washes and compass only.
   const plainCanvas = document.createElement("canvas");
   plainCanvas.width = canvas.width;
   plainCanvas.height = canvas.height;
@@ -207,7 +207,6 @@ export function buildArt(w: World, caption?: ArtCaption): MapArt {
   pctx.imageSmoothingEnabled = true;
   pctx.drawImage(smallPlain, 0, 0, canvas.width, canvas.height);
   compass(pctx, spot.x * (ART / M), spot.y * (ART / M), ART * 3.2);
-  cartouche(pctx, w, land, mw, mh, caption);
 
   // The edges are aged on the screen, not on the map, so the planet sits in one sea that fills the window.
   return { canvas, plain: plainCanvas, paper: paperTile(), landMask: land, maskW: mw, maskH: mh, soft, dist };
@@ -515,37 +514,3 @@ function compass(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: numbe
   ctx.restore();
 }
 
-function cartouche(ctx: CanvasRenderingContext2D, w: World, land: Uint8Array, mw: number, mh: number, caption?: ArtCaption) {
-  // Bottom-left: the other corners belong to the screen's tags, buttons and minimap.
-  void land;
-  void mw;
-  void mh;
-  const W = ART * 30;
-  const H = ART * 6;
-  const x = ART * 2;
-  const y = w.height * ART - H - ART * 1.6;
-  ctx.save();
-  ctx.fillStyle = "rgba(247, 238, 214, 0.92)";
-  ctx.strokeStyle = `rgba(${INK.join(",")}, 0.9)`;
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.moveTo(x + H * 0.4, y);
-  ctx.lineTo(x + W - H * 0.4, y);
-  ctx.quadraticCurveTo(x + W, y + H / 2, x + W - H * 0.4, y + H);
-  ctx.lineTo(x + H * 0.4, y + H);
-  ctx.quadraticCurveTo(x, y + H / 2, x + H * 0.4, y);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.strokeStyle = "rgba(212, 161, 42, 0.9)";
-  ctx.lineWidth = 1.5;
-  ctx.strokeRect(x + H * 0.45, y + 6, W - H * 0.9, H - 12);
-  ctx.fillStyle = `rgba(${INK.join(",")}, 0.95)`;
-  ctx.textAlign = "center";
-  ctx.font = `700 ${Math.round(H * 0.42)}px "Pixelify Sans", serif`;
-  ctx.font = `700 ${Math.round(H * 0.42)}px "Pixelify Sans", "Noto Sans SC", serif`;
-  ctx.fillText(caption?.title ?? `Planet ${w.geo.name}`, x + W / 2, y + H * 0.52);
-  ctx.font = `500 ${Math.round(H * 0.2)}px "IBM Plex Sans", "Noto Sans SC", sans-serif`;
-  ctx.fillText(caption?.sub ?? `${w.countries.length} nations · ${w.lands.length} lands · ${w.bots.length} souls`, x + W / 2, y + H * 0.82);
-  ctx.restore();
-}

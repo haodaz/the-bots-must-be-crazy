@@ -93,6 +93,17 @@ export default function WorldView() {
   const storyRef = useRef(story);
   storyRef.current = story;
   const [tips, setTips] = useState<Role | null>(null);
+  // The menu opens in the middle of the screen and holds the world still while it is open.
+  const [menu, setMenu] = useState(false);
+  const resumeRef = useRef(false);
+  const menuKeyRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") menuKeyRef.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [boxMode, setBoxMode] = useState(false);
@@ -355,6 +366,17 @@ export default function WorldView() {
     });
   }
 
+  function openMenu() {
+    resumeRef.current = playing;
+    setPlaying(false);
+    setMenu(true);
+  }
+
+  function closeMenu(resume = resumeRef.current) {
+    setMenu(false);
+    if (resume) setPlaying(true);
+  }
+
   function chooseRole(role: Role) {
     const w = worldRef.current;
     const p = playerRef.current;
@@ -572,6 +594,12 @@ export default function WorldView() {
   const playing_ = player.role != null && player.role !== "watch";
   const chosenCard = player.hand.find((c) => c.uid === player.chosen);
   const zoomedOut = cam.s < fitCamera(w).s * 2.2;
+  // Esc opens or closes the menu (the story handles its own Esc).
+  menuKeyRef.current = () => {
+    if (story || introOn) return;
+    if (menu) closeMenu();
+    else openMenu();
+  };
 
   return (
     <main className="board-screen">
@@ -608,14 +636,15 @@ export default function WorldView() {
         <div className="panel plaque clock">
           <SunMoon night={night} />
           <div>
+            <div className="planet-name">{t("Planet {name}", { name: w.geo.name })}</div>
             <div className="num">{t("Year {n}", { n: day })}</div>
             <div style={{ width: 90, height: 6, border: "1.5px solid var(--ink)", marginTop: 3 }}>
               <div style={{ width: `${dayFrac * 100}%`, height: "100%", background: night ? COL.need : COL.gold }} />
             </div>
+            <div className="planet-sub">{t("{a} nations · {b} lands · {c} souls", { a: w.countries.length, b: w.lands.length, c: w.bots.length })}</div>
           </div>
         </div>
-        <div className="spacer" />
-        <div className="btn-row">
+        <div className="panel time-row">
           <button className="pbtn" onClick={() => setPlaying((p) => !p)}>
             {playing ? t("Pause") : t("Play")}
           </button>
@@ -624,33 +653,17 @@ export default function WorldView() {
               {sp.label}
             </button>
           ))}
-          <button
-            className="pbtn"
-            onClick={() => {
-              setPlaying(false);
-              setStory(true);
-            }}
-          >
-            {t("Story")}
-          </button>
-          <button className="pbtn" onClick={() => startWorld("new")}>
-            {t("New planet")}
-          </button>
-          <button className="pbtn" onClick={() => setArchive(true)}>
-            {t("Archive")}
-          </button>
-          <Link className="pbtn gold" href="/report" style={{ textDecoration: "none" }}>
-            {t("Impact report")}
-          </Link>
-          <LangSwitch />
         </div>
+        <div className="spacer" />
+        <button className="pbtn menu-btn" onClick={() => openMenu()} title={t("Menu (Esc)")}>
+          <span aria-hidden>☰</span> {t("Menu")}
+        </button>
       </header>
 
       {!introOn && (
         <div className="hud-left">
           <div className="btn-row">
             <span className="chip live">● {t("LIVE")}</span>
-            <span className="chip">{t("Planet {name}", { name: w.geo.name })}</span>
             <span className="chip">{followed ? t("Following Bot #{id}", { id: followed.id }) : zoomedOut ? t("Whole world") : t("Exploring")}</span>
             {night && <span className="chip">{t("Night")}</span>}
             {player.role && (
@@ -848,10 +861,12 @@ export default function WorldView() {
               );
             })}
           </div>
-          <button className={`next-day ${player.waiting ? "ready" : ""}`} onClick={nextDay}>
-            {player.waiting ? t("Begin year {n}", { n: day }) : t("Skip to year {n}", { n: nextTurnYear })}
-            <small>{player.plays > 0 ? t("1 play left") : t("played")}</small>
-          </button>
+          <div className="turn">
+            <span className={`chip plays-left ${player.plays > 0 ? "gold" : ""}`}>{player.plays > 0 ? t("1 play left") : t("played")}</span>
+            <button className={`next-day ${player.waiting ? "ready" : ""}`} onClick={nextDay}>
+              {player.waiting ? t("Begin year {n}", { n: day }) : t("Skip to year {n}", { n: nextTurnYear })}
+            </button>
+          </div>
         </div>
       )}
 
@@ -890,6 +905,63 @@ export default function WorldView() {
             setTips(null);
           }}
         />
+      )}
+
+      {menu && (
+        <div className="veil menu-veil" onClick={() => closeMenu()}>
+          <nav className="game-menu panel" onClick={(e) => e.stopPropagation()} aria-label={t("Menu")}>
+            <div className="game-menu-h">{t("Menu")}</div>
+            <button className="pbtn gold" onClick={() => closeMenu()}>
+              {t("Back to the world")}
+            </button>
+            <button
+              className="pbtn"
+              onClick={() => {
+                closeMenu(false);
+                setStory(true);
+              }}
+            >
+              {t("Story")}
+            </button>
+            {player.role && (
+              <button
+                className="pbtn"
+                onClick={() => {
+                  closeMenu();
+                  setTips(player.role);
+                }}
+              >
+                {t("How to play")}
+              </button>
+            )}
+            <button
+              className="pbtn"
+              onClick={() => {
+                closeMenu();
+                setArchive(true);
+              }}
+            >
+              {t("Archive")}
+            </button>
+            <Link className="pbtn" href="/report" style={{ textDecoration: "none" }}>
+              {t("Impact report")}
+            </Link>
+            <button
+              className="pbtn"
+              onClick={() => {
+                closeMenu(false);
+                startWorld("new");
+                setPlaying(true);
+              }}
+            >
+              {t("New planet")}
+            </button>
+            <div className="game-menu-lang">
+              <span>{t("Language")}</span>
+              <LangSwitch />
+            </div>
+          </nav>
+        </div>
       )}
 
       {story && (

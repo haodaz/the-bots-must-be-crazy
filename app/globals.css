@@ -1677,3 +1677,83 @@ body {
   font-size: 20px;
   line-height: 1;
 }
+
+/* ---------- Top bar: the clock holds the planet's name; time controls sit beside it; everything else is in the menu ---------- */
+
+.plaque.clock .planet-name {
+  font-family: var(--pixel);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.plaque.clock .planet-sub {
+  font-size: 10.5px;
+  color: var(--ink-2);
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.time-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 7px 9px;
+}
+
+.menu-btn {
+  font-size: 15px;
+  padding: 7px 14px 6px;
+}
+
+.menu-veil {
+  z-index: 35;
+}
+
+.game-menu {
+  width: min(300px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 22px 20px;
+}
+
+.game-menu-h {
+  text-align: center;
+  font-family: var(--pixel);
+  font-weight: 700;
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.game-menu > .pbtn {
+  width: 100%;
+  text-align: center;
+  font-size: 16px;
+  padding: 9px 12px 8px;
+}
+
+.game-menu-lang {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 2px dashed var(--line);
+  font-family: var(--pixel);
+  font-size: 14px;
+}
+
+/* The turn button says only what it does; how many plays are left is a tag above it. */
+.turn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.plays-left {
+  font-size: 13px;
+  padding: 3px 9px 2px;
+}

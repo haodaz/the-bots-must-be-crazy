@@ -127,10 +127,6 @@ export class MapRenderer {
       ctx.fillStyle = pattern;
     } else ctx.fillStyle = COL.paper;
     ctx.fillRect(0, 0, W, H);
-    // The chart's margins: other worlds in the sky above, ships and sea creatures below.
-    ctx.globalAlpha = o.landReveal ?? 1;
-    drawDecor(ctx, this.decor, ox, oy, s);
-    ctx.globalAlpha = 1;
 
     // The painted planet.
     ctx.imageSmoothingEnabled = true;
@@ -146,6 +142,12 @@ export class MapRenderer {
     const x1 = Math.min(w.width, Math.ceil(br.x));
     const y1 = Math.min(w.height, Math.ceil(br.y));
     if (close) drawSharpInk(ctx, w, art, ox, oy, s, x0 - 1, y0 - 1, x1 + 1, y1 + 1);
+
+    // The chart's margins, drawn over the painted sea so a tall neck or mast is never cut off at the map's edge:
+    // other worlds in the sky above, ships and sea creatures below. Land stays well inside the edge, so nothing covers it.
+    ctx.globalAlpha = o.landReveal ?? 1;
+    drawDecor(ctx, this.decor, ox, oy, s);
+    ctx.globalAlpha = 1;
 
     if (o.highlightCountry != null) {
       ctx.fillStyle = "rgba(196, 70, 47, 0.18)";

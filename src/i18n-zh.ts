@@ -435,4 +435,7 @@ export const ZH: Record<string, string> = {
   "Every 5 years, play one card, then press Begin year. The camera follows you.": "每 5 年出一张牌，然后按「开始第 N 年」。镜头会跟着你。",
   "How to play": "怎么玩",
   "Got it": "知道了",
+  "Menu": "菜单",
+  "Menu (Esc)": "菜单（Esc）",
+  "Language": "语言",
 };
