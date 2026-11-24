@@ -54,6 +54,10 @@ export type DrawOptions = {
   aim?: { x: number; y: number; r: number; color: string } | null;
   /** The player's own bot (Human role): marked with a gold star. */
   meId?: number | null;
+  /** Minds whose thought is on its way. */
+  thinking?: Set<number>;
+  /** When each mind last thought (performance.now()). */
+  said?: Map<number, number>;
 };
 
 /** The whole planet in view; the paper around it holds the top bar and the card tray. */
@@ -218,6 +222,13 @@ export class MapRenderer {
       }
       if (tokens) standee(ctx, w.seed, bot, cx, oy + (m.y + 1) * s, s * 1.7, { face, stride: m.stride, moving, t: t + bot.id * 0.31, eating: now < m.eatUntil });
       else pawn(ctx, cx, cy, Math.max(7, s * 0.55), body, bot.wake);
+      if (bot.mind) {
+        // A woken bot: a small lit mark above its head, and a thought cloud while it thinks and just after.
+        const top = tokens ? oy + (m.y + 1) * s - s * 1.75 : cy - Math.max(7, s * 0.55);
+        const since = now - (o.said?.get(bot.id) ?? -1e9);
+        const cloud = (o.thinking?.has(bot.id) ?? false) || since < 2600;
+        mindMark(ctx, cx, top, Math.max(6, s * 0.22), bot.mind.reason === "need" ? COL.need : COL.gold, cloud, t + bot.id);
+      }
       if (area && bot.x >= area.x0 - 0.5 && bot.x <= area.x1 && bot.y >= area.y0 - 0.5 && bot.y <= area.y1) {
         const r = Math.max(9, s * 0.62);
         brackets(ctx, cx - r, cy - r, r * 2, r * 2, COL.select, Math.max(2, s / 14));
@@ -468,6 +479,46 @@ function bowl(ctx: CanvasRenderingContext2D, px: number, t: number) {
   ctx.moveTo(px * 6, y0);
   ctx.quadraticCurveTo(px * (6 + Math.sin(t * 5) * 2), y0 - px * 3, px * 6, y0 - px * 6);
   ctx.stroke();
+}
+
+/** A mind's mark: a lit dot over its head; while it thinks, rising puffs and a small cloud. */
+function mindMark(ctx: CanvasRenderingContext2D, cx: number, top: number, r: number, color: string, cloud: boolean, t: number) {
+  ctx.save();
+  ctx.lineWidth = Math.max(1.2, r * 0.28);
+  ctx.strokeStyle = COL.ink;
+  if (!cloud) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(cx, top - r * 1.4, r * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+  const bob = Math.sin(t * 3) * r * 0.25;
+  ctx.fillStyle = "#fffaf0";
+  for (const [dx, dy, k] of [
+    [0.4, -1.0, 0.28],
+    [0.9, -2.0, 0.4],
+  ]) {
+    ctx.beginPath();
+    ctx.arc(cx + dx * r, top + dy * r + bob, r * k, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  const bx = cx + r * 2.1;
+  const by = top - r * 3.7 + bob;
+  ctx.beginPath();
+  ctx.ellipse(bx, by, r * 1.9, r * 1.25, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = color;
+  for (let i = -1; i <= 1; i++) {
+    ctx.beginPath();
+    ctx.arc(bx + i * r * 0.75, by, r * 0.26, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
 /** The player's mark: a gold star above their bot. */

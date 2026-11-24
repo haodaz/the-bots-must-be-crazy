@@ -8,6 +8,7 @@ import { EARTH, invNorm, sigmaFromTop10, type Country, type Earth } from "./eart
 import { ERA_TICKS, LAWS, isNight, rainOf, wageFor } from "./laws.ts";
 import { earthGeography, generatePlanet, type Geography } from "./planet.ts";
 import { nextFloat, nextInt } from "./rng.ts";
+import type { Mind } from "./mind.ts";
 
 /** A bot's instincts. Today they come from its birth; one day a mind may rewrite its own. */
 export type Strategy = {
@@ -82,6 +83,8 @@ export type Bot = {
   needTicks: number;
   wake: WakeReason | null;
   wakeTick: number | null;
+  /** A woken bot's mind: its thoughts and choices, paid for with real compute. Null until it wakes. */
+  mind: Mind | null;
 };
 
 export type WorldCountry = {
@@ -134,7 +137,7 @@ export type Levers = Partial<{
   goldFollowsBirths: boolean;
 }>;
 
-export type EventKind = "genesis" | "rain" | "faint" | "recover" | "wake-ready" | "card";
+export type EventKind = "genesis" | "rain" | "faint" | "recover" | "wake-ready" | "card" | "mind";
 
 /**
  * A change in the world's rules for a while, put there by a played card: food prices, work stopping, wages.
@@ -380,6 +383,7 @@ export function createWorld(seed: number, levers: Levers = {}, opts: { planet?: 
       needTicks: 0,
       wake: null,
       wakeTick: null,
+      mind: null,
     });
   }
 
@@ -498,6 +502,8 @@ function act(w: World, b: Bot, occupied: Uint8Array, taken: Uint8Array, night: b
   } else {
     if (b.state === "asleep") b.state = "roaming";
     b.hunger++;
+    // Working harder burns more: half again as hungry while it lasts.
+    if (w.mods.length && w.tick % 2 === 0 && w.mods.some((m) => m.kind === "wage" && m.mult > 1 && m.botId === b.id && m.until > w.tick)) b.hunger++;
   }
 
   // Rule 1: hungry and able to pay → eat. The money goes back into the local economy.

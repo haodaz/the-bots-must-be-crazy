@@ -7,6 +7,7 @@ import { TERRAIN_NAMES } from "@/engine/planet.ts";
 import { useLang } from "@/i18n.tsx";
 import type { Bot, World } from "@/engine/world.ts";
 import { COL, type Rect } from "./map.ts";
+import { MindLog } from "./Minds.tsx";
 import { H as AH, W as AW, avatarCanvas } from "./avatar.ts";
 
 export const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
@@ -137,7 +138,7 @@ export function BotCard({
       <div className="panel-h">
         <span>{tr("Bot #{id}", { id: bot.id })}</span>
         <span className={`chip ${bot.wake === "need" ? "need" : bot.wake === "plenty" ? "gold" : ""}`}>
-          {bot.wake ? tr(`${bot.wake} switch flipped`) : tr(stateLabel(bot))}
+          {bot.mind ? tr(bot.mind.reason === "need" ? "awake, from need" : "awake, from plenty") : bot.wake ? tr(`${bot.wake} switch flipped`) : tr(stateLabel(bot))}
         </span>
       </div>
       <div className="panel-b">
@@ -153,6 +154,8 @@ export function BotCard({
             </button>
           </div>
         </div>
+
+        <MindLog bot={bot} />
 
         <div className="cert">
           <h4>{tr("Birth certificate")}</h4>

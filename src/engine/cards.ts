@@ -230,7 +230,7 @@ export const DEFS: Record<Kind, Def> = {
     pct: [0.2, 0.5],
     days: [3, 8],
     flavor: "Up before the sun.",
-    text: "You earn {pct} more an hour for {days}.",
+    text: "You earn {pct} more an hour for {days}, and get hungry half again as fast.",
     weight: 2,
   },
   helpNeighbor: {

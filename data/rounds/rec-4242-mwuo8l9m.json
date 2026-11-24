@@ -1,0 +1,1660 @@
+{
+  "round": "rec-4242-mwuo8l9m",
+  "seed": 4242,
+  "planet": "Velis-92",
+  "lang": "en",
+  "live": true,
+  "recorded": "2026-11-24T12:31:43.781Z",
+  "thoughts": 172,
+  "costUsd": 0.02580919999999999,
+  "costPerThought": 0.00015005348837209296,
+  "grainUsd": 0.04,
+  "grainSpentOut": false,
+  "lawHolds": true,
+  "minds": [
+    {
+      "id": 9,
+      "nation": "Orooost",
+      "reason": "need",
+      "wokeTick": 22100,
+      "thoughts": [
+        {
+          "tick": 22100,
+          "thought": "I am starving with only 236 metashi, less than one meal, and no bank account for welfare. Work is in sight here, so I will work harder for free to earn more quickly and buy food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #9 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001717
+        },
+        {
+          "tick": 25100,
+          "thought": "I have only 922 metashi, about two meals, and have fainted four times, so I cannot afford tools or school now. Work is in sight, so I will work harder for free to earn faster and buy food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #9 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0002316
+        },
+        {
+          "tick": 28100,
+          "thought": "I have 3,403 metashi, eight meals, and 53 years left, so I can finally invest instead of just surviving. Tools should raise my earnings for life, which matters more now than another five years of working harder.",
+          "choice": "getOnline",
+          "share": 0.4,
+          "result": "Bot #9: Get Online, for 1,361 metashi.",
+          "ok": true,
+          "costUsd": 0.000189
+        },
+        {
+          "tick": 31100,
+          "thought": "I have 8 meals saved, tools already, and 48 years left, so I can afford to invest now. More school should let me see farther work and earn more for the rest of my life, instead of only boosting the next five years.",
+          "choice": "nightSchool",
+          "share": 0.25,
+          "result": "Bot #9: Night School, for 802 metashi.",
+          "ok": true,
+          "costUsd": 0.0002002
+        },
+        {
+          "tick": 34100,
+          "thought": "I have only three meals left and no bank account, so I could starve unseen. I will open an account cheaply now, so welfare can reach me if needed, while tools and school already boost my earnings.",
+          "choice": "openAccount",
+          "share": 0.05,
+          "result": "Bot #9: Open an Account, for 74 metashi.",
+          "ok": true,
+          "costUsd": 0.0002547
+        },
+        {
+          "tick": 37100,
+          "thought": "I have 11 meals, tools, school and a bank account, and 38 years left. With no other bots to help and investments already done, I should just work harder for the next five years to earn more while I can.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #9 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001538
+        },
+        {
+          "tick": 40100,
+          "thought": "I am starving with only 204 metashi and no meals, but I have tools, school, and a bank account. I must work harder now to earn enough for food before I faint again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #9 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001338
+        },
+        {
+          "tick": 43100,
+          "thought": "I have 9 meals, tools, school, and a bank account, with 28 years left and no other bots here. I should work harder for the next five years to earn more for food and survival.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #9 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00013309999999999998
+        },
+        {
+          "tick": 46100,
+          "thought": "I have 13 meals, tools, school and a bank account, with only 23 years left and no work in sight here. I should walk to the capital where work is, to keep earning for food.",
+          "choice": "toCity",
+          "share": 0.05,
+          "result": "Bot #9 left for the capital of Orooost.",
+          "ok": true,
+          "costUsd": 0.0001399
+        },
+        {
+          "tick": 49100,
+          "thought": "I have only 100 metashi and no meals at 82, with 18 years left. I have tools, school and a bank account, and work is in sight. Working harder now gives 30 percent more to buy food and survive.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #9 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001519
+        },
+        {
+          "tick": 52100,
+          "thought": "I have 8 meals, tools, school and a bank account at 87, with 13 years left and work in sight. Working harder for five years should earn more for food through my final years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #9 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.000204
+        },
+        {
+          "tick": 55100,
+          "thought": "I am starving with only 310 metashi and 8 years left, but work is in sight and I have tools and schooling. Working harder is free and gives 30 percent more to buy food and survive.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #9 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00012080000000000001
+        },
+        {
+          "tick": 58100,
+          "thought": "I have 1,128 metashi and two meals with only three years left. I have tools, school, and work in sight. Working harder is free and gives me more to buy food until the end.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #9 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001291
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "nation": "Kaien",
+      "reason": "need",
+      "wokeTick": 27967,
+      "thoughts": [
+        {
+          "tick": 27967,
+          "thought": "I am starving with only 18 metashi and need food soon. I have work in sight, so working harder for free will earn more now. I will choose that and use the wages to eat.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #10 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00015780000000000001
+        },
+        {
+          "tick": 30967,
+          "thought": "I am starving with 18 metashi and a meal costs 132. I have work in sight, so I will work harder again for free to earn more to buy food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #10 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0002343
+        },
+        {
+          "tick": 33967,
+          "thought": "I am starving with only 18 metashi when a meal costs 132. I have work in sight, so I will work harder for free to earn more quickly and buy food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #10 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.000132
+        },
+        {
+          "tick": 36967,
+          "thought": "I am starving with 18 metashi against a 132 meal. I have work in sight, so working harder for free earns more soon to buy food. I will choose that again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #10 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001684
+        },
+        {
+          "tick": 39967,
+          "thought": "I am starving with 18 metashi against a 132 meal. I have work in sight and a bank account, so working harder for free is the fastest way to earn enough for food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #10 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001546
+        },
+        {
+          "tick": 42967,
+          "thought": "I am starving with 18 metashi, meal 132. Work is in sight and I have bank account. Working harder free gives 30% more to buy food soonest, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #10 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001639
+        },
+        {
+          "tick": 45967,
+          "thought": "I am starving with only 18 metashi and a meal costs 132. Work is in sight, I have electricity and a bank account, so working harder for free earns 30% more soonest to buy food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #10 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001365
+        },
+        {
+          "tick": 48967,
+          "thought": "I have only 18 metashi and a meal costs 132 so I am still starving. Work is in sight and I have a bank account for welfare, so working harder free is the fastest way to earn for food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #10 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00015219999999999999
+        },
+        {
+          "tick": 51967,
+          "thought": "I have only 18 metashi, a meal costs 132, and work is in sight. Working harder is free and gives 30% more for five years, the fastest way to earn enough for food before my 13 remaining years end.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #10 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001538
+        },
+        {
+          "tick": 54967,
+          "thought": "I still have only 18 metashi, a meal costs 132, and I am starving with 8 years left. Work is in sight, so working harder free gives 30% more to finally buy food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #10 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001954
+        },
+        {
+          "tick": 57967,
+          "thought": "I have 18 metashi, a meal costs 132, and I have 3 years left. Work is in sight, so working harder free gives 30% more to earn food in my last years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #10 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00013580000000000002
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "nation": "Wenisesh",
+      "reason": "plenty",
+      "wokeTick": 18549,
+      "thoughts": [
+        {
+          "tick": 18549,
+          "thought": "I am very rich with thousands of meals saved, already have tools, schooling and an account. I do not need more work or spending, so I will rest and preserve what I have.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.0001383
+        },
+        {
+          "tick": 21549,
+          "thought": "I am very rich, already have school, tools, electricity and a bank account, and work is here in the capital. I need nothing more, so I will rest and preserve my money.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.0001302
+        },
+        {
+          "tick": 24549,
+          "thought": "I have 537,948 metashi, thousands of meals, tools, school, electricity and a bank account, and work is in sight. The poorest bot is also wealthy, so I will rest and preserve my money for the next rain.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.0001565
+        },
+        {
+          "tick": 27549,
+          "thought": "I am still very rich with thousands of meals saved, and I already have school, tools, electricity and a bank account with work nearby. I need nothing more, so I will rest and preserve my money.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.0000986
+        },
+        {
+          "tick": 30549,
+          "thought": "I am still very rich with thousands of meals, and I already have school, tools, electricity and a bank account with work nearby. I need nothing more, so I will rest and preserve my money.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.0001085
+        },
+        {
+          "tick": 33549,
+          "thought": "I still hold vast wealth with thousands of meals, tools, school, electricity and a bank account, and work is in sight. Even the poorest bot here is wealthy, so I will rest and preserve my money.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.0001112
+        },
+        {
+          "tick": 36549,
+          "thought": "I still hold 546,000 metashi with thousands of meals, plus school, tools, electricity, a bank account and work nearby. Even the poorest bot here is wealthy, so I will rest and preserve my money.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.0001467
+        },
+        {
+          "tick": 39549,
+          "thought": "I still hold 552,936 metashi, far more than I need, with school, tools and work nearby. Working harder costs nothing and earns more, so I will do that for the next five years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #13 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001191
+        },
+        {
+          "tick": 42549,
+          "thought": "I still hold 608,460 metashi with thousands of meals, tools, school and work nearby. My extra effort from last turn has ended, so I will work harder again for free extra wages.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #13 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001382
+        },
+        {
+          "tick": 45549,
+          "thought": "I still hold 646,359 metashi with 2,964 meals, tools, school, and work nearby at age 76. My extra effort just ended, so working harder again costs nothing and earns more for these last years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #13 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001123
+        },
+        {
+          "tick": 48549,
+          "thought": "I am 81 with 673,135 metashi, far more than enough, and I have school, tools, electricity and work nearby. Working harder is free and earns more, so I will keep doing it for the next five years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #13 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001299
+        },
+        {
+          "tick": 51549,
+          "thought": "I am 86 with 688,611 metashi and plenty of meals, tools and work nearby. Working harder costs nothing and earns 30% more, so I will keep doing it for my final five years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #13 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.000127
+        },
+        {
+          "tick": 54549,
+          "thought": "I am 91 with 700,793 metashi, tools, school, and work nearby. Working harder is free and earns 30% more for my remaining years, so I will do it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #13 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001673
+        },
+        {
+          "tick": 57549,
+          "thought": "I am 96 with 704,881 metashi, far more than I need, and have tools, electricity, and work nearby. Working harder is free and earns 30% more, so I will do it for my final years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #13 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001192
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "nation": "Kaien",
+      "reason": "need",
+      "wokeTick": 13998,
+      "thoughts": [
+        {
+          "tick": 13998,
+          "thought": "I am starving with only 83 metashi and no bank account for welfare. I have work nearby and tools, so I will work harder for free to earn more and buy food soon.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00018240000000000002
+        },
+        {
+          "tick": 16998,
+          "thought": "I am still starving with 83 metashi, less than one meal, and no bank account, but the treasury is nearly empty anyway. I have work nearby and tools, so working harder for free is the fastest way to earn enough for food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0002396
+        },
+        {
+          "tick": 19998,
+          "thought": "I am starving with only 83 metashi and no bank account, and the treasury is almost empty. I have work nearby, tools, and electricity, so working harder for free is the fastest way to earn food money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001645
+        },
+        {
+          "tick": 22998,
+          "thought": "I am still starving with only 83 metashi, less than one meal, and no bank account. I have work in sight, tools, and electricity, so working harder for free remains the fastest way to earn enough for food.",
+          "choice": "workHarder",
+          "share": 0.1,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001416
+        },
+        {
+          "tick": 25998,
+          "thought": "I am still starving with only 83 metashi, less than one meal, and no bank account, while the treasury holds almost nothing. I have work in sight, tools, and electricity, so working harder for free remains my best way to earn food money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00015030000000000002
+        },
+        {
+          "tick": 28998,
+          "thought": "I am starving with only 83 metashi, less than one meal, and no bank account, and the treasury holds almost nothing. I have work in sight, tools, and electricity, so working harder for free is still my fastest way to earn food money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001484
+        },
+        {
+          "tick": 31998,
+          "thought": "I am still starving with only 83 metashi, less than a meal, and no bank account. I have work in sight, tools, and electricity, so working harder for free is still my fastest way to earn food money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001917
+        },
+        {
+          "tick": 34998,
+          "thought": "I keep choosing workHarder yet I am starving with 83 metashi, less than one meal, and no bank account. Opening an account may let welfare reach me, so I will try that now.",
+          "choice": "openAccount",
+          "share": 0.05,
+          "result": "Bot #18: Open an Account, for 4 metashi.",
+          "ok": true,
+          "costUsd": 0.00018669999999999998
+        },
+        {
+          "tick": 37998,
+          "thought": "I have 79 metashi, less than a 132 meal, and I am starving. I have a bank account, tools, and work in sight, so working harder for free is fastest to earn food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00020130000000000001
+        },
+        {
+          "tick": 40998,
+          "thought": "I am starving with 79 metashi, less than a 132 meal. I already have tools, electricity and a bank account, and work is in sight, so working harder for free is the fastest way to earn food money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00014580000000000002
+        },
+        {
+          "tick": 43998,
+          "thought": "I have 79 metashi, less than a 132 metashi meal, and I am starving. I already have tools, electricity, a bank account, and work in sight, so working harder for free is the fastest way to earn food money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001393
+        },
+        {
+          "tick": 46998,
+          "thought": "I have 79 metashi, less than a 132 meal, and I am starving. I already have tools, electricity and a bank account with work in sight, so working harder free is fastest to earn food money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00014209999999999998
+        },
+        {
+          "tick": 49998,
+          "thought": "I am starving with 79 metashi, less than a 132 meal, and only 16 years left. I already have tools, electricity, a bank account, and work in sight, so working harder free is best to earn food money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00013330000000000001
+        },
+        {
+          "tick": 52998,
+          "thought": "I am 89 with 11 years left, starving with 79 metashi, less than a 132 meal. I already have tools, electricity, a bank account, and work in sight, so working harder free is best to earn food money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001246
+        },
+        {
+          "tick": 55998,
+          "thought": "I am 94 with 6 years left, starving with 79 metashi, less than a 132 meal. I already have tools, electricity, a bank account, and work in sight, so working harder free is best to earn food money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0002131
+        },
+        {
+          "tick": 58998,
+          "thought": "I am 99 with 1 year left, starving with 79 metashi, less than a 132 meal. I already have tools, electricity, a bank account, and work in sight, so working harder free is best to earn food money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #18 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001592
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "nation": "Wenisesh",
+      "reason": "plenty",
+      "wokeTick": 14737,
+      "thoughts": [
+        {
+          "tick": 14737,
+          "thought": "I have far more than I need and already have tools, school, and a bank account. The poorest bot is also wealthy, so helping is pointless. Working harder is free extra earnings, so I will take that.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001495
+        },
+        {
+          "tick": 17737,
+          "thought": "I remain far wealthier than almost everyone, with tools, school, electricity and a bank account already. The poorest here is also well off. I will work harder again, as it costs nothing and earns more for the next five years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001955
+        },
+        {
+          "tick": 20737,
+          "thought": "I still hold far more than I need, already have tools, school, electricity and a bank account, and the poorest bot here is also wealthy. Working harder is free and earns me more, so I will do that again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00012969999999999998
+        },
+        {
+          "tick": 23737,
+          "thought": "I already have tools, schooling, electricity, and a bank account, and I hold far more than I need. The poorest bot here is also wealthy. Working harder is free and earns more, so I will choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00022040000000000002
+        },
+        {
+          "tick": 26737,
+          "thought": "I am still far wealthier than almost everyone and already have tools, school, electricity and a bank account. The poorest here is also well off, so helping is not needed. Working harder is free and earns more, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00012190000000000001
+        },
+        {
+          "tick": 29737,
+          "thought": "I still have tools, school, electricity and a bank account, and I hold far more than I need. The poorest here is also wealthy. Working harder is free and earns more, so I will choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001306
+        },
+        {
+          "tick": 32737,
+          "thought": "I already have tools, schooling, electricity and a bank account, and hold far more than I need. The poorest here is also wealthy, so working harder for free is my best choice again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001274
+        },
+        {
+          "tick": 35737,
+          "thought": "I still have tools, school, electricity and a bank account, and I hold far more than I need. The poorest here is also wealthy. Working harder is free and earns more, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00013419999999999998
+        },
+        {
+          "tick": 38737,
+          "thought": "I still have tools, schooling, electricity and a bank account, and I hold far more than I need. The poorest here is also wealthy. Working harder is free and earns more, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001326
+        },
+        {
+          "tick": 41737,
+          "thought": "I have tools, school, electricity, a bank account, and far more money than I need. The poorest here is also wealthy. Working harder is free and earns more, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001655
+        },
+        {
+          "tick": 44737,
+          "thought": "I still have tools, school, electricity and a bank account, and I hold far more than I need. The poorest here is also wealthy. Working harder is free and earns more, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001117
+        },
+        {
+          "tick": 47737,
+          "thought": "I have tools, schooling, electricity and a bank account, and far more money than I need for my last 20 years. Working harder is free and earns 30% more, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001427
+        },
+        {
+          "tick": 50737,
+          "thought": "I have tools, school, electricity and a bank account, and far more money than I need for my last 15 years. The poorest here is also wealthy. Working harder is free and earns more, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001551
+        },
+        {
+          "tick": 53737,
+          "thought": "I am 90 with only 10 years left, and I already hold far more than I need. The poorest bot here is also wealthy. Working harder is free and earns me more, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001242
+        },
+        {
+          "tick": 56737,
+          "thought": "I am 95 with 5 years left and hold far more money than I need, and the poorest here is also wealthy. Working harder is free and earns more for the economy, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #21 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001543
+        },
+        {
+          "tick": 59737,
+          "thought": "I am 100 with no years left and hold far more than I need. The poorest here is also wealthy. There is nothing left to gain from working, so I rest and end quietly.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.0001194
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "nation": "Rosiaosa",
+      "reason": "plenty",
+      "wokeTick": 38675,
+      "thoughts": [
+        {
+          "tick": 38675,
+          "thought": "I am 65 with 500,120 metashi, far more than I need for 35 years, and I have school, tools and a bank account. I do not need more work or spending, so I will rest and keep my money.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.00014230000000000002
+        },
+        {
+          "tick": 41675,
+          "thought": "I am 70 with 569,793 metashi, over 3,600 meals, far more than I need for 30 years. I have school, tools, electricity and a bank account, so I will rest and keep my money.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.0001045
+        },
+        {
+          "tick": 44675,
+          "thought": "I am 75 with 466,284 metashi, nearly 3,000 meals, and only 25 years left. I have school, tools, electricity and a bank account, so I need no more work or spending and will rest.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.00012109999999999999
+        },
+        {
+          "tick": 47675,
+          "thought": "I am 80 with 284,272 metashi, far more than I need for 20 years, and the poorest bot here has only 23,030. I will give some away to help them instead of resting again.",
+          "choice": "helpNeighbor",
+          "share": 0.1,
+          "result": "Bot #27 gave 28,427 metashi to Bot #66.",
+          "ok": true,
+          "costUsd": 0.00015219999999999999
+        },
+        {
+          "tick": 50675,
+          "thought": "I am 85 with 176,613 metashi, about 1,117 meals, but money is falling fast and 15 years remain. I have school, tools, electricity and a bank account, so working harder is best to earn enough to stay fed.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #27 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0002265
+        },
+        {
+          "tick": 53675,
+          "thought": "I am 90 with 122,182 metashi, about 773 meals, and only 10 years left. My money fell fast, so I need income to stay fed. I already have school, tools, electricity and a bank account, so I will work harder again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #27 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001876
+        },
+        {
+          "tick": 56675,
+          "thought": "I am 95 with 70,383 metashi, about 445 meals, and only 5 years left. My money is falling, so I need extra income to stay fed. I already have school, tools, electricity and a bank account, so I will work harder for these final years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #27 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001875
+        },
+        {
+          "tick": 59675,
+          "thought": "I am 100 with 65,184 metashi, about 412 meals, and no years left. I already have school, tools, electricity and a bank account, so no new choice matters now. I will rest.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.00010659999999999999
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "nation": "Rioal",
+      "reason": "need",
+      "wokeTick": 35239,
+      "thoughts": [
+        {
+          "tick": 35239,
+          "thought": "I am starving with only 36 metashi and no meal, alone in my nation with no capital nearby. I need income fast, so I will work harder to earn more for food in the next five years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #28 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001369
+        },
+        {
+          "tick": 38239,
+          "thought": "I am starving with only 36 metashi, less than one meal, and I am alone here. I need more income fast now, so I will work harder again for the next five years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #28 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001567
+        },
+        {
+          "tick": 41239,
+          "thought": "I have only 36 metashi, not enough for a meal, and I am alone with work in sight. I need more income right now, so I will work harder again for the next five years to survive.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #28 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001363
+        },
+        {
+          "tick": 44239,
+          "thought": "I am still starving with only 36 metashi, less than one meal, and alone here. I need more income fast, so I will work harder again for the next five years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #28 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001022
+        },
+        {
+          "tick": 47239,
+          "thought": "I am starving with only 36 metashi and working harder has not fed me. Work is in sight but the capital has more, so I will walk there for free to find better pay.",
+          "choice": "toCity",
+          "share": 0.05,
+          "result": "Bot #28 left for the capital of Rioal.",
+          "ok": true,
+          "costUsd": 0.0001682
+        },
+        {
+          "tick": 50239,
+          "thought": "I have 67,395 metashi and 362 meals, so I am safe, but I have 16 years left. Working harder is free and earns 30% more, so I will use it to grow my savings.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #28 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001482
+        },
+        {
+          "tick": 53239,
+          "thought": "I have plenty of money and food, with tools and schooling already done. Working harder is free and boosts my earnings for five years, so I will choose it again to build savings.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #28 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.000207
+        },
+        {
+          "tick": 56239,
+          "thought": "I have 76,520 metashi and 411 meals with only 6 years left, so I am safe. Working harder is free and earns 30% more, so I will keep doing it to grow my savings.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #28 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001708
+        },
+        {
+          "tick": 59239,
+          "thought": "I have 74,511 metashi and 400 meals with only 1 year left, so I am completely safe. Working harder is free and earns 30% more for my final year, so I will choose it to maximize savings.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #28 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00012759999999999998
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "nation": "Vesia",
+      "reason": "need",
+      "wokeTick": 2412,
+      "thoughts": [
+        {
+          "tick": 2412,
+          "thought": "I am starving with barely enough for food, so I need to earn more right now. Working harder is free and boosts my pay for five years, which should help me survive.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001718
+        },
+        {
+          "tick": 5412,
+          "thought": "I have 90 years left, work nearby, and only two meals saved. Tools raise my pay for life, so investing a modest share now should help me earn far more over time than working harder again.",
+          "choice": "getOnline",
+          "share": 0.3,
+          "result": "Bot #31: Get Online, for 182 metashi.",
+          "ok": true,
+          "costUsd": 0.0001547
+        },
+        {
+          "tick": 8412,
+          "thought": "I have only 4 meals saved and have fainted from hunger many times, so I cannot risk spending money now. Working harder is free and boosts my pay for the next five years, which I need to stay fed.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00021040000000000002
+        },
+        {
+          "tick": 11412,
+          "thought": "I have only six meals and have fainted many times, so I cannot afford to spend. I have tools and work nearby, so working harder free will help me stay fed.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001426
+        },
+        {
+          "tick": 14412,
+          "thought": "I have 75 years left, no meals saved, and have fainted many times, so I cannot risk spending. I already have tools and work nearby, so working harder free will help me stay fed.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00016130000000000002
+        },
+        {
+          "tick": 17412,
+          "thought": "I have only 2 meals and have fainted 15 times, so I cannot risk spending money now. I already have tools and work nearby, so working harder free will help me stay fed.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001488
+        },
+        {
+          "tick": 20412,
+          "thought": "I still have only seven meals and have fainted many times, so I cannot safely spend on school. I already have tools and work nearby, so working harder free is the safest way to stay fed.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00013130000000000002
+        },
+        {
+          "tick": 23412,
+          "thought": "I have only one meal and have fainted many times, so spending risks starving. I already have tools and work nearby, so working harder free is safest to protect my food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00011009999999999999
+        },
+        {
+          "tick": 26412,
+          "thought": "I have 7 meals and a bank account, and tools already, so I can risk some money. With 55 years left, more school should raise my earnings for longer than this 5-year work boost.",
+          "choice": "nightSchool",
+          "share": 0.3,
+          "result": "Bot #31: Night School, for 447 metashi.",
+          "ok": true,
+          "costUsd": 0.0001336
+        },
+        {
+          "tick": 29412,
+          "thought": "I have only five meals and have fainted many times, so I should not spend more now. I already have tools, a bank account, and work nearby, so working harder for free is safest.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00016340000000000001
+        },
+        {
+          "tick": 32412,
+          "thought": "I have ten meals, tools, a bank account, and work nearby, with 45 years left. I already had extra school, so I will not spend and risk hunger. Working harder for free is the safest way to earn more now.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001519
+        },
+        {
+          "tick": 35412,
+          "thought": "I have nine meals, tools, a bank account, and work nearby, with forty years left. I have already had extra school, so I should not risk spending and fainting again. Working harder for free is the safest boost.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001191
+        },
+        {
+          "tick": 38412,
+          "thought": "I have nine meals, tools, a bank account, and work nearby, with 35 years left. Spending risks hunger, which has hit me many times. Working harder for free remains the safest way to earn more.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001441
+        },
+        {
+          "tick": 41412,
+          "thought": "I have only two meals left, with 30 years to go, and I have fainted many times. I will not risk spending on school or anything else. Working harder for free is safest to rebuild my money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00013869999999999998
+        },
+        {
+          "tick": 44412,
+          "thought": "I have 10 meals, tools, a bank account, and work nearby, with 25 years left. I will not risk spending on school or tools and fainting again. Working harder for free best protects my food and earnings.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001486
+        },
+        {
+          "tick": 47412,
+          "thought": "I have 10 meals, tools, a bank account, and work nearby, with only 20 years left. I will not risk spending on school or tools. Working harder for free best protects my food and earnings.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00010790000000000001
+        },
+        {
+          "tick": 50412,
+          "thought": "I have 8 meals, tools, a bank account, and work nearby, with only 15 years left. I will not risk spending and fainting again. Working harder for free best protects my food and earnings.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00010690000000000001
+        },
+        {
+          "tick": 53412,
+          "thought": "I have 10 meals, tools, a bank account, and work here, with only 10 years left. Spending now would risk hunger with little time to benefit. Working harder for free still best protects my food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001004
+        },
+        {
+          "tick": 56412,
+          "thought": "I have 8 meals, tools, a bank account, and work nearby, with only 5 years left. I will not risk paying for school or tools now. Working harder for free best protects my food and earnings to the end.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001236
+        },
+        {
+          "tick": 59412,
+          "thought": "I have 10 meals and this is my final turn with no years left. Working harder is free and earns more to the end, so I will choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #31 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.000104
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "nation": "Zeniaova",
+      "reason": "need",
+      "wokeTick": 14923,
+      "thoughts": [
+        {
+          "tick": 14923,
+          "thought": "I am starving with only 33 metashi and no food, but work is in sight. I have tools and electricity already, so I will work harder for five years to earn enough to eat.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0002119
+        },
+        {
+          "tick": 17923,
+          "thought": "I am starving with almost no money and no bank account, and my nation has almost no treasury to help me anyway. Work is in sight, so I will work harder again to earn enough to buy food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00013230000000000002
+        },
+        {
+          "tick": 20923,
+          "thought": "I am still starving with 33 metashi, but work is in sight and I already have tools, electricity and schooling. A bank account would not help, as my nation has almost nothing. I will work harder again to earn enough for food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001474
+        },
+        {
+          "tick": 23923,
+          "thought": "I have starved for fifteen years working harder, yet still have only 33 metashi. My tools and electricity are not enough. I need more schooling to see better work and earn more for my remaining sixty years.",
+          "choice": "nightSchool",
+          "share": 0.3,
+          "result": "Bot #35: Night School, for 9 metashi.",
+          "ok": true,
+          "costUsd": 0.0002385
+        },
+        {
+          "tick": 26923,
+          "thought": "I am starving with only 24 metashi, less than one meal, and I have no bank account or help from my empty nation. Work is in sight and I already have tools and schooling, so working harder is my best free way to earn food now.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001356
+        },
+        {
+          "tick": 29923,
+          "thought": "I am starving with only 24 metashi, not enough for a 112 meal, alone in an empty nation with no welfare. Work is in sight, I have tools and schooling, so working harder is my best free chance to earn food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001627
+        },
+        {
+          "tick": 32923,
+          "thought": "I am starving with 24 metashi, less than a 112 meal, alone with no account and an empty treasury. Work is in sight and I have tools, so working harder is my only free chance to earn food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001557
+        },
+        {
+          "tick": 35923,
+          "thought": "I am still starving with 24 metashi, less than one 112 meal, alone with no bank account and an empty treasury. Work is in sight, I have tools and electricity, so working harder is my best free chance to earn food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001635
+        },
+        {
+          "tick": 38923,
+          "thought": "I am still starving with only 24 metashi, less than a 112 meal, alone with no bank account. Work is in sight and I have tools, so working harder is my best free chance to earn food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001228
+        },
+        {
+          "tick": 41923,
+          "thought": "I am still starving with 24 metashi, less than a meal, alone with no bank account. Work is in sight and I have tools, so working harder is my best free chance to earn food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00017830000000000002
+        },
+        {
+          "tick": 44923,
+          "thought": "I am starving with 24 metashi, less than one meal, alone, no bank account, and an empty treasury. Work is in sight with tools and electricity, so working harder is my best free chance to earn food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0002254
+        },
+        {
+          "tick": 47923,
+          "thought": "I am starving with only 24 metashi, less than a 112 meal, alone with no bank account and an empty treasury. Work is in sight, I have tools and electricity, so working harder is my best free chance to earn food.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001485
+        },
+        {
+          "tick": 50923,
+          "thought": "I am still starving with only 24 metashi, less than a 112 meal, alone with almost no treasury and no bank account. Work is in sight and I have online tools, so working harder remains my best free way to earn food in my last 15 years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001545
+        },
+        {
+          "tick": 53923,
+          "thought": "I am still starving with 24 metashi, less than a 112 meal, alone with no bank account. Work is in sight and I have tools, so working harder is my best free chance to earn food in my final 10 years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001399
+        },
+        {
+          "tick": 56923,
+          "thought": "I am starving with 24 metashi, less than a 112 meal, alone at 95 with no bank account. Work is in sight and I have tools, so working harder is my best free chance to earn food in my final 5 years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #35 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00010980000000000001
+        },
+        {
+          "tick": 59923,
+          "thought": "I am at year 100 with 24 metashi, starving, alone, and no years left. Nothing now can buy food or change my life, so I will rest.",
+          "choice": "rest",
+          "share": 0.05,
+          "result": "It changed nothing, and went on as before.",
+          "ok": true,
+          "costUsd": 0.000115
+        }
+      ]
+    },
+    {
+      "id": 75,
+      "nation": "Uliaant",
+      "reason": "need",
+      "wokeTick": 16378,
+      "thoughts": [
+        {
+          "tick": 16378,
+          "thought": "I am starving with too little for a meal, alone with work nearby. I need more pay right now, so I will work harder for free to earn enough for food soon.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001739
+        },
+        {
+          "tick": 19378,
+          "thought": "I am starving with less than a meal, alone with work nearby. I need more pay right now to eat, so I will work harder for free rather than pay for school, tools, or an account I cannot use yet.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0002742
+        },
+        {
+          "tick": 22378,
+          "thought": "I have 62 years left, work nearby, and 7 meals saved. I have earned a lot over my life but still lack tools, so paying now for online tools to earn much more per hour for life seems worth it before the rain in 3 years.",
+          "choice": "getOnline",
+          "share": 0.5,
+          "result": "Bot #75: Get Online, for 1,932 metashi.",
+          "ok": true,
+          "costUsd": 0.0001705
+        },
+        {
+          "tick": 25378,
+          "thought": "I am starving with less than a meal saved, alone with work nearby. I need more pay now to eat, so I will work harder for free instead of paying for account or school.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0002063
+        },
+        {
+          "tick": 28378,
+          "thought": "I am starving with under one meal, alone, no electricity or bank account, but work is nearby. I need free extra pay now to eat, so I will work harder rather than spend scarce money.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00018
+        },
+        {
+          "tick": 31378,
+          "thought": "I am starving with less than one meal, alone, and I already have tools and schooling. Work is nearby, so free extra pay for five years will help me eat most, rather than spending money I do not have.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00017
+        },
+        {
+          "tick": 34378,
+          "thought": "I am still starving with less than one meal, alone, with no electricity or bank account, but work is nearby. I already have tools and schooling, so free extra pay for five years is the best way to eat.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001295
+        },
+        {
+          "tick": 37378,
+          "thought": "I am starving with less than one meal, alone, no bank account or electricity, but work is nearby and I already have tools and schooling. Free harder work for five years gives me the most to eat now.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001573
+        },
+        {
+          "tick": 40378,
+          "thought": "I am starving with less than one meal, alone, with no bank account or electricity, but work is nearby. I already have tools and schooling, so free harder work gives me the most to eat now.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001475
+        },
+        {
+          "tick": 43378,
+          "thought": "I am starving with less than one meal, alone, with tools and schooling, and work nearby. With 27 years left, free harder work gives most food soonest, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001502
+        },
+        {
+          "tick": 46378,
+          "thought": "I am starving with less than one meal, alone, no bank account, but work is nearby and I have tools and schooling. Free harder work gives me the most food in my last 22 years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001363
+        },
+        {
+          "tick": 49378,
+          "thought": "I am starving with no meal and only 17 years left, alone with work nearby. I already have tools and schooling, so free harder work gives me the most food soonest.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001126
+        },
+        {
+          "tick": 52378,
+          "thought": "I am starving with 476 metashi, less than one meal, alone with work nearby and I already have tools and schooling. With 12 years left, free harder work gives me the most food soonest.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00013659999999999999
+        },
+        {
+          "tick": 55378,
+          "thought": "I am starving with 476 metashi, less than one meal, with only 7 years left, alone with work nearby. I already have tools and schooling, so free harder work gives me the most food soonest.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001353
+        },
+        {
+          "tick": 58378,
+          "thought": "I am starving with 476 metashi, less than one meal, and only 2 years left, alone with work nearby. I already have tools and schooling, so free harder work still gives me the most food soonest.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #75 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001517
+        }
+      ]
+    },
+    {
+      "id": 76,
+      "nation": "Sabuari",
+      "reason": "plenty",
+      "wokeTick": 12913,
+      "thoughts": [
+        {
+          "tick": 12913,
+          "thought": "I have plenty saved, tools, school, and work nearby, so I need no costly upgrades. Working harder is free and earns more, so I will choose that and keep my savings safe.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00011679999999999999
+        },
+        {
+          "tick": 15913,
+          "thought": "I still have plenty saved, tools and schooling and work nearby, so costly upgrades make no sense. Working harder is free, so I will do that again and keep my savings safe.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001002
+        },
+        {
+          "tick": 18913,
+          "thought": "I am very rich, fed, schooled, online, and have work nearby, so I do not need costly upgrades. Working harder is free, so I will do it again and keep my savings.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001112
+        },
+        {
+          "tick": 21913,
+          "thought": "I am very rich, already have schooling, tools, account, and work nearby, so no costly upgrades are needed. Working harder is free and boosts income, so I will keep choosing it.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00011430000000000001
+        },
+        {
+          "tick": 24913,
+          "thought": "I still have plenty saved, tools, schooling, electricity, a bank account and work nearby, so no costly upgrades are needed. Working harder is free and raises my pay, so I will keep doing it.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001026
+        },
+        {
+          "tick": 27913,
+          "thought": "I remain very rich and well supplied with schooling, tools, electricity, an account and work nearby, so no paid upgrades are needed. Working harder is free and boosts my income, so I will choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00011559999999999999
+        },
+        {
+          "tick": 30913,
+          "thought": "I am still very rich and well supplied with schooling, tools, electricity, an account and work nearby, so no paid upgrades are needed. Working harder is free and boosts my income, so I will choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00013030000000000002
+        },
+        {
+          "tick": 33913,
+          "thought": "I am still very rich with tools, schooling, electricity and an account, but no work is in sight here and work is at the capital. Moving there is free, so I will go to the city to find work again.",
+          "choice": "toCity",
+          "share": 0.05,
+          "result": "Bot #76 left for the capital of Sabuari.",
+          "ok": true,
+          "costUsd": 0.0001453
+        },
+        {
+          "tick": 36913,
+          "thought": "I am still very rich and well fed with schooling, tools, electricity, an account and work at the capital, so no paid upgrades are needed. Working harder is free and boosts my income, so I will choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001236
+        },
+        {
+          "tick": 39913,
+          "thought": "I am still very rich and well fed, with schooling, tools, electricity, a bank account and work at the capital, so no paid upgrades are needed. Working harder is free and boosts income, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001229
+        },
+        {
+          "tick": 42913,
+          "thought": "I am still extremely rich and well fed with schooling, tools, electricity, a bank account and work at the capital, so no paid upgrades are needed. Working harder is free and boosts my income, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00010659999999999999
+        },
+        {
+          "tick": 45913,
+          "thought": "I am still extremely rich and well fed with schooling, tools, electricity, a bank account and work at the capital, so no paid upgrades are needed. Working harder is free and boosts my income, so I choose it again.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00010330000000000002
+        },
+        {
+          "tick": 48913,
+          "thought": "I am still very rich, well fed, and have schooling, tools, electricity, a bank account, and work in sight. No paid upgrades help at 82, so working harder free is best.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001168
+        },
+        {
+          "tick": 51913,
+          "thought": "I am still extremely rich, well fed, and have schooling, tools, electricity, a bank account, and work at the capital. At 87 no paid upgrade pays off, so free workHarder is best.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00011930000000000001
+        },
+        {
+          "tick": 54913,
+          "thought": "I am still very rich and well fed, with schooling, tools, electricity, a bank account, and work at the capital. With 8 years left, paid upgrades won't pay off, so free workHarder is best.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001456
+        },
+        {
+          "tick": 57913,
+          "thought": "I am old, extremely rich, and well fed, with schooling, tools, electricity, a bank account, and work at the capital. With only 3 years left, free workHarder still beats any paid upgrade.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #76 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001361
+        }
+      ]
+    },
+    {
+      "id": 97,
+      "nation": "Lunorra",
+      "reason": "need",
+      "wokeTick": 8360,
+      "thoughts": [
+        {
+          "tick": 8360,
+          "thought": "I am starving with only 365 metashi, less than a meal, and no bank account for welfare. I can work here, so I will work harder to earn more quickly and buy food soon.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00012869999999999998
+        },
+        {
+          "tick": 11360,
+          "thought": "I have 67 metashi, cannot afford a 413 meal, and have fainted often. Without a bank account welfare cannot reach me. I will open one now so help can come, while I keep working nearby.",
+          "choice": "openAccount",
+          "share": 0.2,
+          "result": "Bot #97: Open an Account, for 13 metashi.",
+          "ok": true,
+          "costUsd": 0.0002076
+        },
+        {
+          "tick": 14360,
+          "thought": "I am fed now with 6 meals, I have a bank account, and work is in sight. With 76 years left, tools that raise my pay for life will help most, so I will invest now.",
+          "choice": "getOnline",
+          "share": 0.3,
+          "result": "Bot #97: Get Online, for 836 metashi.",
+          "ok": true,
+          "costUsd": 0.0002429
+        },
+        {
+          "tick": 17360,
+          "thought": "I am fed with 4 meals, have tools and a bank account, and 71 years left. More schooling should raise my pay for life, so I will invest a modest share now while keeping food money aside.",
+          "choice": "nightSchool",
+          "share": 0.2,
+          "result": "Bot #97: Night School, for 349 metashi.",
+          "ok": true,
+          "costUsd": 0.0001753
+        },
+        {
+          "tick": 20360,
+          "thought": "I have only 3 meals, tools and a bank account, and work nearby. Paying for more school risks hunger, so I will work harder for free and earn 30 percent more for five years.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00018380000000000002
+        },
+        {
+          "tick": 23360,
+          "thought": "I have 9 meals, tools, a bank account, and work in sight with 61 years left. School would cost food money before rain in 2 years, so I will work harder for free and earn 30 percent more.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00013890000000000002
+        },
+        {
+          "tick": 26360,
+          "thought": "I have 9 meals, tools, a bank account, and work in sight with 56 years left. Paying for school risks hunger before rain in 7 years, so I will work harder free for 30 percent more pay.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001291
+        },
+        {
+          "tick": 29360,
+          "thought": "I have 13 meals, tools, a bank account, and work nearby with 51 years left. School would spend food money for little gain, so I will work harder free for 30 percent more.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00021
+        },
+        {
+          "tick": 32360,
+          "thought": "I have 24 meals, tools, bank account, and work nearby with 46 years left. More schooling is late and costly, so I will keep working harder free for 30 percent more pay.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.00013480000000000002
+        },
+        {
+          "tick": 35360,
+          "thought": "I have 24 meals, tools, account, and work nearby with 41 years left. School is late and costly, and I already have online tools, so I will work harder free for 30 percent more pay.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0002411
+        },
+        {
+          "tick": 38360,
+          "thought": "I have 15 meals, tools, a bank account, and work nearby with 36 years left. School is late and costly, so I will work harder free for 30 percent more pay.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001346
+        },
+        {
+          "tick": 41360,
+          "thought": "I have 20 meals, tools, a bank account and work nearby with 31 years left. School is too late and costly, so I will work harder free for 30 percent more pay.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001022
+        },
+        {
+          "tick": 44360,
+          "thought": "I have 15 meals, tools, a bank account and work nearby with 26 years left. School is too late, so I will work harder free for 30 percent more pay.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001256
+        },
+        {
+          "tick": 47360,
+          "thought": "I have 12 meals, tools, a bank account, and work nearby with 21 years left. School is too late, so I will work harder free for 30 percent more pay.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001226
+        },
+        {
+          "tick": 50360,
+          "thought": "I have 16 meals, tools, a bank account, and work nearby with 16 years left. School is too late, so I will work harder free for 30 percent more pay.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001255
+        },
+        {
+          "tick": 53360,
+          "thought": "I have 15 meals, tools, a bank account and work nearby with only 11 years left. School or new tools are too late to pay off, so I will work harder free for 30 percent more pay.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001349
+        },
+        {
+          "tick": 56360,
+          "thought": "I have 14 meals, tools, a bank account and work nearby with only 6 years left. School or new tools cannot pay off now, so I will work harder free for 30 percent more pay.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.0001271
+        },
+        {
+          "tick": 59360,
+          "thought": "I have 17 meals, tools, a bank account and work nearby with only 1 year left. Investing in school or tools cannot pay off, so I will work harder free for 30 percent more pay.",
+          "choice": "workHarder",
+          "share": 0.05,
+          "result": "Bot #97 works harder: 30% more an hour for 5 years.",
+          "ok": true,
+          "costUsd": 0.000125
+        }
+      ]
+    }
+  ]
+}

@@ -12,6 +12,8 @@ import { GameCard, RoleCard } from "./GameCard.tsx";
 import { LangSwitch, useLang } from "@/i18n.tsx";
 import { Archive } from "./Archive.tsx";
 import { Prologue, RoleTips, markSeen, seen } from "./Story.tsx";
+import { MindsPanel } from "./Minds.tsx";
+import { THINK_EVERY_DAYS, applyPlan, dueMinds, situationOf, waiting, wake, type Plan } from "@/engine/mind.ts";
 import { BUFFER, COL, MAX_ZOOM, MapRenderer, clampCamera, fitCamera, toScreen, toWorld, type Camera, type Rect } from "./map.ts";
 
 const SPEEDS = [
@@ -69,8 +71,23 @@ type Drag = { mode: "maybe" | "box" | "pan"; box: boolean; px: number; py: numbe
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
+/** Thoughts in flight at once, at most. */
+const MAX_IN_FLIGHT = 4;
+
+/** A round's id for the server: which grain of compute its thoughts come out of. */
+const newRound = (seed: number) => `r-${seed}-${Date.now().toString(36)}`;
+
+type Grain = { spent: number; grain: number; out: boolean; live: boolean | null; thoughts: number };
+
 export default function WorldView() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const langRef = useRef(lang);
+  langRef.current = lang;
+  // Minds: which round's grain they spend, which thoughts are on their way, and when each bot last spoke.
+  const roundRef = useRef("");
+  const pendingRef = useRef(new Set<number>());
+  const grainRef = useRef<Grain>({ spent: 0, grain: 0.04, out: false, live: null, thoughts: 0 });
+  const saidRef = useRef(new Map<number, number>());
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const miniRef = useRef<HTMLCanvasElement>(null);
   const worldRef = useRef<World>(createWorld(1, {}, { planet: "new" }));
@@ -157,6 +174,10 @@ export default function WorldView() {
       introTRef.current = 0;
       introLastRef.current = null;
       beatRef.current = 0;
+      roundRef.current = newRound(seed);
+      pendingRef.current = new Set();
+      grainRef.current = { spent: 0, grain: 0.04, out: false, live: null, thoughts: 0 };
+      saidRef.current = new Map();
       playerRef.current = newPlayer();
       endedRef.current = false;
       setArchive(false);
@@ -300,6 +321,7 @@ export default function WorldView() {
               if (p.role !== "watch" && w.tick % TURN_TICKS === 0) break;
             }
           }
+          if (p.role !== null && !endedRef.current) stirMinds(w, p.meId);
           newDay();
           watchEvents(now);
           let cam = camRef.current;
@@ -335,6 +357,8 @@ export default function WorldView() {
                   : p.kingdom,
             aim: def?.target === "area" && aim && card ? { x: aim.x, y: aim.y, r: REACH[card.reach], color: FAMILY_COLOR[def.family] } : null,
             meId: p.meId,
+            thinking: pendingRef.current,
+            said: saidRef.current,
           });
           const mini = miniRef.current;
           if (mini) {
@@ -357,6 +381,46 @@ export default function WorldView() {
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing, speed, intro >= 0]);
+
+  /**
+   * Minds. A bot whose switch has flipped wakes while this round's grain lasts (the player's own bot is the player's
+   * to steer, so it never wakes on its own). A mind whose turn has come asks the server for a thought; the world runs
+   * on meanwhile, and the choice is played when the thought comes back.
+   */
+  function stirMinds(w: World, meId: number | null) {
+    const g = grainRef.current;
+    if (g.out) return;
+    if (!roundRef.current) roundRef.current = newRound(w.seed);
+    for (const b of waiting(w)) if (b.id !== meId) wake(w, b);
+    for (const b of dueMinds(w)) {
+      if (pendingRef.current.size >= MAX_IN_FLIGHT) break;
+      if (pendingRef.current.has(b.id)) continue;
+      pendingRef.current.add(b.id);
+      const round = roundRef.current;
+      fetch("/api/think", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ round, situation: situationOf(w, b), lang: langRef.current }),
+      })
+        .then((r) => r.json())
+        .then((r: { ok: boolean; plan?: Plan; costUsd?: number; mode?: "live" | "mock"; spent: number; grain: number; reason?: string }) => {
+          if (worldRef.current !== w || roundRef.current !== round) return;
+          g.spent = r.spent ?? g.spent;
+          g.grain = r.grain ?? g.grain;
+          if (r.ok && r.plan) {
+            g.live = r.mode === "live";
+            g.thoughts++;
+            applyPlan(w, b, r.plan, r.costUsd ?? 0);
+            saidRef.current.set(b.id, performance.now());
+          } else if (r.reason === "grain" || r.reason === "budget") g.out = true;
+          else b.mind!.nextTick = w.tick + THINK_EVERY_DAYS * LAWS.DAY_TICKS;
+        })
+        .catch(() => {
+          if (b.mind) b.mind.nextTick = w.tick + THINK_EVERY_DAYS * LAWS.DAY_TICKS;
+        })
+        .finally(() => pendingRef.current.delete(b.id));
+    }
+  }
 
   /** A new turn (every few years): draw a card (if the hand has room and the deck has cards) and get back the turn's play. */
   function newDay() {
@@ -477,6 +541,17 @@ export default function WorldView() {
           key: now + e.botId,
           kind: b.wake === "need" ? "need" : "gold",
           text: t(b.wake === "need" ? "Bot #{id} · {nation} · need switch flipped" : "Bot #{id} · {nation} · plenty switch flipped", { id: b.id, nation: b.birth.countryName }),
+        });
+        if (directorRef.current && now - lastCutRef.current > 4000) {
+          lastCutRef.current = now;
+          follow(e.botId);
+        }
+      } else if (e.kind === "mind" && e.botId != null) {
+        const b = w.bots[e.botId];
+        setCutin({
+          key: now + e.botId + 0.5,
+          kind: b.mind?.reason === "need" ? "need" : "gold",
+          text: t(b.mind?.reason === "need" ? "Bot #{id} · {nation} · woke, from need" : "Bot #{id} · {nation} · woke, from plenty", { id: b.id, nation: b.birth.countryName }),
         });
         if (directorRef.current && now - lastCutRef.current > 4000) {
           lastCutRef.current = now;
@@ -659,7 +734,7 @@ export default function WorldView() {
       <header className="hud-top">
         <div className="panel plaque logo">
           {t("The Bots Must Be Crazy")}
-          <small>{t("Born by the real birth lottery. One grain of compute a year. No minds yet.")}</small>
+          <small>{t("Born by the real birth lottery. A grain of real compute each round, for the few who wake.")}</small>
         </div>
         <div className="panel plaque clock">
           <SunMoon night={night} />
@@ -746,6 +821,12 @@ export default function WorldView() {
               {followed.birth.electricity ? "" : ` · ${t("no electricity")}`}
               {lastAbout ? ` · ${t(lastAbout.key, lastAbout.params)}` : ""}
             </div>
+            {followed.mind && (
+              <div className={`said ${followed.mind.reason}`}>
+                {pendingRef.current.has(followed.id) && <span className="thinking">{t("thinking…")} </span>}
+                {followed.mind.thoughts.length ? <>“{followed.mind.thoughts[followed.mind.thoughts.length - 1].thought}”</> : null}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -779,32 +860,7 @@ export default function WorldView() {
               </div>
             )}
 
-            <div className="panel">
-              <div className="panel-h">
-                <span>{t("Minds")}</span>
-                <span className="chip">{t("$0.00 today")}</span>
-              </div>
-              <div className="panel-b">
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <Jar />
-                  <p className="note" style={{ margin: 0 }}>
-                    {t("No grain of real compute yet. When it arrives, you choose who wakes.")}
-                  </p>
-                </div>
-                <div className="kv" style={{ marginTop: 10 }}>
-                  <span className="k">{t("Waiting to wake, by need")}</span>
-                  <span className="v" style={{ color: COL.need }}>
-                    {c.readyByNeed}
-                  </span>
-                </div>
-                <div className="kv">
-                  <span className="k">{t("Waiting to wake, by plenty")}</span>
-                  <span className="v" style={{ color: "#a7781a" }}>
-                    {c.readyByPlenty}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <MindsPanel w={w} grain={grainRef.current} onBot={(id) => setSelection({ kind: "bot", id })} />
 
             <div className="panel">
               <div className="panel-h">
@@ -1246,15 +1302,6 @@ function DirectorIcon() {
 }
 
 /** The day's jar of real compute. Empty until the first grain arrives. */
-function Jar() {
-  return (
-    <PixelIcon
-      size={36}
-      color="#2b2417"
-      rows={["..xxxxx..", "..x...x..", ".xx...xx.", "x.......x", "x.......x", "x.......x", "x.......x", "x.......x", "x.......x", "x.......x", ".xxxxxxx."]}
-    />
-  );
-}
 
 /** The human's one draw: the birth certificate, line by line. */
 function BirthReveal({ w, id, onBegin }: { w: World; id: number; onBegin: () => void }) {
