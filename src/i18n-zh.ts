@@ -438,4 +438,5 @@ export const ZH: Record<string, string> = {
   "Menu": "菜单",
   "Menu (Esc)": "菜单（Esc）",
   "Language": "语言",
+  "{n} left": "剩 {n} 张",
 };

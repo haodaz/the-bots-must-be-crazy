@@ -837,7 +837,7 @@ export default function WorldView() {
       {!introOn && playing_ && (
         <div className="hand-tray">
           <div className="deck-pile" title={t("Cards left in your deck")}>
-            <span className="n">{player.deck.length}</span>
+            <span className="n">{t("{n} left", { n: player.deck.length })}</span>
           </div>
           <div className="hand">
             {player.hand.map((card, i) => {

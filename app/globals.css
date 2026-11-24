@@ -1176,7 +1176,7 @@ body {
 }
 
 .deck-pile {
-  width: 70px;
+  width: 104px;
   aspect-ratio: 5 / 7;
   border: 2px solid #2b2417;
   border-radius: 9px;
@@ -1664,17 +1664,20 @@ body {
 
 .deck-pile {
   place-items: end center;
-  padding-bottom: 6px;
+  padding-bottom: 10px;
 }
 
 .deck-pile .n {
-  min-width: 26px;
-  padding: 1px 6px 0;
+  min-width: 36px;
+  padding: 2px 8px 1px;
   text-align: center;
   background: #fff5dc;
   border: 2px solid #2b2417;
   border-radius: 4px;
-  font-size: 20px;
+  font-family: var(--pixel);
+  font-weight: 600;
+  font-size: 17px;
+  white-space: nowrap;
   line-height: 1;
 }
 
