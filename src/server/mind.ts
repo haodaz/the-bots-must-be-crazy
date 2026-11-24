@@ -10,7 +10,7 @@ import { dirname } from "node:path";
 import { PLAN_SCHEMA, RULES, cleanPlan, promptFor, type Plan, type Situation } from "../engine/mind.ts";
 import { BudgetError } from "./budget.ts";
 import { liveAllowed, think } from "./meta.ts";
-import { getStore } from "./store.ts";
+import { getStore, publicOpen, type PoolName } from "./store.ts";
 
 /** One round's grain of real compute, in US$. */
 export function grainUsd() {
@@ -26,24 +26,29 @@ export function tracePath() {
 
 export type ThoughtReply =
   | { ok: true; plan: Plan; costUsd: number; mode: "live" | "mock"; spent: number; grain: number }
-  | { ok: false; reason: "grain" | "pool" | "busy" | "budget" | "error"; message: string; spent: number; grain: number };
+  | { ok: false; reason: "grain" | "pool" | "busy" | "closed" | "budget" | "error"; message: string; spent: number; grain: number };
 
 const MESSAGES = {
   grain: "This round's grain of compute is spent.",
   pool: "The public pool of compute is spent.",
   busy: "Too many new rounds from here this hour.",
+  closed: "The public pool is closed; what is left is kept for the judges.",
 };
 
-/** Ask for one thought. `visitor` is an anonymous hash, used only to limit how many rounds one visitor starts an hour. */
-export async function thinkFor(round: string, s: Situation, lang: "en" | "zh", visitor = "local"): Promise<ThoughtReply> {
+/**
+ * Ask for one thought. `visitor` is an anonymous hash, used only to limit how many rounds one visitor starts an hour;
+ * `pool` is which pool pays (the judges' pool only with the judges' pass).
+ */
+export async function thinkFor(round: string, s: Situation, lang: "en" | "zh", visitor = "local", pool: PoolName = "public"): Promise<ThoughtReply> {
   const grain = grainUsd();
   const input = promptFor(s, lang);
   const live = liveAllowed();
+  if (pool === "public" && !publicOpen()) return { ok: false, reason: "closed", message: MESSAGES.closed, spent: 0, grain };
   // The most this thought could cost: every input token fresh, every output token used.
   const worst = ((RULES.length + input.length + JSON.stringify(PLAN_SCHEMA.schema).length) / 3.2) * 0.1e-6 + MAX_OUTPUT * 0.5e-6;
   const store = getStore();
   // Rehearsals cost nothing and reserve nothing.
-  const held = live ? await store.reserve(round, worst, grain, visitor) : { ok: true as const, pool: 0, round: 0 };
+  const held = live ? await store.reserve(round, worst, grain, visitor, pool) : { ok: true as const, pool: 0, round: 0 };
   if (!held.ok) return { ok: false, reason: held.reason, message: MESSAGES[held.reason], spent: held.round, grain };
   try {
     const r = await think({
@@ -57,20 +62,21 @@ export async function thinkFor(round: string, s: Situation, lang: "en" | "zh", v
     });
     const plan = cleanPlan(r.json);
     const u = r.receipt.usage;
-    const trace = { at: r.receipt.at, round, bot: s.id, year: s.year, lang, mode: r.receipt.mode, input, output: r.text, usage: u, costUsd: r.receipt.costUsd };
+    const trace = { at: r.receipt.at, pool, round, bot: s.id, year: s.year, lang, mode: r.receipt.mode, input, output: r.text, usage: u, costUsd: r.receipt.costUsd };
     if (live) {
       await store.settle(
         round,
         worst,
         { at: r.receipt.at, round, bot: s.id, year: s.year, choice: plan.choice, lang, input: u.input, cached: u.cached, output: u.output, reasoning: u.reasoning, costUsd: r.receipt.costUsd },
         trace,
+        pool,
       );
     }
     if (store.kind === "file") writeTrace(trace);
     const spent = live ? held.round - worst + r.receipt.costUsd : 0;
     return { ok: true, plan, costUsd: r.receipt.costUsd, mode: r.receipt.mode, spent, grain };
   } catch (e) {
-    if (live) await store.refund(round, worst).catch(() => {});
+    if (live) await store.refund(round, worst, pool).catch(() => {});
     const budget = e instanceof BudgetError;
     return { ok: false, reason: budget ? "budget" : "error", message: (e as Error).message, spent: held.round - (live ? worst : 0), grain };
   }

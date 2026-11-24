@@ -14,6 +14,7 @@ import { Archive } from "./Archive.tsx";
 import { Prologue, RoleTips, markSeen, seen } from "./Story.tsx";
 import { MindsPanel } from "./Minds.tsx";
 import { THINK_EVERY_DAYS, applyPlan, dueMinds, situationOf, waiting, wake, type Plan } from "@/engine/mind.ts";
+import { indexReplay, replayTick, type Replay, type ReplayIndex } from "@/engine/replay.ts";
 import { BUFFER, COL, MAX_ZOOM, MapRenderer, clampCamera, fitCamera, toScreen, toWorld, type Camera, type Rect } from "./map.ts";
 
 const SPEEDS = [
@@ -77,6 +78,20 @@ const MAX_IN_FLIGHT = 4;
 /** A round's id for the server: which grain of compute its thoughts come out of. */
 const newRound = (seed: number) => `r-${seed}-${Date.now().toString(36)}`;
 
+/** The judges' pass, if this browser was given one (from a link with ?pass=…). */
+const PASS = "tbmbc.pass";
+function judgePass(): string {
+  try {
+    return localStorage.getItem(PASS) ?? "";
+  } catch {
+    return "";
+  }
+}
+const passHeaders = (): Record<string, string> => (judgePass() ? { "x-judge-pass": judgePass() } : {});
+
+/** What this visitor's rounds can do: think for real (public pool, or the judges' pool), or watch a recorded round. */
+type Access = { judge: boolean; replay: boolean };
+
 type Grain = { spent: number; grain: number; out: boolean; live: boolean | null; thoughts: number; why?: string };
 
 export default function WorldView() {
@@ -88,6 +103,9 @@ export default function WorldView() {
   const pendingRef = useRef(new Set<number>());
   const grainRef = useRef<Grain>({ spent: 0, grain: 0.04, out: false, live: null, thoughts: 0 });
   const saidRef = useRef(new Map<number, number>());
+  const [access, setAccess] = useState<Access | null>(null);
+  /** A recorded round, bound to the world it is being played in. */
+  const replayRef = useRef<{ data: Replay; ix: ReplayIndex; world: World } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const miniRef = useRef<HTMLCanvasElement>(null);
   const worldRef = useRef<World>(createWorld(1, {}, { planet: "new" }));
@@ -220,6 +238,55 @@ export default function WorldView() {
     lastEventRef.current = worldRef.current.events[worldRef.current.events.length - 1] ?? null;
   }, []);
 
+  // Who is visiting: a judges' link (?pass=…) is kept in this browser and taken out of the address bar. Then ask the
+  // server what rounds can do; if the public pool is closed or spent, load the recorded round and build its world.
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const pass = url.searchParams.get("pass");
+      if (pass) {
+        localStorage.setItem(PASS, pass);
+        url.searchParams.delete("pass");
+        window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+      }
+    } catch {}
+    let live = true;
+    fetch("/api/status", { headers: passHeaders(), cache: "no-store" })
+      .then((r) => r.json())
+      .then(async (s: { judge: boolean; replay: boolean }) => {
+        if (!live) return;
+        setAccess({ judge: s.judge, replay: s.replay });
+        if (!s.replay) return;
+        const get = (l: string) => fetch(`/replay/${l}.json`).then((r) => (r.ok ? (r.json() as Promise<Replay>) : null));
+        const data = (await get(langRef.current)) ?? (await get("en"));
+        if (!live || !data || playerRef.current.role !== null) return;
+        const w = createWorld(data.seed, {}, { planet: "new" });
+        worldRef.current = w;
+        camRef.current = fitCamera(w);
+        particlesRef.current = makeParticles(w);
+        lastEventRef.current = w.events[w.events.length - 1] ?? null;
+        replayRef.current = { data, ix: indexReplay(data), world: w };
+        roundRef.current = data.round;
+        grainRef.current = { spent: 0, grain: 0.04, out: false, live: true, thoughts: 0, why: "replay" };
+        saidRef.current = new Map();
+        setFrame((f) => f + 1);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  /** Thoughts played back from the recording: shown the same way as live ones. */
+  function replayed(said: { bot: number; thought: { costUsd: number } }[]) {
+    const g = grainRef.current;
+    for (const s of said) {
+      g.spent += s.thought.costUsd;
+      g.thoughts++;
+      saidRef.current.set(s.bot, performance.now());
+    }
+  }
+
   // Wheel and trackpad pinch zoom the map around the cursor (non-passive listeners, so the page neither scrolls
   // nor zooms). A pinch arrives as a wheel event with ctrlKey and small steps, so it gets a stronger factor.
   useEffect(() => {
@@ -314,14 +381,18 @@ export default function WorldView() {
             endedRef.current = true;
             setArchive(true);
           }
+          // The recorded round plays only for the Observer, in the world it was recorded in (cards would change it).
+          const rp = replayRef.current;
+          const replaying = rp != null && rp.world === w && p.role === "watch";
           if (playing && p.role !== null && !p.reveal && !p.waiting && !endedRef.current) {
             for (let i = 0; i < SPEEDS[speed].ticks; i++) {
-              step(w);
+              if (replaying) replayed(replayTick(w, rp.ix));
+              else step(w);
               // Card players: stop at the start of each turn (every few years), for their play.
               if (p.role !== "watch" && w.tick % TURN_TICKS === 0) break;
             }
           }
-          if (p.role !== null && !endedRef.current) stirMinds(w, p.meId);
+          if (p.role !== null && !endedRef.current && !replaying) stirMinds(w, p.meId);
           newDay();
           watchEvents(now);
           let cam = camRef.current;
@@ -399,7 +470,7 @@ export default function WorldView() {
       const round = roundRef.current;
       fetch("/api/think", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...passHeaders() },
         body: JSON.stringify({ round, situation: situationOf(w, b), lang: langRef.current }),
       })
         .then((r) => r.json())
@@ -412,7 +483,7 @@ export default function WorldView() {
             g.thoughts++;
             applyPlan(w, b, r.plan, r.costUsd ?? 0);
             saidRef.current.set(b.id, performance.now());
-          } else if (r.reason && ["grain", "pool", "busy", "budget"].includes(r.reason)) {
+          } else if (r.reason && ["grain", "pool", "busy", "closed", "budget"].includes(r.reason)) {
             g.out = true;
             g.why = r.reason;
           }
@@ -476,6 +547,11 @@ export default function WorldView() {
       p.waiting = true;
     }
     if (role === "king") p.pickKingdom = true;
+    // In the recorded round's world, any role but the Observer's plays its own round (and asks the server, as usual).
+    if (role !== "watch" && replayRef.current?.world === w) {
+      roundRef.current = newRound(w.seed);
+      grainRef.current = { spent: 0, grain: 0.04, out: false, live: null, thoughts: 0 };
+    }
     if (!seen(`role-${role}`)) setTips(role);
     if (role === "human") {
       // One draw, no redraw: the bots were born by the real lottery, so any of them is a fair draw.
@@ -769,7 +845,14 @@ export default function WorldView() {
       {!introOn && (
         <div className="hud-left">
           <div className="btn-row">
-            <span className="chip live">● {t("LIVE")}</span>
+            {replayRef.current?.world === worldRef.current && player.role === "watch" ? (
+              <span className="chip live" title={t("A recorded round: every thought in it was really paid for.")}>
+                ▶ {t("REPLAY")}
+              </span>
+            ) : (
+              <span className="chip live">● {t("LIVE")}</span>
+            )}
+            {access?.judge && <span className="chip gold">{t("Judges' pass")}</span>}
             <span className="chip">{followed ? t("Following Bot #{id}", { id: followed.id }) : zoomedOut ? t("Whole world") : t("Exploring")}</span>
             {night && <span className="chip">{t("Night")}</span>}
             {player.role && (
@@ -972,6 +1055,11 @@ export default function WorldView() {
             <div className="veil-title">
               {t("How will you enter this world?")}
               <small>{t("Planet {name}: {n} souls, born by the real birth lottery.", { name: w.geo.name, n: w.bots.length })}</small>
+              {replayRef.current?.world === w && (
+                <small className="veil-note">
+                  {t("The public pool of real compute is closed. Choose the Observer to watch a recorded round on this planet, where every thought was really paid for.")}
+                </small>
+              )}
             </div>
             <div className="role-row">
               {(["watch", "god", "king", "human"] as Role[]).map((r) => (

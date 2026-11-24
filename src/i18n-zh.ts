@@ -490,4 +490,15 @@ export const ZH: Record<string, string> = {
   "Cached": "缓存",
   "Output": "输出",
   "Cost": "花费",
+  // ---- 回放与评委 ----
+  REPLAY: "回放",
+  "A recorded round: every thought in it was really paid for.": "录好的一局：里面每一次思考都是真花钱买的。",
+  "Judges' pass": "评委通行",
+  "The public pool of real compute is closed. Choose the Observer to watch a recorded round on this planet, where every thought was really paid for.": "公开的那池真实算力已经关了。选「观察者」，看这颗星球上录好的一局，里面每一次思考都是真花钱买的。",
+  "A recorded round. Every thought in it was really paid for with Meta's Muse Ember, and is played back as it happened.": "录好的一局。里面每一次思考都是真用 Meta Muse Ember 花钱买的，照当时的样子放回来。",
+  "The public pool of real compute is closed, so the minds stay asleep in this round. The Observer can watch a recorded round, where every thought was really paid for.": "公开的那池真实算力已经关了，这一局里心智不会醒来。选「观察者」可以看录好的一局，里面每一次思考都是真花钱买的。",
+  "Judges' pool": "评委池",
+  "of {pool}, kept for judging · {n} rounds": "共 {pool}，留给评审 · {n} 局",
+  closed: "已关闭",
+  judge: "评委",
 };

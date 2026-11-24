@@ -58,8 +58,12 @@ export function MindsPanel({ w, grain, onBot }: { w: World; grain: GrainView; on
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <GrainJar left={left} />
           <p className="note" style={{ margin: 0 }}>
-            {!grain.out
+            {grain.why === "replay"
+              ? t("A recorded round. Every thought in it was really paid for with Meta's Muse Ember, and is played back as it happened.")
+              : !grain.out
               ? t("This round holds a grain of real compute. Each thought is paid from it, with Meta's Muse Ember.")
+              : grain.why === "closed"
+                ? t("The public pool of real compute is closed, so the minds stay asleep in this round. The Observer can watch a recorded round, where every thought was really paid for.")
               : grain.why === "pool"
                 ? t("The public pool of real compute is spent. The minds live on by their last choice.")
                 : grain.why === "busy"

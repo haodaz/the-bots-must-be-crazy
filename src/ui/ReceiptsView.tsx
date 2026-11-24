@@ -36,7 +36,8 @@ export default function ReceiptsView() {
 
   const s = data?.summary;
   const dev = data?.dev;
-  const total = (s?.kind === "redis" ? s.spent : 0) + (dev?.spentUsd ?? 0);
+  const redis = s?.kind === "redis";
+  const total = (redis ? s.spent + (s.judge?.spent ?? 0) : 0) + (dev?.spentUsd ?? 0);
   const choice = (c: string) => (!c ? "" : c === "rest" ? t("Rest") : DEFS[c as keyof typeof DEFS] ? t(DEFS[c as keyof typeof DEFS].title) : c);
 
   return (
@@ -65,7 +66,15 @@ export default function ReceiptsView() {
         <div className="panel stat">
           <div className="k">{t("Public pool")}</div>
           <div className="v">{s ? usd(s.kind === "redis" ? s.spent : 0, 3) : "…"}</div>
-          <div className="s">{s ? t("of {pool}, for everyone who plays", { pool: usd(s.kind === "redis" ? s.cap : 0, 2) }) : ""}</div>
+          <div className="s">
+            {s ? t("of {pool}, for everyone who plays", { pool: usd(s.kind === "redis" ? s.cap : 0, 2) }) : ""}
+            {s && !s.open ? ` · ${t("closed")}` : ""}
+          </div>
+        </div>
+        <div className="panel stat">
+          <div className="k">{t("Judges' pool")}</div>
+          <div className="v">{s?.judge ? usd(redis ? s.judge.spent : 0, 3) : "…"}</div>
+          <div className="s">{s?.judge ? t("of {pool}, kept for judging · {n} rounds", { pool: usd(s.judge.cap, 2), n: redis ? s.judge.rounds : 0 }) : ""}</div>
         </div>
         <div className="panel stat">
           <div className="k">{t("Thoughts")}</div>
@@ -126,7 +135,10 @@ export default function ReceiptsView() {
                 {s.receipts.map((r: PublicReceipt, i) => (
                   <tr key={`${r.at}-${i}`}>
                     <td>{r.at.replace("T", " ").slice(5, 19)}</td>
-                    <td className="mono">{r.round.slice(-6)}</td>
+                    <td className="mono">
+                      {r.round.slice(-6)}
+                      {r.pool === "judge" ? <span className="chip gold" style={{ marginLeft: 6 }}>{t("judge")}</span> : null}
+                    </td>
                     <td>
                       #{r.bot}
                       {r.year ? ` · ${t("Y{n}", { n: r.year })}` : ""}
