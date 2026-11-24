@@ -175,7 +175,7 @@ function LifeFile({ w, b, unsealed }: { w: World; b: Bot; unsealed: boolean }) {
       </div>
       <div className="lifefile-right">
         <h3 className="lifefile-title">{fateLabel(t, b)}</h3>
-        <div className="story">
+        <div className="life-story">
           {story(t, w, b, unsealed).map((line, i) => (
             <p key={i}>{line}</p>
           ))}
