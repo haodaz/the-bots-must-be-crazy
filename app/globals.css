@@ -1180,7 +1180,7 @@ body {
   aspect-ratio: 5 / 7;
   border: 2px solid #2b2417;
   border-radius: 9px;
-  background: repeating-linear-gradient(45deg, #7e2a22 0 6px, #8f3328 6px 12px);
+  background: url(/art/back.webp) center / cover, repeating-linear-gradient(45deg, #7e2a22 0 6px, #8f3328 6px 12px);
   box-shadow:
     inset 0 0 0 3px #e3c065,
     inset 0 0 0 4px #2b2417,
@@ -1189,7 +1189,7 @@ body {
     7px 7px 0 #2b2417;
   display: grid;
   place-items: center;
-  color: #fff3da;
+  color: #2b2417;
   font-family: var(--num);
   font-size: 26px;
   text-shadow: 0 2px 0 #2b2417;
@@ -1494,4 +1494,186 @@ body {
 
 .veil > .archive {
   justify-self: center;
+}
+
+/* ---------- The story before the gold, and the role tips ---------- */
+
+.story {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--paper-dot) 1px, transparent 1.2px);
+  background-size: 10px 10px;
+  padding: 16px;
+  overflow: auto;
+}
+
+.story-inner {
+  width: min(980px, 100%, calc(56vh * 7 / 4 + 10px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.story-eyebrow {
+  font-family: var(--pixel);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.story-plate {
+  aspect-ratio: 7 / 4;
+  border: 2px solid var(--ink);
+  box-shadow:
+    inset 0 0 0 4px var(--panel),
+    inset 0 0 0 5.5px var(--gold),
+    5px 5px 0 var(--ink);
+  background: var(--panel);
+  overflow: hidden;
+  animation: story-in 0.7s ease-out;
+}
+
+.story-plate img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: story-drift 14s ease-out forwards;
+}
+
+.story-blank {
+  width: 100%;
+  height: 100%;
+  background: var(--panel-2);
+}
+
+.story-text {
+  animation: story-in 0.7s ease-out 0.15s backwards;
+}
+
+.story-text h2 {
+  margin: 0 0 6px;
+  font-family: var(--pixel);
+  font-size: clamp(22px, 3.2vw, 32px);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.story-text p {
+  margin: 0;
+  max-width: 62ch;
+  font-size: clamp(15px, 1.7vw, 18px);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.story-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.story-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.story-dots span {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--ink);
+  background: var(--panel);
+  cursor: pointer;
+}
+
+.story-dots span.on {
+  background: var(--gold);
+}
+
+@keyframes story-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes story-drift {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.role-tips {
+  position: absolute;
+  z-index: 25;
+  left: 50%;
+  top: 120px;
+  transform: translateX(-50%);
+  width: min(460px, calc(100% - 32px));
+  animation: story-in 0.4s ease-out;
+}
+
+.role-tips ol {
+  list-style: none;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.role-tips li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.role-tips .n {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink);
+  background: var(--gold-soft);
+  font-family: var(--num);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.role-tips-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 14px 12px;
+}
+
+.chip-btn {
+  cursor: pointer;
+}
+
+.deck-pile {
+  place-items: end center;
+  padding-bottom: 6px;
+}
+
+.deck-pile .n {
+  min-width: 26px;
+  padding: 1px 6px 0;
+  text-align: center;
+  background: #fff5dc;
+  border: 2px solid #2b2417;
+  border-radius: 4px;
+  font-size: 20px;
+  line-height: 1;
 }

@@ -11,6 +11,7 @@ const TURN_TICKS = TURN_DAYS * LAWS.DAY_TICKS;
 import { GameCard, RoleCard } from "./GameCard.tsx";
 import { LangSwitch, useLang } from "@/i18n.tsx";
 import { Archive } from "./Archive.tsx";
+import { Prologue, RoleTips, markSeen, seen } from "./Story.tsx";
 import { BUFFER, COL, MAX_ZOOM, MapRenderer, clampCamera, fitCamera, toScreen, toWorld, type Camera, type Rect } from "./map.ts";
 
 const SPEEDS = [
@@ -87,6 +88,11 @@ export default function WorldView() {
 
   const [, setFrame] = useState(0);
   const [intro, setIntro] = useState(0);
+  // The story shows before the first opening; afterwards it can be opened again from the top bar.
+  const [story, setStory] = useState(() => !seen("story"));
+  const storyRef = useRef(story);
+  storyRef.current = story;
+  const [tips, setTips] = useState<Role | null>(null);
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [boxMode, setBoxMode] = useState(false);
@@ -253,7 +259,8 @@ export default function WorldView() {
           canvas.height = BUFFER.height;
         }
         const ctx = canvas.getContext("2d")!;
-        if (introStartRef.current === null) introStartRef.current = now;
+        // The opening waits while the story is open.
+        if (introStartRef.current === null || storyRef.current) introStartRef.current = now;
         const t = (now - introStartRef.current) / 1000;
         if (intro >= 0) {
           drawGenesis(ctx, r, w, t, particlesRef.current);
@@ -360,6 +367,7 @@ export default function WorldView() {
       p.waiting = true;
     }
     if (role === "king") p.pickKingdom = true;
+    if (!seen(`role-${role}`)) setTips(role);
     if (role === "human") {
       // One draw, no redraw: the bots were born by the real lottery, so any of them is a fair draw.
       p.meId = Math.floor(Math.random() * w.bots.length);
@@ -616,6 +624,15 @@ export default function WorldView() {
               {sp.label}
             </button>
           ))}
+          <button
+            className="pbtn"
+            onClick={() => {
+              setPlaying(false);
+              setStory(true);
+            }}
+          >
+            {t("Story")}
+          </button>
           <button className="pbtn" onClick={() => startWorld("new")}>
             {t("New planet")}
           </button>
@@ -637,7 +654,7 @@ export default function WorldView() {
             <span className="chip">{followed ? t("Following Bot #{id}", { id: followed.id }) : zoomedOut ? t("Whole world") : t("Exploring")}</span>
             {night && <span className="chip">{t("Night")}</span>}
             {player.role && (
-              <span className="chip gold">
+              <button className="chip gold chip-btn" title={t("How to play")} onClick={() => setTips(player.role)}>
                 {player.role === "watch"
                   ? t("You are the Observer")
                   : player.role === "god"
@@ -647,7 +664,8 @@ export default function WorldView() {
                       ? t("King of {nation}", { nation: w.countries[player.kingdom].name })
                       : t("King, choosing")
                     : t("You are Bot #{id}", { id: player.meId ?? 0 })}
-              </span>
+                {" ?"}
+              </button>
             )}
           </div>
           <div className="btn-row">
@@ -806,7 +824,7 @@ export default function WorldView() {
       {!introOn && playing_ && (
         <div className="hand-tray">
           <div className="deck-pile" title={t("Cards left in your deck")}>
-            {player.deck.length}
+            <span className="n">{player.deck.length}</span>
           </div>
           <div className="hand">
             {player.hand.map((card, i) => {
@@ -863,6 +881,27 @@ export default function WorldView() {
       )}
 
       {!introOn && archive && <Archive w={w} ended={endedRef.current} onClose={() => setArchive(false)} />}
+
+      {!introOn && tips && tips === player.role && !player.reveal && (
+        <RoleTips
+          role={tips}
+          onClose={() => {
+            markSeen(`role-${tips}`);
+            setTips(null);
+          }}
+        />
+      )}
+
+      {story && (
+        <Prologue
+          last={introOn ? t("Watch it begin") : t("Back to the world")}
+          onDone={() => {
+            markSeen("story");
+            setStory(false);
+            if (!introOn) setPlaying(true);
+          }}
+        />
+      )}
 
       {!introOn && player.reveal && player.meId != null && <BirthReveal w={w} id={player.meId} onBegin={() => ((player.reveal = false), setFrame((f) => f + 1))} />}
 

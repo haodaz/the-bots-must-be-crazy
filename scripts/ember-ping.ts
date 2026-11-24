@@ -12,7 +12,7 @@ const r = await think({
   instructions: "You are a test. Answer with one word.",
   input: "Reply with the word ready.",
   effort: "minimal",
-  maxOutputTokens: 16,
+  maxOutputTokens: 120,
 });
 console.log(`${liveAllowed() ? "LIVE" : "rehearsal"}: "${r.text}"`);
 console.log(r.receipt);

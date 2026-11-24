@@ -2,7 +2,7 @@
 // Rehearsal by default: prints the plan and its cost, makes no images, spends $0.
 // Usage: node scripts/gen-art.ts [--only=card-harvest,intro-1-pocket] [--set=card|role|back|intro] [--variants=2]
 //        MODEL_LIVE=1 node scripts/gen-art.ts ...   (real images, $0.01 each)
-// Images land in public/art/<id>-v<n>.webp; pick the keepers in src/art/manifest.ts.
+// Raw images land in data/local/art/<id>-v<n>.webp (not committed); pick and shrink the keepers with scripts/pick-art.ts.
 
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { JOBS, promptFor } from "../src/art/prompts.ts";
@@ -21,10 +21,10 @@ const cost = jobs.length * variants * PRICES["muse-image-1.0"].image;
 console.log(`${live ? "LIVE" : "Rehearsal"}: ${jobs.length} illustrations × ${variants} variants = ${jobs.length * variants} images, about $${cost.toFixed(2)}.`);
 console.log(`Spent so far: $${spentUsd().toFixed(4)} of the $${capUsd().toFixed(2)} cap.`);
 
-mkdirSync("public/art", { recursive: true });
+mkdirSync("data/local/art", { recursive: true });
 for (const job of jobs) {
   for (let v = 1; v <= variants; v++) {
-    const path = `public/art/${job.id}-v${v}.webp`;
+    const path = `data/local/art/${job.id}-v${v}.webp`;
     if (live && existsSync(path)) {
       console.log(`  skip ${path} (already there)`);
       continue;

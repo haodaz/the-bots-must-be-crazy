@@ -45,12 +45,12 @@ export const JOBS: ArtJob[] = [
   role("human", "A small traveller with a cloth bundle seen from behind, standing at a crossroads signpost under a wide sky."),
   // Card back
   { id: "back", set: "back", subject: "A symmetrical ornamental pattern of interlaced vines and stars around a single golden coin, deep red and gold on parchment.", size: "1024x1024" },
-  // Opening
-  intro("1-pocket", "Close view of a worn coat pocket; a few plain paper notes and two small coins slip out and begin to fall. Only the coat and a hand, no face."),
-  intro("2-clouds", "Paper notes and coins tumbling down through soft clouds, turning into glowing gold as they fall."),
-  intro("3-rain", "A gentle rain of golden light falling toward a quiet parchment-coloured planet seen from above, wisps of cloud."),
-  intro("4-cities", "Gold settling onto a hand-drawn map of a new world, pooling into softly glowing cities along rivers and coasts."),
-  intro("5-looking-up", "Tiny figures on a grassy hill seen from behind, looking up at golden light spreading across the sky."),
+  // Prologue: the story before the gold falls, one wide plate per page
+  intro("1-born", "Seen from high above at dawn: many tiny glowing paper lanterns drifting down from the sky, each one settling at a different place on a wide landscape of fields, deserts, rivers, snowy mountains and small towns."),
+  intro("2-doors", "A row of five small open doorways standing side by side in an open meadow, each opening onto a different world: a lamplit town at night, a dry cracked plain, a green river valley, a snowy hillside, a busy harbour with ships."),
+  intro("3-planet", "Two cupped hands with warm brown skin gently holding a small parchment-coloured planet with tiny continents, blue seas, rivers and specks of golden light, like holding a seed. Only the hands, no face."),
+  intro("4-ants", "Close view of a long winding line of tiny ants carrying one single shining grain of sugar across an old parchment map, the grain glowing softly like a small star."),
+  intro("5-pocket", "Close view of a worn coat pocket; four plain paper notes and two small coins slip out and begin to fall, catching the light. Only the coat and a hand, no face."),
 ];
 
 export const promptFor = (job: ArtJob) => `${STYLE}\n\nSubject: ${job.subject}`;

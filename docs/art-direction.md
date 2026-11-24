@@ -25,6 +25,6 @@ All art is generated with **Muse Image** (Meta Model API) during the hackathon, 
 | Card art, one per kind of card | 19 | square (1024×1024) |
 | Role cards: Observer, God, King, Human | 4 | square |
 | Card back | 1 | square |
-| Opening keyframes | 5 | wide (1792×1024) |
+| Story pages before the opening | 5 | wide (1792×1024 asked, 2016×1152 returned) |
 
-Two variants each, the better one kept: about 58 images, about $0.58. Prompts live in `src/art/prompts.ts`; `node scripts/gen-art.ts` generates them (a free rehearsal unless live calls are switched on).
+Two variants each, the better one kept: 58 images, $0.58. Prompts live in `src/art/prompts.ts`. `node scripts/gen-art.ts` generates them into `data/local/art` (a free rehearsal unless live calls are switched on; the raw files are large and stay out of the repo). `node scripts/pick-art.ts sheet` lays the variants side by side; `node scripts/pick-art.ts keep id=v …` shrinks the kept ones into `public/art` (640 px cards, 1600 px story plates) and writes `src/art/manifest.ts`.
