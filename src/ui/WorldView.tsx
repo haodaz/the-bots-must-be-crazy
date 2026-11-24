@@ -22,6 +22,9 @@ const SPEEDS = [
 
 /** The opening, in seconds. */
 const INTRO = { fall: 1.8, burst: 3.4, land: 4.8, settle: 6.2, borders: 7.4, born: 9.2, end: 10.2 };
+/** The opening plays one line at a time: each beat plays to its end and waits for a click before the next. */
+const BEATS = [INTRO.fall, INTRO.burst, INTRO.land, INTRO.settle, INTRO.borders, INTRO.end];
+const HOLD = 0.001;
 const FOLLOW_ZOOM = 6;
 
 type Selection =
@@ -77,7 +80,10 @@ export default function WorldView() {
   /** While a zoom eases in, this world point stays under this screen point (buffer px). */
   const zoomAnchorRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const particlesRef = useRef<Particle[]>([]);
-  const introStartRef = useRef<number | null>(null);
+  // The opening's own clock, in seconds: it stops at the end of each beat until the viewer moves on.
+  const introTRef = useRef(0);
+  const introLastRef = useRef<number | null>(null);
+  const beatRef = useRef(0);
   const lastEventRef = useRef<WorldEvent | null>(null);
   const lastCutRef = useRef(0);
   const rotateRef = useRef(0);
@@ -97,9 +103,11 @@ export default function WorldView() {
   const [menu, setMenu] = useState(false);
   const resumeRef = useRef(false);
   const menuKeyRef = useRef<() => void>(() => {});
+  const introKeyRef = useRef<() => boolean>(() => false);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") menuKeyRef.current();
+      else if ((e.key === " " || e.key === "Enter" || e.key === "ArrowRight") && introKeyRef.current()) e.preventDefault();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -146,7 +154,9 @@ export default function WorldView() {
       camRef.current = fitCamera(w);
       lastEventRef.current = w.events[w.events.length - 1] ?? null;
       particlesRef.current = makeParticles(w);
-      introStartRef.current = null;
+      introTRef.current = 0;
+      introLastRef.current = null;
+      beatRef.current = 0;
       playerRef.current = newPlayer();
       endedRef.current = false;
       setArchive(false);
@@ -270,12 +280,13 @@ export default function WorldView() {
           canvas.height = BUFFER.height;
         }
         const ctx = canvas.getContext("2d")!;
-        // The opening waits while the story is open.
-        if (introStartRef.current === null || storyRef.current) introStartRef.current = now;
-        const t = (now - introStartRef.current) / 1000;
+        // The opening's clock runs to the end of the current beat and waits there; it also waits while the story is open.
+        const last = introLastRef.current ?? now;
+        introLastRef.current = now;
+        if (!storyRef.current) introTRef.current = Math.min(introTRef.current + (now - last) / 1000, BEATS[beatRef.current] - HOLD);
+        const t = introTRef.current;
         if (intro >= 0) {
           drawGenesis(ctx, r, w, t, particlesRef.current);
-          if (t >= INTRO.end) setIntro(-1);
         } else {
           const p = playerRef.current;
           if (!endedRef.current && w.tick >= LAWS.LIFE_DAYS * LAWS.DAY_TICKS) {
@@ -336,7 +347,7 @@ export default function WorldView() {
         }
         if (now - lastHud > 110) {
           lastHud = now;
-          if (intro >= 0) setIntro(Math.min(t, INTRO.end));
+          if (intro >= 0) setIntro((prev) => (prev < 0 ? prev : t)); // never undo a skip or the last click
           setFrame((f) => f + 1);
         }
       }
@@ -364,6 +375,15 @@ export default function WorldView() {
       kind: "gold",
       text: t(drew ? "Year {n}. You drew a card. Play, then press on." : p.deck.length ? "Year {n}. Your hand is full. Play, then press on." : "Year {n}. Your deck is empty. Play, then press on.", { n: year + 1 }),
     });
+  }
+
+  /** A click during the opening: finish the line that is playing, or, if it is already waiting, go on to the next. */
+  function nextBeat() {
+    const end = BEATS[beatRef.current] - HOLD;
+    if (introTRef.current < end - 0.01) introTRef.current = end;
+    else if (beatRef.current >= BEATS.length - 1) return setIntro(-1);
+    else beatRef.current += 1;
+    setIntro(introTRef.current);
   }
 
   function openMenu() {
@@ -595,6 +615,11 @@ export default function WorldView() {
   const chosenCard = player.hand.find((c) => c.uid === player.chosen);
   const zoomedOut = cam.s < fitCamera(w).s * 2.2;
   // Esc opens or closes the menu (the story handles its own Esc).
+  introKeyRef.current = () => {
+    if (!introOn || story) return false;
+    nextBeat();
+    return true;
+  };
   menuKeyRef.current = () => {
     if (story || introOn) return;
     if (menu) closeMenu();
@@ -615,7 +640,10 @@ export default function WorldView() {
 
       <div className="board-overlay">
         {introOn ? (
-          <GenesisCaption t={intro} w={w} onSkip={() => setIntro(-1)} />
+          <>
+            <button className="intro-catch" onClick={nextBeat} aria-label={t("Continue")} />
+            <GenesisCaption t={intro} w={w} waiting={intro >= BEATS[beatRef.current] - HOLD - 0.01} onSkip={() => setIntro(-1)} />
+          </>
         ) : (
           <>
             <MapLabels w={w} cam={cam} zoomedOut={zoomedOut} />
@@ -1142,7 +1170,7 @@ function drawGenesis(ctx: CanvasRenderingContext2D, r: MapRenderer, w: World, t:
   }
 }
 
-function GenesisCaption({ t: time, w, onSkip }: { t: number; w: World; onSkip: () => void }) {
+function GenesisCaption({ t: time, w, waiting, onSkip }: { t: number; w: World; waiting: boolean; onSkip: () => void }) {
   const { t } = useLang();
   let big: string | null = null;
   let line: string | null = null;
@@ -1172,6 +1200,7 @@ function GenesisCaption({ t: time, w, onSkip }: { t: number; w: World; onSkip: (
       <div className="genesis-caption">
         {big && <div className="big">{big}</div>}
         {line && <div className="line">{line}</div>}
+        <div className={`next-hint ${waiting ? "on" : ""}`}>{t("Click to continue ▸")}</div>
       </div>
       <button className="pbtn skip" onClick={onSkip}>
         {t("Skip")}
