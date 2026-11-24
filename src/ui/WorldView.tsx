@@ -77,7 +77,7 @@ const MAX_IN_FLIGHT = 4;
 /** A round's id for the server: which grain of compute its thoughts come out of. */
 const newRound = (seed: number) => `r-${seed}-${Date.now().toString(36)}`;
 
-type Grain = { spent: number; grain: number; out: boolean; live: boolean | null; thoughts: number };
+type Grain = { spent: number; grain: number; out: boolean; live: boolean | null; thoughts: number; why?: string };
 
 export default function WorldView() {
   const { t, lang } = useLang();
@@ -412,7 +412,10 @@ export default function WorldView() {
             g.thoughts++;
             applyPlan(w, b, r.plan, r.costUsd ?? 0);
             saidRef.current.set(b.id, performance.now());
-          } else if (r.reason === "grain" || r.reason === "budget") g.out = true;
+          } else if (r.reason && ["grain", "pool", "busy", "budget"].includes(r.reason)) {
+            g.out = true;
+            g.why = r.reason;
+          }
           else b.mind!.nextTick = w.tick + THINK_EVERY_DAYS * LAWS.DAY_TICKS;
         })
         .catch(() => {
@@ -1029,6 +1032,9 @@ export default function WorldView() {
             </button>
             <Link className="pbtn" href="/report" style={{ textDecoration: "none" }}>
               {t("Impact report")}
+            </Link>
+            <Link className="pbtn" href="/receipts" style={{ textDecoration: "none" }}>
+              {t("Receipts")}
             </Link>
             <button
               className="pbtn"

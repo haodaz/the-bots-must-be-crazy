@@ -40,5 +40,8 @@ if (process.argv.includes("--export")) {
   ];
   mkdirSync("reports", { recursive: true });
   writeFileSync("reports/usage-trace.md", lines.join("\n"));
-  console.log("Wrote reports/usage-trace.md");
+  // The short version the public receipts page shows: what development spent before the public pool opened.
+  const kinds = [...by.entries()].map(([k, b]) => ({ what: k, calls: b.calls, costUsd: Math.round(b.cost * 1e6) / 1e6 }));
+  writeFileSync("reports/usage-dev.json", JSON.stringify({ updated: new Date().toISOString(), calls: live.length, spentUsd: Math.round(spent * 1e6) / 1e6, kinds }, null, 2));
+  console.log("Wrote reports/usage-trace.md and reports/usage-dev.json");
 }

@@ -1,0 +1,22 @@
+{
+  "updated": "2026-11-24T12:52:07.281Z",
+  "calls": 389,
+  "spentUsd": 0.630843,
+  "kinds": [
+    {
+      "what": "muse-ember-1.0 · ping",
+      "calls": 2,
+      "costUsd": 0.000042
+    },
+    {
+      "what": "muse-image-1.0 · art",
+      "calls": 58,
+      "costUsd": 0.58
+    },
+    {
+      "what": "muse-ember-1.0 · mind",
+      "calls": 329,
+      "costUsd": 0.050802
+    }
+  ]
+}

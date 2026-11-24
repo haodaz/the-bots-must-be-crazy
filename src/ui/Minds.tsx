@@ -10,7 +10,7 @@ import type { Bot, World } from "@/engine/world.ts";
 import { useLang } from "@/i18n.tsx";
 import { COL } from "./map.ts";
 
-export type GrainView = { spent: number; grain: number; out: boolean; live: boolean | null; thoughts: number };
+export type GrainView = { spent: number; grain: number; out: boolean; live: boolean | null; thoughts: number; why?: string };
 
 const year = (tick: number) => Math.floor(tick / LAWS.DAY_TICKS) + 1;
 const usd = (v: number) => `$${v < 0.01 ? v.toFixed(4) : v.toFixed(3)}`;
@@ -58,9 +58,13 @@ export function MindsPanel({ w, grain, onBot }: { w: World; grain: GrainView; on
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <GrainJar left={left} />
           <p className="note" style={{ margin: 0 }}>
-            {grain.out
-              ? t("This round's grain is spent. The minds live on by their last choice.")
-              : t("This round holds a grain of real compute. Each thought is paid from it, with Meta's Muse Ember.")}
+            {!grain.out
+              ? t("This round holds a grain of real compute. Each thought is paid from it, with Meta's Muse Ember.")
+              : grain.why === "pool"
+                ? t("The public pool of real compute is spent. The minds live on by their last choice.")
+                : grain.why === "busy"
+                  ? t("You have started many rounds this hour, so this one gets no new thoughts. The minds live on by their last choice.")
+                  : t("This round's grain is spent. The minds live on by their last choice.")}
           </p>
         </div>
         <div className="kv" style={{ marginTop: 10 }}>

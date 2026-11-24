@@ -1,18 +1,20 @@
 // The only door to Meta's models. Two kinds of call: think (Muse Ember, text) and paint (Muse Image).
 // Every call passes the budget gate first and leaves a receipt.
 //
-// Live calls need three things at once: a key (META_API_KEY), an explicit switch (MODEL_LIVE=1), and not
-// being on the public deployment (VERCEL unset). Anything else is a rehearsal with a fake reply that costs $0.
+// Live calls need a key (META_API_KEY) and an explicit switch (MODEL_LIVE=1). On the public deployment they also need
+// the shared store (Redis), which keeps the pool, each round's grain and the per-visitor limit; without it the public
+// game only rehearses. Anything else is a rehearsal with a fake reply that costs $0.
 
 import { existsSync, readFileSync } from "node:fs";
 import { approve, estimateTokens, record, tokenCost, worstCaseText, PRICES, type Receipt, type Usage } from "./budget.ts";
+import { hasSharedStore } from "./store.ts";
 
 const BASE = "https://api.meta.ai/v1";
 
 /** Read .env.local into process.env (scripts run outside Next, which would normally do this). */
 export function loadEnv(path = ".env.local") {
-  if (!existsSync(path)) return;
-  for (const line of readFileSync(path, "utf8").split("\n")) {
+  if (!existsSync(/*turbopackIgnore: true*/ path)) return;
+  for (const line of readFileSync(/*turbopackIgnore: true*/ path, "utf8").split("\n")) {
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
     if (!m || process.env[m[1]] != null) continue;
     process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
@@ -20,7 +22,7 @@ export function loadEnv(path = ".env.local") {
 }
 
 export function liveAllowed(): boolean {
-  return Boolean(process.env.META_API_KEY) && process.env.MODEL_LIVE === "1" && !process.env.VERCEL;
+  return Boolean(process.env.META_API_KEY) && process.env.MODEL_LIVE === "1" && (!process.env.VERCEL || hasSharedStore());
 }
 
 export type Effort = "none" | "minimal" | "low" | "medium" | "high";

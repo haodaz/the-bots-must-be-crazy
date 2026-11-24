@@ -65,8 +65,8 @@ export function worstCaseText(inputTokens: number, maxOutputTokens: number): num
 
 export function readLedger(): Receipt[] {
   const path = ledgerPath();
-  if (!existsSync(path)) return [];
-  return readFileSync(path, "utf8")
+  if (!existsSync(/*turbopackIgnore: true*/ path)) return [];
+  return readFileSync(/*turbopackIgnore: true*/ path, "utf8")
     .split("\n")
     .filter(Boolean)
     .map((line) => JSON.parse(line) as Receipt);
@@ -91,7 +91,9 @@ export function approve(estimateUsd: number, mode: "live" | "mock") {
 }
 
 export function record(r: Receipt) {
+  // The public deployment keeps no files; its receipts go to the shared store instead (store.ts).
+  if (process.env.VERCEL) return;
   const path = ledgerPath();
-  mkdirSync(dirname(path), { recursive: true });
-  appendFileSync(path, JSON.stringify(r) + "\n");
+  mkdirSync(/*turbopackIgnore: true*/ dirname(path), { recursive: true });
+  appendFileSync(/*turbopackIgnore: true*/ path, JSON.stringify(r) + "\n");
 }
